@@ -2,11 +2,11 @@
 
 This repo is one of the three parts of voxcraft software.
 
-1. [voxcraft-sim](https://github.com/liusida/voxcraft-sim): A highly parallelized physics engine that can simulate the voxel-based soft robots. This part utilizes CUDA and GPU.
+1. [voxcraft-sim](https://github.com/voxcraft/voxcraft-sim): A highly parallelized physics engine that can simulate the voxel-based soft robots. This part utilizes CUDA and GPU.
 
 2. voxcraft-evo: The evolutionary algorithms that can automatically design voxel-based soft robots.
 
-3. [voxcraft-viz](https://github.com/liusida/voxcraft-viz): The visualization tool that can playback the history file produced by voxcraft-sim, and it can used for manually design bots and run it in a CPU-based physics engine.
+3. [voxcraft-viz](https://github.com/voxcraft/voxcraft-viz): The visualization tool that can playback the history file produced by voxcraft-sim, and it can used for manually design bots and run it in a CPU-based physics engine.
 
 Learn more about the whole voxcraft project (not just software) to get a bigger picture, please refer to: https://voxcraft.github.io/
 
@@ -26,7 +26,7 @@ Create a new notebook and go to Menu->Runtime->Change runtime type, select GPU.
 
 Then, run the script:
 ```python
-!git clone https://github.com/liusida/voxcraft-sim.git; cd voxcraft-sim/;
+!git clone https://github.com/voxcraft/voxcraft-sim.git; cd voxcraft-sim/;
 
 print("Source code downloaded.")
 
@@ -56,7 +56,7 @@ Once you have the CUDA 10.1 environment, the rest is easy:
 sudo apt-get update
 sudo apt-get install -y git cmake libboost-all-dev
 
-git clone https://github.com/liusida/voxcraft-sim.git
+git clone https://github.com/voxcraft/voxcraft-sim.git
 cd voxcraft-sim
 mkdir build
 cd build
@@ -72,7 +72,7 @@ Try one of the demos:
 ./voxcraft-sim -i ../demos/basic/ > demo_basic.history
 ```
 
-It will produce a `demo_basic.history` file that is for [voxcraft-viz](https://github.com/liusida/voxcraft-viz) to visualize.
+It will produce a `demo_basic.history` file that is for [voxcraft-viz](https://github.com/voxcraft/voxcraft-viz) to visualize.
 
 # Citation
 
