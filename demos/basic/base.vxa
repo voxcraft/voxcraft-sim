@@ -1,0 +1,53 @@
+<VXA Version="1.1">
+<Simulator>
+    <RecordHistory>
+        <RecordStepSize>100</RecordStepSize>
+        <RecordVoxel>1</RecordVoxel>
+        <RecordLink>0</RecordLink>
+    </RecordHistory>
+    <StopCondition>
+        <StopConditionFormula>
+            <mtSUB>
+            <mtVAR>t</mtVAR>
+            <mtCONST>1</mtCONST>
+            </mtSUB>
+        </StopConditionFormula>
+    </StopCondition>
+</Simulator>
+<VXC Version="0.94">
+    <Lattice>
+        <Lattice_Dim>0.01</Lattice_Dim>
+    </Lattice>
+    <Palette>
+        <Material>
+            <Name>Default</Name>
+            <Display>
+                <Red>1</Red>
+                <Green>0</Green>
+                <Blue>0</Blue>
+                <Alpha>1</Alpha>
+            </Display>
+            <Mechanical>
+                <MatModel>0</MatModel>
+                <Elastic_Mod>1e+05</Elastic_Mod>
+                <Fail_Stress>0</Fail_Stress>
+                <Density>1e+3</Density>
+                <Poissons_Ratio>0.35</Poissons_Ratio>
+                <CTE>0</CTE>
+                <MaterialTempPhase>0</MaterialTempPhase>
+                <uStatic>1</uStatic>
+                <uDynamic>0.8</uDynamic>
+            </Mechanical>
+        </Material>
+    </Palette>
+    <Structure Compression="ASCII_READABLE">
+        <X_Voxels>1</X_Voxels>
+        <Y_Voxels>1</Y_Voxels>
+        <Z_Voxels>2</Z_Voxels>
+        <Data>
+            <Layer><![CDATA[0]]></Layer>
+            <Layer><![CDATA[1]]></Layer>
+        </Data>
+    </Structure>
+</VXC>
+</VXA>
