@@ -81,11 +81,11 @@ If you need to cite our work, here is the format:
 ```
 @MISC{liu_voxcraft_2020,
 	title = {Voxcraft-sim, a GPU-accelerated voxel-based physics engine},
-	url = {https://github.com/liusida/voxcraft-sim},
-	howpublished = {\url{https://github.com/liusida/voxcraft-sim}},
+	url = {https://github.com/voxcraft/voxcraft-sim},
+	howpublished = {\url{https://github.com/voxcraft/voxcraft-sim}},
 	author = {Sida Liu and Sam Kriegman and David Matthews and Josh Bongard},
 	year = {2020}
-	doi = {10.5281/zenodo.3834936},
+	doi = {10.5281/zenodo.3835152},
 }
 ```
 [![DOI](https://zenodo.org/badge/265434971.svg)](https://zenodo.org/badge/latestdoi/265434971)
