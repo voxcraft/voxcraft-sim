@@ -83,7 +83,7 @@ If you need to cite our work, here is the format:
 	title = {Voxcraft-sim, a GPU-accelerated voxel-based physics engine},
 	url = {https://github.com/voxcraft/voxcraft-sim},
 	howpublished = {\url{https://github.com/voxcraft/voxcraft-sim}},
-	author = {Sida Liu and Sam Kriegman and David Matthews and Josh Bongard},
+	author = {Sida Liu and David Matthews and Sam Kriegman and Josh Bongard},
 	year = {2020}
 	doi = {10.5281/zenodo.3835152},
 }
