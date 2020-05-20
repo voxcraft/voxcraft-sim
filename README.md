@@ -88,3 +88,4 @@ If you need to cite our work, here is the format:
 	doi = {10.5281/zenodo.3834936},
 }
 ```
+[![DOI](https://zenodo.org/badge/265434971.svg)](https://zenodo.org/badge/latestdoi/265434971)
