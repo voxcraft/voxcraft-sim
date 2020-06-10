@@ -3,6 +3,7 @@ build
 .vscode
 release
 workspace
+a.history
 
 # Prerequisites
 *.d
