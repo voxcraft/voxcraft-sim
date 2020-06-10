@@ -534,6 +534,6 @@ __device__ void VX3_Voxel::generateNearby(int linkDepth, int gindex, bool surfac
 __device__ void VX3_Voxel::updateGroup() {
     if (d_group==NULL) {
         d_group = new VX3_VoxelGroup();
+        d_group->updateGroup(this);
     }
-    d_group->updateGroup(this);
 }
