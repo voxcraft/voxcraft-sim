@@ -13,6 +13,7 @@
 #include "VX3_MaterialLink.h"
 #include "VX3_Voxel.h"
 #include "VX_Enums.h"
+#include "VX3_AttachManager.h"
 
 /*
  * VX3_VoxelyzeKernel is a GPU mock class of CVoxelyze
@@ -159,6 +160,8 @@ class VX3_VoxelyzeKernel {
     bool InitialPositionReinitialized = false;
 
     int EnableExpansion=0;
+
+    VX3_AttachManager* d_attach_manager;
 };
 
 #endif // VX3_VOXELYZE_KERNEL_H

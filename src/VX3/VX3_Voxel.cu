@@ -530,3 +530,10 @@ __device__ void VX3_Voxel::enableCollisions(bool enabled, float watchRadius) {
 __device__ void VX3_Voxel::generateNearby(int linkDepth, int gindex, bool surfaceOnly) {
     assert(false); // not used. near by has logic flaws.
 }
+
+__device__ void VX3_Voxel::updateGroup() {
+    if (d_group==NULL) {
+        d_group = new VX3_VoxelGroup();
+    }
+    d_group->updateGroup(this);
+}

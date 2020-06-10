@@ -1,0 +1,14 @@
+<VXD>
+  <Structure replace="VXA.VXC.Structure" Compression="ASCII_READABLE">
+    <X_Voxels>3</X_Voxels>
+    <Y_Voxels>3</Y_Voxels>
+    <Z_Voxels>1</Z_Voxels>
+    <Data>
+      <Layer><![CDATA[111101111]]></Layer>
+    </Data>
+    <BaseCiliaForce>
+      <Layer><![CDATA[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]></Layer>
+    </BaseCiliaForce>
+  </Structure>
+</VXD>
+

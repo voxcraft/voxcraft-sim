@@ -9,6 +9,7 @@
 #include "VX3_MaterialVoxel.h"
 #include "VX3_Signal.h"
 #include "VX3_queue.cuh"
+#include "VX3_VoxelGroup.h"
 
 class VX3_Collision;
 class VX3_VoxelyzeKernel;
@@ -273,7 +274,7 @@ class VX3_Voxel {
     VX3_External *ext = NULL;
 
     VX3_Link *links[6]; // links in the 6 cardinal directions according to linkDirection enumeration
-
+    
     // voxel state
     VX3_Vec3D<double> pos;     // current center position (meters) (GCS)
     VX3_Vec3D<double> linMom;  // current linear momentum (kg*m/s) (GCS)
@@ -312,6 +313,10 @@ class VX3_Voxel {
     // for Secondary Experiment
     bool removed = false;
     bool isMeasured = true;
+
+    VX3_VoxelGroup* d_group = NULL;
+    VX3_Vec3D<int> groupPosition;
+    __device__ void updateGroup();
 };
 
 #endif // VX3_VOXEL_H

@@ -1,7 +1,11 @@
-# Prerequisites
-*.d
+# Custom
 build
 .vscode
+release
+workspace
+
+# Prerequisites
+*.d
 
 # Compiled Object files
 *.slo
