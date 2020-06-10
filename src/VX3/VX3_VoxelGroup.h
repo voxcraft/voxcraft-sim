@@ -1,6 +1,7 @@
 #if !defined(VX3_VOXELGROUP_H)
 #define VX3_VOXELGROUP_H
 
+#include "VX3_vector.cuh"
 class VX3_Voxel;
 
 class VX3_VoxelGroup {
@@ -11,6 +12,7 @@ public:
     int max_x, max_y, max_z;
 
     VX3_Voxel **d_group_map = NULL;
+    VX3_dVector<VX3_Voxel *> d_surface_voxels;
     bool needRebuild = true;
 
     __device__ VX3_VoxelGroup(/* args */);
@@ -18,6 +20,7 @@ public:
     __device__ int to1D(int x, int y, int z);
     __device__ void to3D(int offset, int *ret_x, int *ret_y, int *ret_z);
     __device__ int getVoxelOffset(VX3_Voxel *voxel);
+    __device__ bool isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *voxel_remote, int* ret_linkdir);
 };
 
 #endif // VX3_VOXELGROUP_H

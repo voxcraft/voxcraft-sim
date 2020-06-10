@@ -56,7 +56,7 @@ def generate_vxd(body, cilia):
 
 X_Voxels, Y_Voxels, Z_Voxels = 2,3,1
 body = np.ones(shape=[X_Voxels,Y_Voxels,Z_Voxels], dtype=int)
-body[1,0:2,0] = 0
+# body[1,1,0] = 0
 cilia = np.zeros(shape=[3, X_Voxels, Y_Voxels, Z_Voxels], dtype=float)
 cilia[0,0,1,0] = 1
 
