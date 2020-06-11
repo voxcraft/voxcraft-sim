@@ -1,6 +1,7 @@
 # Prerequisites
 *.d
 build
+cmake-build-debug
 .vscode
 
 # Compiled Object files
@@ -32,3 +33,6 @@ build
 *.exe
 *.out
 *.app
+
+# IDEs
+*.idea

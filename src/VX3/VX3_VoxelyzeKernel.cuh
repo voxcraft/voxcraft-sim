@@ -14,6 +14,8 @@
 #include "VX3_Voxel.h"
 #include "VX_Enums.h"
 
+#include "../CollisionDetection/include/CollisionSystem.cuh"
+
 /*
  * VX3_VoxelyzeKernel is a GPU mock class of CVoxelyze
  * Usage: setup a CVoxelyze, and use the constructor function to initialize a VX3_VoxelyzeKernel.
@@ -25,6 +27,7 @@ class VX3_VoxelyzeKernel {
     VX3_VoxelyzeKernel() = default; // start from scratch, read VXA ourselves.
 
     void cleanup();
+
 
     /* Cuda methods */
     __device__ bool doTimeStep(float dt = -1.0f);
@@ -97,6 +100,8 @@ class VX3_VoxelyzeKernel {
     float watchDistance;  //(in voxel units) Distance between voxels (not including 2*boundingRadius for each voxel) to watch for collisions from.
 
     // bool* d_collisionsStale;
+    CollisionSystem *d_collision_system;
+    CollisionSystem *h_collision_system;
     VX3_dVector<VX3_Collision *> d_v_collisions;
 
     bool enableAttach;

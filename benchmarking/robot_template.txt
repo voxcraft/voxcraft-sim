@@ -41,13 +41,13 @@
         </Material>
     </Palette>
     <Structure Compression="ASCII_READABLE">
-        <X_Voxels>10</X_Voxels>
-        <Y_Voxels>10</Y_Voxels>
-        <Z_Voxels>2</Z_Voxels>
+        <X_Voxels>%s</X_Voxels>
+        <Y_Voxels>3</Y_Voxels>
+        <Z_Voxels>3</Z_Voxels>
         <Data>
-            <Layer><![CDATA[1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111]]></Layer>
-            <Layer><![CDATA[1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111]]></Layer>
-
+            <Layer><![CDATA[%s]]></Layer>
+            <Layer><![CDATA[%s]]></Layer>
+            <Layer><![CDATA[%s]]></Layer>
         </Data>
     </Structure>
 </VXC>
