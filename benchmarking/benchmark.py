@@ -11,8 +11,8 @@ LOOPS_PER_SIZE = 1
 times = []
 
 if __name__ == "__main__":
-    for robot_len_pow in range(16):
-        robot_len = 1<<robot_len_pow
+    for robot_len in [1, 100, 200, 300, 400, 500]:
+        # robot_len = 1<<robot_len_pow
         layer_str = "1"*3 *robot_len
         curr_robot = template_str % (str(robot_len), layer_str, layer_str, layer_str)
         with open(output_file, "w") as f:
