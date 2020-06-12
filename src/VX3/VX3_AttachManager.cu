@@ -38,9 +38,9 @@ __device__ bool VX3_AttachManager::tryAttach(VX3_Voxel *voxel1, VX3_Voxel *voxel
         printf("q12 w=%f,x=%f,y=%f,z=%f\n", q12.w, q12.x, q12.y, q12.z);
     }
     int linkdir_1, linkdir_2;
-    if (voxel1->d_group->isCompatible(voxel1, voxel2, &linkdir_1)) {
+    if (voxel1->d_group->isCompatible(voxel1, voxel2, &linkdir_1, &linkdir_2)) {
+        // linkdir_2 = oppositeDir(linkdir_1);
         // printf("Compatible.");
-        linkdir_2 = oppositeDir(linkdir_1);
     } else {
         return false;
     }
@@ -50,66 +50,10 @@ __device__ bool VX3_AttachManager::tryAttach(VX3_Voxel *voxel1, VX3_Voxel *voxel
     // Other potential attachments are ignored, no wait.
     if (atomicCAS(&mutex, 0, 1) == 0) {
         // Entering Critical Area
-        // determine relative position
-        linkDirection link_dir_1, link_dir_2;
-        linkAxis link_axis;
-        auto a = voxel1->orientation();
-        auto b = voxel2->orientation();
-        auto c = voxel1->position();
-        auto d = voxel2->position();
-        auto e = c - d;
-        auto ea = a.RotateVec3DInv(-e);
-        auto eb = b.RotateVec3DInv(e);
-
-        // first find which is the dominant axis, then determine which one is
-        // neg which one is pos.
-        VX3_Vec3D<double> f;
-        bool reverseOrder = false;
-        f = ea.Abs();
-        if (f.x >= f.y && f.x >= f.z) { // X_AXIS
-            link_axis = X_AXIS;
-            if (ea.x < 0) {
-                link_dir_1 = X_NEG;
-                link_dir_2 = X_POS;
-                reverseOrder = true;
-            } else {
-                link_dir_1 = X_POS;
-                link_dir_2 = X_NEG;
-            }
-        } else if (f.y >= f.x && f.y >= f.z) { // Y_AXIS
-            link_axis = Y_AXIS;
-            if (ea.y < 0) {
-                link_dir_1 = Y_NEG;
-                link_dir_2 = Y_POS;
-                reverseOrder = true;
-            } else {
-                link_dir_1 = Y_POS;
-                link_dir_2 = Y_NEG;
-            }
-        } else { // Z_AXIS
-            link_axis = Z_AXIS;
-            if (ea.z < 0) { // voxel1 is on top
-                link_dir_1 = Z_NEG;
-                link_dir_2 = Z_POS;
-                reverseOrder = true;
-            } else {
-                link_dir_1 = Z_POS;
-                link_dir_2 = Z_NEG;
-            }
-        }
-
-        // TODO: need to solve this. Create only when there's a right place to
-        // attach
-        printf("link_dir_1 %d %d, link_dir_2 %d %d\n", (int)link_dir_1, linkdir_1, (int)link_dir_2, linkdir_2);
-        if (voxel1->links[link_dir_1] == NULL && voxel2->links[link_dir_2] == NULL) {
+        if (voxel1->links[linkdir_1] == NULL && voxel2->links[linkdir_2] == NULL) {
             VX3_Link *pL;
-            if (reverseOrder) {
-                pL = new VX3_Link(voxel1, link_dir_1, voxel2, link_dir_2, link_axis,
+            pL = new VX3_Link(voxel1, (linkDirection)linkdir_1, voxel2, (linkDirection)linkdir_2, (linkAxis) (int) floorf(linkdir_1/2), (linkAxis) (int) floorf(linkdir_2/2),
                                   k); // make the new link (change to both materials, etc.
-            } else {
-                pL = new VX3_Link(voxel2, link_dir_2, voxel1, link_dir_1, link_axis,
-                                  k); // make the new link (change to both materials, etc.
-            }
             if (!pL) {
                 printf(COLORCODE_BOLD_RED "ERROR: Out of memory. Link not created.\n");
             } else {
@@ -118,6 +62,7 @@ __device__ bool VX3_AttachManager::tryAttach(VX3_Voxel *voxel1, VX3_Voxel *voxel
 
                 k->isSurfaceChanged = true;
                 printf("New Link formed.\n");
+                k->EnableCilia = false; // for debug: no cilia after attachment.
                 ret = true;
             }
         }

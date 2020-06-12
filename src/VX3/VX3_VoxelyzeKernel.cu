@@ -151,10 +151,15 @@ __device__ void VX3_VoxelyzeKernel::syncVectors() {
     for (int i = 0; i < num_d_voxels; i++) {
         d_voxels[i].syncVectors();
     }
+    
+    for (int i = 0; i < num_d_links; i++) {
+        d_links[i].syncVectors(this);
+    }
 
     for (int i = 0; i < num_d_voxels; i++) {
         d_voxels[i].updateGroup();
     }
+
 
     d_attach_manager = new VX3_AttachManager();
     d_attach_manager->k = this;

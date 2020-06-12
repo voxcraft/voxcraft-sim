@@ -11,9 +11,9 @@
 
 #ifdef __CUDACC__
 #define DEBUG_DEV_ENABLED true
-#define debugDev(cmd) { if (DEBUG_DEV_ENABLED) {printf(("\n[debugDev] %s(%d): <%s> \033[0;32m"), __FILE__, __LINE__,__FUNCTION__); cmd; printf("\033[0m"); } }
+#define debugDev(cmd) { if (DEBUG_DEV_ENABLED) {printf(("\n%s(%d): <%s> \033[0;32m"), __FILE__, __LINE__,__FUNCTION__); cmd; printf("\033[0m"); } }
 #ifdef DEBUG_DEV_ENABLED
-#define debugDevice( var_name, cmd ) { printf(("\n[debugDev] %s(%d): <%s> (%s) \033[0;32m"), __FILE__, __LINE__,__FUNCTION__, var_name); cmd; printf("\033[0m");  }
+#define debugDevice( var_name, cmd ) { printf(("\n%s(%d): <%s> (%s) \033[0;32m"), __FILE__, __LINE__,__FUNCTION__, var_name); cmd; printf("\033[0m");  }
 #else
 #define debugDevice( a, b ) ;
 #endif

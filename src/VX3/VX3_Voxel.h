@@ -93,9 +93,9 @@ class VX3_Voxel {
     } //!< Returns the nominal size of this voxel (LCS) accounting for any specified temperature and external actuation. Specifically,
       //!< returns the zero-stress size of the voxel if all forces/moments were removed.
 
-    // Change to: Actuation due to Voltage!!
     __device__ double baseSize(linkAxis axis) const {
         return mat->size()[axis] * (1 + tempe * mat->alphaCTE);
+        // Change to: Actuation due to Voltage!!
         // return mat->size()[axis] * (1 + voltage * mat->alphaCTE);
     } //!< Returns the nominal size of this voxel in the specified axis accounting for any specified temperature and external actuation.
       //!< Specifically, returns the zero-stress dimension of the voxel if all forces/moments were removed.

@@ -60,6 +60,11 @@ __global__ void CUDA_Simulation(VX3_VoxelyzeKernel *d_voxelyze_3, int num_simula
         // d_v3->initialCenterOfMass.x*1000, d_v3->initialCenterOfMass.y*1000,
         // d_v3->initialCenterOfMass.z*1000);
         for (int j = 0; j < 1000000; j++) { // Maximum Steps 1000000
+            //for debug
+            // if (j==1000) {
+            //     d_v3->d_voxels[0].d_group->reorient_lattice();
+            // }
+            //
             if (d_v3->StopConditionMet())
                 break;
             if (!d_v3->doTimeStep()) {

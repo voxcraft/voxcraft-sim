@@ -54,23 +54,27 @@ def generate_vxd(body, cilia):
     file_content = etree.tostring(VXD, pretty_print=True).decode("utf-8")
     return file_content
 
-X_Voxels, Y_Voxels, Z_Voxels = 2,3,1
+body_tiny = np.ones(shape=[2,2,3], dtype=int)
+body_tiny[:,:,0] = 0
+
+X_Voxels, Y_Voxels, Z_Voxels = 2,4,2
 body = np.ones(shape=[X_Voxels,Y_Voxels,Z_Voxels], dtype=int)
 # body[1,1,0] = 0
 cilia = np.zeros(shape=[3, X_Voxels, Y_Voxels, Z_Voxels], dtype=float)
-cilia[0,0,1,0] = 1
+cilia[2,0,0,1] = 0.6
 
 cilia1 = np.zeros(shape=[3, X_Voxels, Y_Voxels, Z_Voxels], dtype=float)
-cilia1[0,1,1,0] = -1
+cilia1[0,1,-1,0] = 0
 
-world = np.zeros([10,10,1], dtype=int)
+world = np.zeros([10,10,10], dtype=int)
 world_cilia = np.zeros(shape=[3, world.shape[0], world.shape[1], world.shape[2]], dtype=float)
 
-put_into(world, body)
-put_into(world, body[::-1,:,:], offset=[6,0,0])
+# put_into(world, body)
+# put_into(world, body[::-1,:,:], offset=[4,0,0])
+# put_into(world_cilia, cilia, prefix=1)
+# put_into(world_cilia, cilia1, offset=[4,0,0], prefix=1)
+put_into(world, body_tiny)
 put_into(world_cilia, cilia, prefix=1)
-put_into(world_cilia, cilia1, offset=[6,0,0], prefix=1)
-
 
 print("Generating")
 file_content = generate_vxd(world, world_cilia)

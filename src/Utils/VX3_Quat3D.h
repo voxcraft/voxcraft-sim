@@ -149,7 +149,7 @@ public:
       //!< post-rotation orientation.
 
     __device__ inline void debug() {
-        printf("w:%f, x:%f, y:%f, z:%f\t", w, x, y, z);
+        printf("(Quat3D) w:%e, x:%e, y:%e, z:%e\n", w, x, y, z);
     }
 
     // functions to make code with mixed template parameters work...

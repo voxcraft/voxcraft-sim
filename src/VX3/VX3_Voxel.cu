@@ -57,6 +57,19 @@ __device__ void VX3_Voxel::syncVectors() {
     d_signal.activeTime = 0;
 
     d_signals.clear();
+
+    // init linkdir
+    for (int i=0;i<6;i++) {
+        if (links[i]) {
+            if (links[i]->pVNeg==this) {
+                links[i]->linkdirNeg = (linkDirection)i;
+            } else if (links[i]->pVPos==this) {
+                links[i]->linkdirPos = (linkDirection)i;
+            } else {
+                printf("linkdir initialization error.\n");
+            }
+        }
+    }
 }
 __device__ VX3_Voxel *VX3_Voxel::adjacentVoxel(linkDirection direction) const {
     VX3_Link *pL = links[(int)direction];
@@ -351,11 +364,13 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
 
     // forces from internal bonds
     VX3_Vec3D<double> totalForce(0, 0, 0);
+    // VX3_Vec3D<> tmp;
     for (int i = 0; i < 6; i++) {
-        if (links[i])
+        if (links[i]) {
+            // tmp = links[i]->force(isNegative((linkDirection)i));
             totalForce += links[i]->force(isNegative((linkDirection)i)); // total force in LCS
+        }
     }
-
     totalForce = orient.RotateVec3D(totalForce); // from local to global coordinates
     assert(!(totalForce.x != totalForce.x) || !(totalForce.y != totalForce.y) || !(totalForce.z != totalForce.z)); // assert non QNAN
 

@@ -11,7 +11,7 @@ class VX3_MaterialLink;
 class VX3_Link {
   public:
     VX3_Link(CVX_Link *p, VX3_VoxelyzeKernel *k);
-    __device__ VX3_Link(VX3_Voxel *voxel1, linkDirection dir1, VX3_Voxel *voxel2, linkDirection dir2, linkAxis link_axis,
+    __device__ VX3_Link(VX3_Voxel *voxel1, linkDirection dir1, VX3_Voxel *voxel2, linkDirection dir2, linkAxis link_axis, linkAxis link_axis_pos,
                         VX3_VoxelyzeKernel *k);
 
     __device__ void reset(); //!< Resets all current state information about
@@ -87,15 +87,16 @@ class VX3_Link {
     __device__ float b2() const;
     __device__ float b3() const;
 
-    __device__ VX3_Quat3D<double> orientLink();
+    __device__ void orientLink();
+    __device__ void orientLink_new();
     // updates pos2, angle1, angle2, and smallAngle.
     // returns the rotation quaternion (after
     // toAxisX) used to get to this orientation
 
     // unwind a coordinate as if the bond was in the the positive X direction
     // (and back...)
-    template <typename T> __device__ void toAxisX(VX3_Vec3D<T> *const pV) const {
-        switch (axis) {
+    template <typename T> __device__ void toAxisX(VX3_Vec3D<T> *const pV, linkAxis ax) const {
+        switch (ax) {
         case Y_AXIS: {
             T tmp = pV->x;
             pV->x = pV->y;
@@ -113,8 +114,8 @@ class VX3_Link {
         }
     } // transforms a VX3_Vec3D in the original orientation of the bond to that
       // as if the bond was in +X direction
-    template <typename T> __device__ void toAxisX(VX3_Quat3D<T> *const pQ) const {
-        switch (axis) {
+    template <typename T> __device__ void toAxisX(VX3_Quat3D<T> *const pQ, linkAxis ax) const {
+        switch (ax) {
         case Y_AXIS: {
             T tmp = pQ->x;
             pQ->x = pQ->y;
@@ -131,8 +132,8 @@ class VX3_Link {
             break;
         }
     }
-    template <typename T> __device__ VX3_Vec3D<T> toAxisX(const VX3_Vec3D<T> &v) const {
-        switch (axis) {
+    template <typename T> __device__ VX3_Vec3D<T> toAxisX(const VX3_Vec3D<T> &v, linkAxis ax) const {
+        switch (ax) {
         case Y_AXIS:
             return VX3_Vec3D<T>(v.y, -v.x, v.z);
         case Z_AXIS:
@@ -142,8 +143,8 @@ class VX3_Link {
         }
     } // transforms a VX3_Vec3D in the original orientation of the bond to that
       // as if the bond was in +X direction
-    template <typename T> __device__ VX3_Quat3D<T> toAxisX(const VX3_Quat3D<T> &q) const {
-        switch (axis) {
+    template <typename T> __device__ VX3_Quat3D<T> toAxisX(const VX3_Quat3D<T> &q, linkAxis ax) const {
+        switch (ax) {
         case Y_AXIS:
             return VX3_Quat3D<T>(q.w, q.y, -q.x, q.z);
         case Z_AXIS:
@@ -153,8 +154,8 @@ class VX3_Link {
         }
     } // transforms a VX3_Vec3D in the original orientation of the bond to that
       // as if the bond was in +X direction
-    template <typename T> __device__ void toAxisOriginal(VX3_Vec3D<T> *const pV) const {
-        switch (axis) {
+    template <typename T> __device__ void toAxisOriginal(VX3_Vec3D<T> *const pV, linkAxis ax) const {
+        switch (ax) {
         case Y_AXIS: {
             T tmp = pV->y;
             pV->y = pV->x;
@@ -171,8 +172,8 @@ class VX3_Link {
             break;
         }
     }
-    template <typename T> __device__ void toAxisOriginal(VX3_Quat3D<T> *const pQ) const {
-        switch (axis) {
+    template <typename T> __device__ void toAxisOriginal(VX3_Quat3D<T> *const pQ, linkAxis ax) const {
+        switch (ax) {
         case Y_AXIS: {
             T tmp = pQ->y;
             pQ->y = pQ->x;
@@ -199,7 +200,7 @@ class VX3_Link {
 
     // template <typename T>
     // __device__ VX3_Vec3D<T> toAxisX		(const VX3_Vec3D<T>& v)	const
-    // {switch (axis){case Y_AXIS: return VX3_Vec3D<T>(v.y, -v.x, v.z); case
+    // {switch (ax){case Y_AXIS: return VX3_Vec3D<T>(v.y, -v.x, v.z); case
     // Z_AXIS: return VX3_Vec3D<T>(v.z, v.y, -v.x); default: return v;}}
     // //transforms a VX3_Vec3D in the original orientation of the bond to that
     // as if the bond was in +X direction
@@ -221,7 +222,8 @@ class VX3_Link {
     linkState boolStates; // single int to store many boolean state values as
                           // bit flags according to
 
-    linkAxis axis;
+    // linkAxis axis; //use linkdirNeg and Pos instead, for the consideration of attachment
+    linkDirection linkdirNeg, linkdirPos;
 
     VX3_MaterialLink *mat;
     float strainRatio; // ration of Epos to Eneg (EPos/Eneg)
@@ -243,6 +245,22 @@ class VX3_Link {
 
 	// for Secondary Experiment
     bool removed = false;
+
+    int debug=0;
+    __device__ __host__ int oppositeDir(int linkdir);
+    __device__ linkAxis toAxis(linkDirection linkdir) {
+        int i = (int)linkdir;
+        i = (int) ((i-(i%2))/2);
+        return (linkAxis) i;
+    };
+
+    VX3_Quat3D<double> quat_linkDirection[6];   // precalculate rotation for different link direction
+                                                // quat_linkDirection[linkDirection].RotateVector for rotating from raw coordinates to coordinates corresponding direction.
+    __device__ void syncVectors(VX3_VoxelyzeKernel *k);
+
+    __device__ VX3_Vec3D<double> pseudoRotation(linkDirection linkdir, VX3_Vec3D<double> pos, bool inverse=false);
+
+    VX3_VoxelyzeKernel *d_kernel;
 };
 
 #endif // VX3_LINK_H
