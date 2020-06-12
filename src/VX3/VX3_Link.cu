@@ -165,16 +165,20 @@ __device__ void VX3_Link::orientLink() // updates pos2, angle1, angle2, and smal
         // (3) pos2: The position is in the imaginary coordinates. (Must be close to (1,0,0))
         // (4) raw angle 1: The orientation (X_POS) of pVNeg in real coordinates.
         // (5) angle 1: The orientation of linkdirNeg in real coordinates.
-        VX3_Vec3D<> raw_pos2 = pVPos->position() - pVNeg->position(); //(1)
-        VX3_Quat3D<> rotate_pos2 = quat_linkDirection[linkdirNeg].Conjugate() * pVNeg->orientation().Conjugate(); // (A)
+        VX3_Vec3D<> raw_pos2 = pVPos->position() - pVNeg->position(); 
+        pos2 = raw_pos2; //(1): position of pVPos relative to pVNeg.
+        pos2 = pVNeg->orientation().Conjugate().RotateVec3D(pos2); // (2): into pVNeg coordinates.
+        pos2 = quat_linkDirection[linkdirNeg].Conjugate().RotateVec3D(pos2); // (3): into beam coordinates.
         // (A) is the same as rotating twice:
-        // pos2 = pVNeg->orientation().RotateVec3DInv(raw_pos2);
-        // pos2 = quat_linkDirection[linkdirNeg].RotateVec3DInv(pos2);
-        pos2 = rotate_pos2.RotateVec3D(raw_pos2);
+        // VX3_Quat3D<> rotate_pos2 = quat_linkDirection[linkdirNeg].Conjugate() * pVNeg->orientation().Conjugate(); // (A)
+        // pos2 = rotate_pos2.RotateVec3D(raw_pos2);
 
-        VX3_Quat3D<> raw_angle2 = pVPos->orientation(); // (5,6,7)
-        angle2 = quat_linkDirection[linkdirPos] * raw_angle2;
-        angle2 = rotate_pos2 * angle2;
+        VX3_Quat3D<> raw_angle2 = pVPos->orientation();
+        angle2 = raw_angle2; // (4): orientation of pVPos
+        angle2 = pVNeg->orientation().Conjugate() * angle2; // (5)
+        angle2 = quat_linkDirection[linkdirNeg].Conjugate() * angle2;
+        angle2 = angle2 * quat_linkDirection[oppositeDir(linkdirPos)];
+        // angle2 = rotate_pos2.Conjugate() * angle2;
         // VX3_Quat3D<> totalRotation = quat_linkDirection[linkdirNeg] * pVNeg->orientation(); // (3) First Rotate according to pVNeg->orientation (on the right), then Rotate according to quat_linkDirection[linkdirNeg] (on the left).
         // totalRotation = totalRotation.Conjugate();
         // totalRotation = totalRotation * quat_linkDirection[linkdirNeg];
@@ -184,8 +188,10 @@ __device__ void VX3_Link::orientLink() // updates pos2, angle1, angle2, and smal
         // angle1 = VX3_Quat3D<>(); // always (1,0,0,0)
         old_angle2 = raw_angle2;
         tmp_angle2 = angle2;
+        old_pos2 = raw_pos2;
+        tmp_pos2 = pos2;
     }
-    if (true) {
+    if (false) {
         VX3_Vec3D<> _pos2 = pVPos->position() - pVNeg->position();
         pos2 = toAxisX(_pos2, toAxis(linkdirNeg)); // digit truncation happens here...
         VX3_Quat3D<> _angle1 = pVNeg->orientation();
@@ -198,13 +204,20 @@ __device__ void VX3_Link::orientLink() // updates pos2, angle1, angle2, and smal
         pos2 = totalRot.RotateVec3D(pos2);
         angle2 = totalRot * angle2;
         angle1 = VX3_Quat3D<>(); // zero for now...
-        if (d_kernel->currentTime>=0.08) {
+        if (d_kernel->currentTime>=0.2) {
             printf("%d) angle2: %e, %e, %e, %e \n \t %e, %e, %e, %e \n\t\t\t\t\t (old) %e, %e, %e, %e.\n", linkdirNeg,
             tmp_angle2.w, tmp_angle2.x, tmp_angle2.y, tmp_angle2.z,
             angle2.w, angle2.x, angle2.y, angle2.z,
             old_angle2.w, old_angle2.x, old_angle2.y, old_angle2.z
         );
-        }      
+        }
+        if (d_kernel->currentTime>=0.1) {
+            printf("%d) pos2: %e, %e, %e \n \t %e, %e, %e \n\t\t\t\t\t (old) %e, %e, %e.\n", linkdirNeg,
+            tmp_pos2.x, tmp_pos2.y, tmp_pos2.z,
+            pos2.x, pos2.y, pos2.z,
+            old_pos2.x, old_pos2.y, old_pos2.z
+        );
+        }             
     }
 
     // small angle approximation?
@@ -308,16 +321,16 @@ __device__ void VX3_Link::updateForces() {
     if (true) {
         // new method
         forceNeg = quat_linkDirection[linkdirNeg].RotateVec3D(forceNeg);
-        forcePos = quat_linkDirection[oppositeDir(linkdirPos)].RotateVec3D(forcePos);
+        forcePos = quat_linkDirection[linkdirNeg].RotateVec3D(forcePos);
         momentNeg = quat_linkDirection[linkdirNeg].RotateVec3D(momentNeg);
-        momentPos = quat_linkDirection[oppositeDir(linkdirPos)].RotateVec3D(momentPos);
+        momentPos = quat_linkDirection[linkdirNeg].RotateVec3D(momentPos);
     } 
     if (false) {
         // old method
         toAxisOriginal(&forceNeg, toAxis(linkdirNeg));
-        toAxisOriginal(&forcePos, toAxis((linkDirection)oppositeDir(linkdirPos)));
+        toAxisOriginal(&forcePos, toAxis(linkdirNeg));
         toAxisOriginal(&momentNeg, toAxis(linkdirNeg));
-        toAxisOriginal(&momentPos, toAxis((linkDirection)oppositeDir(linkdirPos)));
+        toAxisOriginal(&momentPos, toAxis(linkdirNeg));
     }
 
     assert(!(forceNeg.x != forceNeg.x) || !(forceNeg.y != forceNeg.y) || !(forceNeg.z != forceNeg.z)); //assert non QNAN

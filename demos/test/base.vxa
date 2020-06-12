@@ -11,7 +11,7 @@
             </AttachCondition>
         </AttachDetach>
         <RecordHistory>
-            <RecordStepSize>10</RecordStepSize>
+            <RecordStepSize>100</RecordStepSize>
             <RecordVoxel>1</RecordVoxel>
             <RecordLink>0</RecordLink>
         </RecordHistory>

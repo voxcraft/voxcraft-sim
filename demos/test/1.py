@@ -55,13 +55,16 @@ def generate_vxd(body, cilia):
     return file_content
 
 body_tiny = np.ones(shape=[2,2,3], dtype=int)
-body_tiny[:,:,0] = 0
+# body_tiny[np.random.random(size=[2,2,3])<0.3] = 0
+body_tiny[0,:,0]=0
+# tiny_cilia = np.zeros(shape=[3,2,2,3])
+tiny_cilia = np.random.random(size=[3,2,2,3]) * 0.5
 
-X_Voxels, Y_Voxels, Z_Voxels = 2,4,2
+X_Voxels, Y_Voxels, Z_Voxels = 2,4,1
 body = np.ones(shape=[X_Voxels,Y_Voxels,Z_Voxels], dtype=int)
 # body[1,1,0] = 0
 cilia = np.zeros(shape=[3, X_Voxels, Y_Voxels, Z_Voxels], dtype=float)
-cilia[2,0,0,1] = 0.6
+cilia[0,0,0,0] = 0.6
 
 cilia1 = np.zeros(shape=[3, X_Voxels, Y_Voxels, Z_Voxels], dtype=float)
 cilia1[0,1,-1,0] = 0
@@ -74,7 +77,7 @@ world_cilia = np.zeros(shape=[3, world.shape[0], world.shape[1], world.shape[2]]
 # put_into(world_cilia, cilia, prefix=1)
 # put_into(world_cilia, cilia1, offset=[4,0,0], prefix=1)
 put_into(world, body_tiny)
-put_into(world_cilia, cilia, prefix=1)
+put_into(world_cilia, tiny_cilia, prefix=1)
 
 print("Generating")
 file_content = generate_vxd(world, world_cilia)
