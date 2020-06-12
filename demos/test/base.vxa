@@ -11,9 +11,9 @@
             </AttachCondition>
         </AttachDetach>
         <RecordHistory>
-            <RecordStepSize>100</RecordStepSize>
+            <RecordStepSize>20</RecordStepSize>
             <RecordVoxel>1</RecordVoxel>
-            <RecordLink>0</RecordLink>
+            <RecordLink>1</RecordLink>
         </RecordHistory>
         <Damping>
             <BondDampingZ>1</BondDampingZ>
@@ -24,7 +24,7 @@
             <StopConditionFormula>
                 <mtSUB>
                 <mtVAR>t</mtVAR>
-                <mtCONST>1</mtCONST>
+                <mtCONST>0.5</mtCONST>
                 </mtSUB>
             </StopConditionFormula>
         </StopCondition>
@@ -40,7 +40,7 @@
                     <Red>1</Red>
                     <Green>0</Green>
                     <Blue>0</Blue>
-                    <Alpha>1</Alpha>
+                    <Alpha>0.5</Alpha>
                 </Display>
                 <Mechanical>
                     <Sticky>1</Sticky>

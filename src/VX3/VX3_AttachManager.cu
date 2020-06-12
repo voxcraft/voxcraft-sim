@@ -32,10 +32,10 @@ __device__ bool VX3_AttachManager::tryAttach(VX3_Voxel *voxel1, VX3_Voxel *voxel
         //// consider rotation later
         VX3_Quat3D<float> q1 = voxel1->orientation();
         VX3_Quat3D<float> q2 = voxel2->orientation();
-        printf("q1 w=%f,x=%f,y=%f,z=%f, ", q1.w, q1.x, q1.y, q1.z);
-        printf("q2 w=%f,x=%f,y=%f,z=%f\n", q2.w, q2.x, q2.y, q2.z);
+        // printf("q1 w=%f,x=%f,y=%f,z=%f, ", q1.w, q1.x, q1.y, q1.z);
+        // printf("q2 w=%f,x=%f,y=%f,z=%f\n", q2.w, q2.x, q2.y, q2.z);
         VX3_Quat3D<float> q12 = q1.Conjugate() * q2;
-        printf("q12 w=%f,x=%f,y=%f,z=%f\n", q12.w, q12.x, q12.y, q12.z);
+        // printf("q12 w=%f,x=%f,y=%f,z=%f\n", q12.w, q12.x, q12.y, q12.z);
     }
     int linkdir_1, linkdir_2;
     if (voxel1->d_group->isCompatible(voxel1, voxel2, &linkdir_1, &linkdir_2)) {
@@ -45,6 +45,10 @@ __device__ bool VX3_AttachManager::tryAttach(VX3_Voxel *voxel1, VX3_Voxel *voxel
         return false;
     }
 
+    // try only form one link
+    if (debug)
+        return false;
+
     bool ret = false;
     // Start Attach!
     // Other potential attachments are ignored, no wait.
@@ -52,8 +56,7 @@ __device__ bool VX3_AttachManager::tryAttach(VX3_Voxel *voxel1, VX3_Voxel *voxel
         // Entering Critical Area
         if (voxel1->links[linkdir_1] == NULL && voxel2->links[linkdir_2] == NULL) {
             VX3_Link *pL;
-            pL = new VX3_Link(voxel1, (linkDirection)linkdir_1, voxel2, (linkDirection)linkdir_2, (linkAxis) (int) floorf(linkdir_1/2), (linkAxis) (int) floorf(linkdir_2/2),
-                                  k); // make the new link (change to both materials, etc.
+            pL = new VX3_Link(voxel2, (linkDirection)linkdir_2, voxel1, (linkDirection)linkdir_1, k); // make the new link (change to both materials, etc.
             if (!pL) {
                 printf(COLORCODE_BOLD_RED "ERROR: Out of memory. Link not created.\n");
             } else {
@@ -64,6 +67,7 @@ __device__ bool VX3_AttachManager::tryAttach(VX3_Voxel *voxel1, VX3_Voxel *voxel
                 printf("New Link formed.\n");
                 k->EnableCilia = false; // for debug: no cilia after attachment.
                 ret = true;
+                debug++;
             }
         }
         atomicExch(&mutex, 0);

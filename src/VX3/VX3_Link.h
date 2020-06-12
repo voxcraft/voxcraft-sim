@@ -11,8 +11,7 @@ class VX3_MaterialLink;
 class VX3_Link {
   public:
     VX3_Link(CVX_Link *p, VX3_VoxelyzeKernel *k);
-    __device__ VX3_Link(VX3_Voxel *voxel1, linkDirection dir1, VX3_Voxel *voxel2, linkDirection dir2, linkAxis link_axis, linkAxis link_axis_pos,
-                        VX3_VoxelyzeKernel *k);
+    __device__ VX3_Link(VX3_Voxel *voxel1, linkDirection dir1, VX3_Voxel *voxel2, linkDirection dir2, VX3_VoxelyzeKernel *k);
 
     __device__ void reset(); //!< Resets all current state information about
                              //!< this link to the initial value.
@@ -21,16 +20,33 @@ class VX3_Link {
         return positiveEnd ? pVPos : pVNeg;
     } //!< Returns a pointer to one of the two voxels that compose this link.
       //!< @param[in] positiveEnd Specifies which voxel is desired.
-    __device__ VX3_Vec3D<> force(bool positiveEnd) const {
-        return positiveEnd ? forcePos : forceNeg;
-    } //!< Returns the current force acting on a voxel due to the position and
-      //!< orientation of the other. @param[in] positiveEnd Specifies which
-      //!< voxel information is desired about.
-    __device__ VX3_Vec3D<> moment(bool positiveEnd) const {
-        return positiveEnd ? momentPos : momentNeg;
-    } //!< Returns the current moment acting on a voxel due to the position and
-      //!< orientation of the other. @param[in] positiveEnd Specifies which
-      //!< voxel information is desired about.
+    __device__ VX3_Vec3D<> force(VX3_Voxel* voxel) const {
+        if (pVNeg == voxel) { return forceNeg; }
+        else if (pVPos == voxel) { return forcePos; }
+        else { 
+            printf("ERROR in VX3_Link::force().\n");
+            return VX3_Vec3D<>(0,0,0);
+        }
+    }
+    __device__ VX3_Vec3D<> moment(VX3_Voxel* voxel) const {
+        if (pVNeg == voxel) { return momentNeg; }
+        else if (pVPos == voxel) { return momentPos; }
+        else { 
+            printf("ERROR in VX3_Link::moment().\n");
+            return VX3_Vec3D<>(0,0,0);
+        }
+    }
+    // [Deprecated] old method assume link is alway NEG->POS
+    // __device__ VX3_Vec3D<> force(bool positiveEnd) const {
+    //     return positiveEnd ? forcePos : forceNeg;
+    // } //!< Returns the current force acting on a voxel due to the position and
+    //   //!< orientation of the other. @param[in] positiveEnd Specifies which
+    //   //!< voxel information is desired about.
+    // __device__ VX3_Vec3D<> moment(bool positiveEnd) const {
+    //     return positiveEnd ? momentPos : momentNeg;
+    // } //!< Returns the current moment acting on a voxel due to the position and
+    //   //!< orientation of the other. @param[in] positiveEnd Specifies which
+    //   //!< voxel information is desired about.
 
     __device__ float axialStrain() const {
         return strain;

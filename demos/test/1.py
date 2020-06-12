@@ -54,30 +54,48 @@ def generate_vxd(body, cilia):
     file_content = etree.tostring(VXD, pretty_print=True).decode("utf-8")
     return file_content
 
-body_tiny = np.ones(shape=[2,2,3], dtype=int)
-# body_tiny[np.random.random(size=[2,2,3])<0.3] = 0
-body_tiny[0,:,0]=0
-# tiny_cilia = np.zeros(shape=[3,2,2,3])
-tiny_cilia = np.random.random(size=[3,2,2,3]) * 0.5
-
-X_Voxels, Y_Voxels, Z_Voxels = 2,4,1
-body = np.ones(shape=[X_Voxels,Y_Voxels,Z_Voxels], dtype=int)
-# body[1,1,0] = 0
-cilia = np.zeros(shape=[3, X_Voxels, Y_Voxels, Z_Voxels], dtype=float)
-cilia[0,0,0,0] = 0.6
-
-cilia1 = np.zeros(shape=[3, X_Voxels, Y_Voxels, Z_Voxels], dtype=float)
-cilia1[0,1,-1,0] = 0
-
 world = np.zeros([10,10,10], dtype=int)
 world_cilia = np.zeros(shape=[3, world.shape[0], world.shape[1], world.shape[2]], dtype=float)
+Senario=3
 
-# put_into(world, body)
-# put_into(world, body[::-1,:,:], offset=[4,0,0])
-# put_into(world_cilia, cilia, prefix=1)
-# put_into(world_cilia, cilia1, offset=[4,0,0], prefix=1)
-put_into(world, body_tiny)
-put_into(world_cilia, tiny_cilia, prefix=1)
+if Senario==1:
+    # Tiny blob
+    body_tiny = np.ones(shape=[2,2,3], dtype=int)
+    # body_tiny[np.random.random(size=[2,2,3])<0.3] = 0
+    body_tiny[0,:,0]=0
+    tiny_cilia = np.zeros(shape=[3,2,2,3])
+    # tiny_cilia = np.random.random(size=[3,2,2,3]) * 0.5
+    put_into(world, body_tiny)
+    put_into(world_cilia, tiny_cilia, prefix=1)
+
+elif Senario==2:
+    # normal attach
+    X_Voxels, Y_Voxels, Z_Voxels = 2,3,1
+    body = np.ones(shape=[X_Voxels,Y_Voxels,Z_Voxels], dtype=int)
+    body[1,1,0] = 0
+    cilia = np.zeros(shape=[3, X_Voxels, Y_Voxels, Z_Voxels], dtype=float)
+    cilia[0,0,1,0] = 0.6
+
+    put_into(world, body)
+    put_into(world, body[::-1,:,:], offset=[4,0,0])
+    put_into(world_cilia, cilia, prefix=1)
+    put_into(world_cilia, -cilia[:,::-1,:,:], offset=[4,0,0], prefix=1)
+
+elif Senario==3:
+    # Orthogonal attach
+    X_Voxels, Y_Voxels, Z_Voxels = 2,4,1
+    body = np.ones(shape=[X_Voxels,Y_Voxels,Z_Voxels], dtype=int)
+    # body[1,1,0] = 0
+    cilia = np.zeros(shape=[3, X_Voxels, Y_Voxels, Z_Voxels], dtype=float)
+    cilia[0,0,0,0] = 0.6
+
+    cilia1 = np.zeros(shape=[3, X_Voxels, Y_Voxels, Z_Voxels], dtype=float)
+    cilia1[0,1,-1,0] = 0
+
+    put_into(world, body)
+    put_into(world, body[::-1,:,:], offset=[4,0,0])
+    put_into(world_cilia, cilia, prefix=1)
+    put_into(world_cilia, cilia1, offset=[4,0,0], prefix=1)
 
 print("Generating")
 file_content = generate_vxd(world, world_cilia)

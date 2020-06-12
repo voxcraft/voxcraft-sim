@@ -205,7 +205,11 @@ __device__ void VX3_Voxel::timeStep(double dt, double currentTime, VX3_VoxelyzeK
 
     assert(!(curForce.x != curForce.x) || !(curForce.y != curForce.y) || !(curForce.z != curForce.z)); // assert non QNAN
     linMom += curForce * dt;
-
+    // debug: after first link formed, disable momentum.
+    // if (k->d_attach_manager->debug) {
+    //     linMom = VX3_Vec3D<>();
+    // }
+    
     VX3_Vec3D<double> translate(linMom * (dt * mat->_massInverse)); // movement of the voxel this timestep
 
     //	we need to check for friction conditions here (after calculating the translation) and stop things accordingly
@@ -227,9 +231,19 @@ __device__ void VX3_Voxel::timeStep(double dt, double currentTime, VX3_VoxelyzeK
 
     pos += translate;
 
+    if (links[Y_NEG]) {
+    if (links[Y_NEG]->isNewLink) {
+        printf("Debug.");
+    }}
+
     // Rotation
     VX3_Vec3D<> curMoment = moment();
     angMom += curMoment * dt;
+
+    // debug: after first link formed, disable momentum.
+    // if (k->d_attach_manager->debug) {
+    //     angMom = VX3_Vec3D<>();
+    // }
 
     orient = VX3_Quat3D<>(angMom * (dt * mat->_momentInertiaInverse)) * orient; // update the orientation
     if (ext) {
@@ -364,11 +378,9 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
 
     // forces from internal bonds
     VX3_Vec3D<double> totalForce(0, 0, 0);
-    // VX3_Vec3D<> tmp;
     for (int i = 0; i < 6; i++) {
         if (links[i]) {
-            // tmp = links[i]->force(isNegative((linkDirection)i));
-            totalForce += links[i]->force(isNegative((linkDirection)i)); // total force in LCS
+            totalForce += links[i]->force(this); // total force in LCS
         }
     }
     totalForce = orient.RotateVec3D(totalForce); // from local to global coordinates
@@ -399,7 +411,7 @@ __device__ VX3_Vec3D<double> VX3_Voxel::moment() {
     VX3_Vec3D<double> totalMoment(0, 0, 0);
     for (int i = 0; i < 6; i++) {
         if (links[i]) {
-            totalMoment += links[i]->moment(isNegative((linkDirection)i)); // total force in LCS
+            totalMoment += links[i]->moment(this); // total force in LCS
         }
     }
     totalMoment = orient.RotateVec3D(totalMoment);

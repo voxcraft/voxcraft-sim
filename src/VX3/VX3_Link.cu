@@ -20,8 +20,7 @@ VX3_Link::VX3_Link(CVX_Link *p, VX3_VoxelyzeKernel *k)
     }
 }
 // VX3_Link can also be initialized in device
-__device__ VX3_Link::VX3_Link(VX3_Voxel *voxelNeg, linkDirection dirNeg, VX3_Voxel *voxelPos, linkDirection dirPos, 
-                                linkAxis link_axis, linkAxis link_axis_pos, VX3_VoxelyzeKernel *k) {
+__device__ VX3_Link::VX3_Link(VX3_Voxel *voxelNeg, linkDirection dirNeg, VX3_Voxel *voxelPos, linkDirection dirPos, VX3_VoxelyzeKernel *k) {
     syncVectors(k);
     voxelNeg->links[dirNeg] = this;
     voxelPos->links[dirPos] = this;
@@ -101,47 +100,6 @@ __device__ void VX3_Link::updateTransverseInfo() {
  */
 __device__ void VX3_Link::orientLink_new() // updates pos2, angle1, angle2, and smallAngle
 {
-    if (isNewLink) {
-        printf("Debug.\n");
-    }
-
-
-    VX3_Quat3D<> totalRotation = quat_linkDirection[linkdirNeg] * pVNeg->orientation(); // (3) First Rotate according to pVNeg->orientation (on the right), then Rotate according to quat_linkDirection[linkdirNeg] (on the left).
-    VX3_Vec3D<> raw_pos2 = pVPos->position() - pVNeg->position(); //(4)
-    VX3_Quat3D<> raw_angle2 = quat_linkDirection[X_NEG] * quat_linkDirection[linkdirPos] * pVPos->orientation(); // (5,6,7)
-    pos2 = totalRotation.RotateVec3DInv(raw_pos2); //(8)
-    debug++;
-    angle2 = totalRotation.Conjugate() * raw_angle2; // (9)
-    angle1 = VX3_Quat3D<>(); // always (1,0,0,0)
-
-    //SmallTurn: To what extent does the beam bent.
-    //ExtendPerc: The extend percentage as a spring. 
-    //smallAngle: The beam act like a spring in X-axis in local coordinates.
-    float SmallTurn = (float)((abs(pos2.z) + abs(pos2.y)) / pos2.x);
-    float ExtendPerc = (float)(abs(1 - pos2.x / currentRestLength));
-    if (!smallAngle /*&& angle2.IsSmallAngle()*/ && SmallTurn < SA_BOND_BEND_RAD && ExtendPerc < SA_BOND_EXT_PERC) {
-        smallAngle = true;
-        setBoolState(LOCAL_VELOCITY_VALID, false);
-    } else if (smallAngle && (/*!angle2.IsSmallishAngle() || */ SmallTurn > HYSTERESIS_FACTOR * SA_BOND_BEND_RAD ||
-                              ExtendPerc > HYSTERESIS_FACTOR * SA_BOND_EXT_PERC)) {
-        smallAngle = false;
-        setBoolState(LOCAL_VELOCITY_VALID, false);
-    }
-
-    if (smallAngle) {                 // Align so Angle1 is all zeros
-        pos2.x -= currentRestLength;  // only valid for small angles
-    } else {                          // Large angle. Align so that Pos2.y, Pos2.z are zero.
-        angle1.FromAngleToPosX(pos2); // get the angle to align Pos2 with the X axis
-        angle2 = angle1 * angle2;     // rotate angle2
-        pos2 = VX3_Vec3D<>(pos2.Length() - currentRestLength, 0, 0);
-    }
-
-    angle1v = angle1.ToRotationVector();
-    angle2v = angle2.ToRotationVector();
-
-    assert(!(angle1v.x != angle1v.x) || !(angle1v.y != angle1v.y) || !(angle1v.z != angle1v.z)); // assert non QNAN
-    assert(!(angle2v.x != angle2v.x) || !(angle2v.y != angle2v.y) || !(angle2v.z != angle2v.z)); // assert non QNAN
-
 }
 
 __device__ void VX3_Link::orientLink() // updates pos2, angle1, angle2, and smallAngle
@@ -165,14 +123,18 @@ __device__ void VX3_Link::orientLink() // updates pos2, angle1, angle2, and smal
         // (3) pos2: The position is in the imaginary coordinates. (Must be close to (1,0,0))
         // (4) raw angle 1: The orientation (X_POS) of pVNeg in real coordinates.
         // (5) angle 1: The orientation of linkdirNeg in real coordinates.
+        if (isNewLink) {
+            printf("Debug.\n");
+        }
         VX3_Vec3D<> raw_pos2 = pVPos->position() - pVNeg->position(); 
         pos2 = raw_pos2; //(1): position of pVPos relative to pVNeg.
-        pos2 = pVNeg->orientation().Conjugate().RotateVec3D(pos2); // (2): into pVNeg coordinates.
-        pos2 = quat_linkDirection[linkdirNeg].Conjugate().RotateVec3D(pos2); // (3): into beam coordinates.
+        VX3_Quat3D<> r1 = pVNeg->orientation().Conjugate();
+        pos2 = r1.RotateVec3D(pos2); // (2): into pVNeg coordinates.
+        VX3_Quat3D<> r2 = quat_linkDirection[linkdirNeg].Conjugate();
+        pos2 = r2.RotateVec3D(pos2); // (3): into beam coordinates.
         // (A) is the same as rotating twice:
         // VX3_Quat3D<> rotate_pos2 = quat_linkDirection[linkdirNeg].Conjugate() * pVNeg->orientation().Conjugate(); // (A)
         // pos2 = rotate_pos2.RotateVec3D(raw_pos2);
-
         VX3_Quat3D<> raw_angle2 = pVPos->orientation();
         angle2 = raw_angle2; // (4): orientation of pVPos
         angle2 = pVNeg->orientation().Conjugate() * angle2; // (5)
@@ -190,6 +152,17 @@ __device__ void VX3_Link::orientLink() // updates pos2, angle1, angle2, and smal
         tmp_angle2 = angle2;
         old_pos2 = raw_pos2;
         tmp_pos2 = pos2;
+        if (isNewLink) {
+            printf("Debug.\n");
+            printf("angle2: %e, %e, %e, %e ; (old) %e, %e, %e, %e.\n", 
+                    angle2.w, angle2.x, angle2.y, angle2.z,
+                    raw_angle2.w, raw_angle2.x, raw_angle2.y, raw_angle2.z
+                );
+            printf("pos2: %e, %e, %e; (old) %e, %e, %e.\n",
+                    pos2.x, pos2.y, pos2.z,
+                    raw_pos2.x, raw_pos2.y, raw_pos2.z
+                );
+        }
     }
     if (false) {
         VX3_Vec3D<> _pos2 = pVPos->position() - pVNeg->position();
@@ -239,6 +212,8 @@ __device__ void VX3_Link::orientLink() // updates pos2, angle1, angle2, and smal
         angle2 = angle1 * angle2;     // rotate angle2
         pos2 = VX3_Vec3D<>(pos2.Length() - currentRestLength, 0, 0);
     }
+    // angle1.Rotate() can rotate everything from imaginary perfect beam corrdinates to real beam coordinates.
+    // angle2.Rotate() can rotate everything from real coordinates to real beam coordinates.
 
     angle1v = angle1.ToRotationVector();
     angle2v = angle2.ToRotationVector();

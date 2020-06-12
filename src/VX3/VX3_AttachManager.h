@@ -15,6 +15,9 @@ public:
     __device__ VX3_AttachManager(/* args */);
     __device__ bool tryAttach(VX3_Voxel* voxel1, VX3_Voxel* voxel2);
     __device__ int oppositeDir(int linkdir);
+
+
+    int debug=0;
 };
 
 

@@ -122,10 +122,10 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
     // Determine Angle
     VX3_Quat3D<double> q1 = voxel_host->orientation();
     VX3_Quat3D<double> q2 = voxel_remote->orientation();
-    printf("q1 w=%f,x=%f,y=%f,z=%f, ", q1.w, q1.x, q1.y, q1.z);
-    printf("q2 w=%f,x=%f,y=%f,z=%f\n", q2.w, q2.x, q2.y, q2.z);
+    // printf("q1 w=%f,x=%f,y=%f,z=%f, ", q1.w, q1.x, q1.y, q1.z);
+    // printf("q2 w=%f,x=%f,y=%f,z=%f\n", q2.w, q2.x, q2.y, q2.z);
     VX3_Quat3D<double> q2to1 = q2.Conjugate() * q1;
-    printf("q2to1 w=%f,x=%f,y=%f,z=%f\n", q2to1.w, q2to1.x, q2to1.y, q2to1.z);
+    // printf("q2to1 w=%f,x=%f,y=%f,z=%f\n", q2to1.w, q2to1.x, q2to1.y, q2to1.z);
 
     int potential_link_1 = -1, potential_link_2 = -1;
     // Quaternion = cos(degree) + sin(degree)(a i+b j+c k)
@@ -140,7 +140,7 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
     if (almost_orthogonal) {
         // Rotate voxel_remote in lattice to align with voxel_host
         if (true) {
-            printf("this special case.");
+            // printf("this special case.");
             voxel_remote->d_group->reorient_lattice();
         }
 
@@ -149,7 +149,7 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
         VX3_Vec3D<double> pos_1 = q1.RotateVec3DInv(raw_pos);  // make the pos relative to voxel_host
         VX3_Vec3D<double> pos_2 = q2.RotateVec3DInv(-raw_pos); // make the pos relative to voxel_remote
 
-        printf("relative pos_1: %f, %f, %f\n\n", pos_1.x, pos_1.y, pos_1.z);
+        // printf("relative pos_1: %f, %f, %f\n\n", pos_1.x, pos_1.y, pos_1.z);
         if (abs(pos_1.x) > abs(pos_1.y) && abs(pos_1.x) > abs(pos_1.z)) {
             // X-axis
             potential_link_1 = (int)(pos_1.x > 0 ? X_POS : X_NEG);
@@ -161,7 +161,7 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
             potential_link_1 = (int)(pos_1.z > 0 ? Z_POS : Z_NEG);
         }
 
-        printf("relative pos_2: %f, %f, %f\n\n", pos_2.x, pos_2.y, pos_2.z);
+        // printf("relative pos_2: %f, %f, %f\n\n", pos_2.x, pos_2.y, pos_2.z);
         if (abs(pos_2.x) > abs(pos_2.y) && abs(pos_2.x) > abs(pos_2.z)) {
             // X-axis
             potential_link_2 = (int)(pos_2.x > 0 ? X_POS : X_NEG);
@@ -212,9 +212,9 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
     }
 
     // Only need to consider surface voxel
-    for (int i = 0; i < d_surface_voxels.size(); i++) {
-        printf("Surface 1: %d, %d, %d. \n", d_surface_voxels[i]->ix - min_x, d_surface_voxels[i]->iy - min_y, d_surface_voxels[i]->iz - min_z);
-    }
+    // for (int i = 0; i < d_surface_voxels.size(); i++) {
+    //     printf("Surface 1: %d, %d, %d. \n", d_surface_voxels[i]->ix - min_x, d_surface_voxels[i]->iy - min_y, d_surface_voxels[i]->iz - min_z);
+    // }
 
     for (int i = 0; i < voxel_remote->d_group->d_surface_voxels.size(); i++) {
         remote_ix = -voxel_remote->d_group->d_surface_voxels[i]->iy;
@@ -223,7 +223,7 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
         int remote_x = remote_ix + diff_ix;
         int remote_y = remote_iy + diff_iy;
         int remote_z = remote_iz + diff_iz;
-        printf("Surface 2: %d, %d, %d. \n", remote_x, remote_y, remote_z);
+        // printf("Surface 2: %d, %d, %d. \n", remote_x, remote_y, remote_z);
 
         int offset = to1D(remote_x, remote_y, remote_z);
         if (offset == -1) {
@@ -231,7 +231,7 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
         } else if (d_group_map[offset] == NULL) {
             // good, because empty position
         } else {
-            printf("Not Compatible. Offset %d\n", offset);
+            // printf("Not Compatible. Offset %d\n", offset);
             return false;
         }
     }
