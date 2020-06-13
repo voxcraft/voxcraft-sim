@@ -11,7 +11,7 @@ __device__ int VX3_AttachManager::oppositeDir(int linkdir) {
     return linkdir - residual + !(linkdir % 2);
 }
 __device__ bool VX3_AttachManager::tryAttach(VX3_Voxel *voxel1, VX3_Voxel *voxel2) {
-    printf("try attach: voxel1 (%d,%d,%d), voxel2 (%d,%d,%d)\n", voxel1->ix, voxel1->iy, voxel1->iz, voxel2->ix, voxel2->iy, voxel2->iz);
+    // printf("try attach: voxel1 (%d,%d,%d), voxel2 (%d,%d,%d)\n", voxel1->ix, voxel1->iy, voxel1->iz, voxel2->ix, voxel2->iy, voxel2->iz);
 
     // Simple preliminary filter
     //// determined by formula
@@ -38,6 +38,10 @@ __device__ bool VX3_AttachManager::tryAttach(VX3_Voxel *voxel1, VX3_Voxel *voxel
         // printf("q12 w=%f,x=%f,y=%f,z=%f\n", q12.w, q12.x, q12.y, q12.z);
     }
     int linkdir_1, linkdir_2;
+    if (voxel1->d_group==voxel2->d_group) {
+        // Same group, but please attach neighbors in the same group.
+        return false;
+    }
     if (voxel1->d_group->isCompatible(voxel1, voxel2, &linkdir_1, &linkdir_2)) {
         // linkdir_2 = oppositeDir(linkdir_1);
         // printf("Compatible.");
@@ -56,10 +60,14 @@ __device__ bool VX3_AttachManager::tryAttach(VX3_Voxel *voxel1, VX3_Voxel *voxel
         // Entering Critical Area
         if (voxel1->links[linkdir_1] == NULL && voxel2->links[linkdir_2] == NULL) {
             VX3_Link *pL;
-            pL = new VX3_Link(voxel2, (linkDirection)linkdir_2, voxel1, (linkDirection)linkdir_1, k); // make the new link (change to both materials, etc.
+            pL = new VX3_Link(voxel1, (linkDirection)linkdir_1, voxel2, (linkDirection)linkdir_2, k); // make the new link (change to both materials, etc.
             if (!pL) {
                 printf(COLORCODE_BOLD_RED "ERROR: Out of memory. Link not created.\n");
             } else {
+                // update voxel1's group, and set voxel2's group to voxel1's
+                // TODO:update
+                // There's problem in update, don't use ix,iy,iz, because after the first attachment, that info is not accurate any more.
+
                 pL->isNewLink = k->SafetyGuard;
                 k->d_v_links.push_back(pL); // add to the list
 

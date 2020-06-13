@@ -56,10 +56,33 @@ def generate_vxd(body, cilia):
 
 world = np.zeros([10,10,10], dtype=int)
 world_cilia = np.zeros(shape=[3, world.shape[0], world.shape[1], world.shape[2]], dtype=float)
-Senario=3
+Senario="Orthogonal attach"
+# Senario="shoot"
 
-if Senario==1:
-    # Tiny blob
+if Senario=="voxels fall":
+    # group calculating error
+    body_tiny = np.ones(shape=[2,2,8], dtype=int)
+    body_tiny[np.random.random(size=[2,2,8])<0.5] = 0
+    body_tiny[:,:,5:]=0
+    tiny_cilia = np.zeros(shape=[3,2,2,8])
+    # tiny_cilia = np.random.random(size=[3,2,2,3]) * 0.2
+    put_into(world, body_tiny)
+    put_into(world_cilia, tiny_cilia, prefix=1)
+elif Senario=="shoot":
+    # 
+    body_tiny = np.ones(shape=[5,1,1], dtype=int)
+    v = np.ones(shape=[1,1,1], dtype=int)
+    c = np.zeros(shape=[3,1,1,1])
+    c[1,0,0,0] = -0.4
+    c[0,0,0,0] = -0.2
+
+    # tiny_cilia = np.random.random(size=[3,2,2,3]) * 0.5
+    put_into(world, body_tiny)
+    put_into(world, v, offset=[2,2,0])
+    put_into(world_cilia, c, offset=[2,2,0], prefix=1)
+
+elif Senario=="tiny blob":
+    # test ok
     body_tiny = np.ones(shape=[2,2,3], dtype=int)
     # body_tiny[np.random.random(size=[2,2,3])<0.3] = 0
     body_tiny[0,:,0]=0
@@ -68,8 +91,8 @@ if Senario==1:
     put_into(world, body_tiny)
     put_into(world_cilia, tiny_cilia, prefix=1)
 
-elif Senario==2:
-    # normal attach
+elif Senario=="normal attach":
+    # test ok
     X_Voxels, Y_Voxels, Z_Voxels = 2,3,1
     body = np.ones(shape=[X_Voxels,Y_Voxels,Z_Voxels], dtype=int)
     body[1,1,0] = 0
@@ -81,8 +104,35 @@ elif Senario==2:
     put_into(world_cilia, cilia, prefix=1)
     put_into(world_cilia, -cilia[:,::-1,:,:], offset=[4,0,0], prefix=1)
 
-elif Senario==3:
-    # Orthogonal attach
+elif Senario=="verticle attach":
+    # test ok
+    X_Voxels, Y_Voxels, Z_Voxels = 2,3,1
+    body = np.ones(shape=[X_Voxels,Y_Voxels,Z_Voxels], dtype=int)
+    body[1,1,0] = 0
+    cilia = np.zeros(shape=[3, X_Voxels, Y_Voxels, Z_Voxels], dtype=float)
+    cilia[1,0,1,0] = 0.6
+
+    put_into(world, body)
+    put_into(world, body[::-1,:,:], offset=[4,0,0])
+    put_into(world_cilia, cilia, prefix=1)
+    put_into(world_cilia, -cilia[:,::-1,:,:], offset=[4,0,0], prefix=1)
+    world = np.swapaxes(world, 0,1)
+    world_cilia = np.swapaxes(world_cilia,1,2)
+
+elif Senario=="two Y_NEG":
+    # still bad
+    X_Voxels, Y_Voxels, Z_Voxels = 4,1,1
+    body = np.ones(shape=[X_Voxels,Y_Voxels,Z_Voxels], dtype=int)
+    body1 = np.ones(shape=[1,1,1], dtype=int)
+    cilia = np.zeros(shape=[3, X_Voxels, Y_Voxels, Z_Voxels], dtype=float)
+    cilia[1,0,0,0] = 0.18
+
+    put_into(world, body)
+    put_into(world, body1, offset=[5,0,0])
+    put_into(world_cilia, cilia, prefix=1)
+
+elif Senario=="Orthogonal attach":
+    # still bad
     X_Voxels, Y_Voxels, Z_Voxels = 2,4,1
     body = np.ones(shape=[X_Voxels,Y_Voxels,Z_Voxels], dtype=int)
     # body[1,1,0] = 0

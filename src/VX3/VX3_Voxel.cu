@@ -173,6 +173,11 @@ __device__ VX3_Vec3D<float> VX3_Voxel::cornerOffset(voxelCorner corner) const {
 
 // http://klas-physics.googlecode.com/svn/trunk/src/general/Integrator.cpp (reference)
 __device__ void VX3_Voxel::timeStep(double dt, double currentTime, VX3_VoxelyzeKernel *k) {
+
+    if (k->d_attach_manager->debug) {
+        return;
+        //freeze all voxels when new link forms. just for a snapshot to analyze the position and angles.
+    }
     previousDt = dt;
     if (dt == 0.0f)
         return;
@@ -230,11 +235,6 @@ __device__ void VX3_Voxel::timeStep(double dt, double currentTime, VX3_VoxelyzeK
         setFloorStaticFriction(false);
 
     pos += translate;
-
-    if (links[Y_NEG]) {
-    if (links[Y_NEG]->isNewLink) {
-        printf("Debug.");
-    }}
 
     // Rotation
     VX3_Vec3D<> curMoment = moment();

@@ -232,10 +232,10 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
             // good, because empty position
         } else {
             // printf("Not Compatible. Offset %d\n", offset);
-            return false;
+            // return false;
         }
     }
-    printf("Compatible.\n");
+    // printf("Compatible.\n");
     *ret_linkdir_1 = potential_link_1;
     *ret_linkdir_2 = potential_link_2;
     return true;

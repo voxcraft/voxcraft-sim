@@ -21,7 +21,7 @@ __device__ VX3_Vec3D<double> linkDirectionVec3D(linkDirection linkdir) {
 }
 
 __global__ void kernel() {
-    VX3_Vec3D<> pos = VX3_Vec3D<>(0,1,0);
+    VX3_Vec3D<> pos = VX3_Vec3D<>(0,0,-1);
     VX3_Quat3D<> q;
     q.FromAngleToPosX(pos);
     q.debug();

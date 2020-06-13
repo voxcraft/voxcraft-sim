@@ -9,9 +9,10 @@
                     <mtCONST>1</mtCONST>
                 </Condition_0>
             </AttachCondition>
+            <SafetyGuard>1</SafetyGuard>
         </AttachDetach>
         <RecordHistory>
-            <RecordStepSize>20</RecordStepSize>
+            <RecordStepSize>10</RecordStepSize>
             <RecordVoxel>1</RecordVoxel>
             <RecordLink>1</RecordLink>
         </RecordHistory>
@@ -24,7 +25,7 @@
             <StopConditionFormula>
                 <mtSUB>
                 <mtVAR>t</mtVAR>
-                <mtCONST>0.5</mtCONST>
+                <mtCONST>1</mtCONST>
                 </mtSUB>
             </StopConditionFormula>
         </StopCondition>
@@ -44,7 +45,7 @@
                 </Display>
                 <Mechanical>
                     <Sticky>1</Sticky>
-                    <Cilia>0.05</Cilia>
+                    <Cilia>0.1</Cilia>
                     <MatModel>0</MatModel>
                     <Elastic_Mod>1e+05</Elastic_Mod>
                     <Fail_Stress>0</Fail_Stress>
@@ -53,7 +54,7 @@
                     <CTE>0</CTE>
                     <MaterialTempPhase>0</MaterialTempPhase>
                     <uStatic>1</uStatic>
-                    <uDynamic>0.5</uDynamic>
+                    <uDynamic>0.6</uDynamic>
                 </Mechanical>
             </Material>
         </Palette>
