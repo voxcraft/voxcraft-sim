@@ -11,7 +11,7 @@ LOOPS_PER_SIZE = 1
 times = []
 
 if __name__ == "__main__":
-    for robot_len in [1, 100, 200, 300, 400, 500]:
+    for robot_len in range(1, 100, 3):
         # robot_len = 1<<robot_len_pow
         layer_str = "1"*3 *robot_len
         curr_robot = template_str % (str(robot_len), layer_str, layer_str, layer_str)

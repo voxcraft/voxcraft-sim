@@ -452,7 +452,7 @@ __device__ void VX3_VoxelyzeKernel::updateAttach() {
             CUDA_CHECK_AFTER_CALL();
             VcudaDeviceSynchronize();
         }
-    } else if (false) {
+    } else if (true) {
         // Tree based collision detection!
         int num_cols = 0;
 
@@ -470,8 +470,7 @@ __device__ void VX3_VoxelyzeKernel::updateAttach() {
         // Note that as voxels move, it makes sense to re-build the tree to improve the performance of tree traversal in the
         // find_collisions_device() method of the CollisionSystem, however rebuilding the tree is not necessary to have accurate collision detection.
 
-        bool print_now = false;
-        if (d_collision_system->N != num_d_surface_voxels || CurStepCount%50 == 1) {
+        if (d_collision_system->N != num_d_surface_voxels || CurStepCount%100 == 1) {
             d_collision_system->N = num_d_surface_voxels;
             d_collision_system->end =d_collision_system->start + num_d_surface_voxels;
             d_collision_system->find_potential_collisions.NUM_INTERNAL = num_d_surface_voxels - 1;
@@ -481,14 +480,10 @@ __device__ void VX3_VoxelyzeKernel::updateAttach() {
             d_collision_system->update_z_pos_ranks();
             d_collision_system->update_mortons();
             d_collision_system->build_tree();
-            print_now = true;
-            printf("Step %d with %d surface voxels and %d total voxels ...", CurStepCount, num_d_surface_voxels, num_d_voxels);
         }
         d_collision_system->update_bounding_boxes();
         num_cols = d_collision_system->find_collisions_device();
-        if (print_now) {
-            printf(" found %d collisions\n", num_cols);
-        }
+        // printf("Step %lu with %d surface voxels and %d total voxels found %d collisions\n", CurStepCount, num_d_surface_voxels, num_d_voxels, num_cols);
 
         if (num_cols == 0 ) { // no collisions were detected.
             return;
@@ -506,7 +501,6 @@ __device__ void VX3_VoxelyzeKernel::updateAttach() {
             CUDA_CHECK_AFTER_CALL();
         }
     } else  {
-        printf("Step %d with %d surface voxels and %d total voxels\n", CurStepCount, num_d_surface_voxels, num_d_voxels);
         // Pairwise detection O(n ^ 2)
         blockSize = 16;
         dim3 dimBlock(blockSize, blockSize);

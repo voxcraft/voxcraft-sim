@@ -433,7 +433,24 @@ void CollisionSystem::update_mortons_fast(float2 xlims, float2 ylims, float2 zli
 
 __host__ __device__
 void CollisionSystem::build_tree() {
-    thrust::for_each(thrust::device, start, start + (N - 1), build_bvh_tree);
+    int num_SM, curDeviceId, gridSize, blockSize;
+    cudaGetDevice(&curDeviceId);
+    cudaDeviceGetAttribute(&num_SM, cudaDevAttrMultiProcessorCount, curDeviceId);
+    blockSize = (int)(N-1)/num_SM;
+    if (num_SM * blockSize < (N-1)) {
+        blockSize += 1;
+    }
+    if (blockSize > 256) {
+        blockSize = 256;
+        gridSize = ((int)N + 254)/256; // N - 1 + 255 leaf nodes.
+    } else {
+        gridSize = num_SM;
+    }
+    build_tree_kernel<<<gridSize, blockSize>>>(N - 1, N, build_bvh_tree);
+    CUDA_CHECK_AFTER_CALL();
+    VcudaDeviceSynchronize();
+
+    // thrust::for_each(thrust::device, start, start + (N - 1), build_bvh_tree);
 }
 
 __host__ __device__
@@ -477,7 +494,7 @@ int CollisionSystem::find_collisions_device() {
     } else {
         gridSize = num_SM;
     }
-    find_potential_collisions_kernel<<<gridSize, blockSize>>>(N - 1, 1, find_potential_collisions);
+    find_potential_collisions_kernel<<<gridSize, blockSize>>>(N - 1, N, find_potential_collisions);
     CUDA_CHECK_AFTER_CALL();
     VcudaDeviceSynchronize();
 
@@ -535,6 +552,13 @@ int CollisionSystem::find_collisions_N2_device() {
 }
 
 __global__ void find_potential_collisions_kernel(int startIdx, int num, find_potential_collisions_func functor) {
+    int tid = threadIdx.x + blockDim.x * blockIdx.x;
+    if (tid < num) {
+        functor(tid + startIdx);
+    }
+}
+
+__global__ void build_tree_kernel(int startIdx, int num, build_bvh_tree_func functor) {
     int tid = threadIdx.x + blockDim.x * blockIdx.x;
     if (tid < num) {
         functor(tid + startIdx);

@@ -301,5 +301,5 @@ public:
 };
 
 __global__ void find_potential_collisions_kernel(int startIdx, int num, find_potential_collisions_func functor);
-
+__global__ void build_tree_kernel(int startIdx, int num, build_bvh_tree_func functor);
 #endif //COLLISIONDETECTION_COLLISIONSYSTEM_CUH

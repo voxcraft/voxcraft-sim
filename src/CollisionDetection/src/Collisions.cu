@@ -99,6 +99,7 @@ void build_bvh_tree_func::operator()(unsigned int idx) {
     // Determine where to split the range.
     int split = findSplit(sortedMortonCodes, first, last);
 
+
     // Select childA and record parent child relationships.
     if (split == first) {
         leaf_parents[split] = idx;
