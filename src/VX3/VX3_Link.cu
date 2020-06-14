@@ -107,6 +107,7 @@ __device__ void VX3_Link::orientLink() // updates pos2, angle1, angle2, and smal
     VX3_Vec3D<> tmp_pos2, old_pos2;
     VX3_Quat3D<> tmp_angle2, old_angle2;
     if (true) {
+        // New method, using quant_linkDirection.
         // 1. pVNeg->orientation
         // 2. linkdirNeg
         // 1+2 => 3. totalRotation
@@ -117,55 +118,17 @@ __device__ void VX3_Link::orientLink() // updates pos2, angle1, angle2, and smal
         // 3+4 => 8. pos2
         // 3+7 => 9. angle2
         // Imagine that pVNeg is placed on the origin, and the linkdirNeg is pointing towards +X direction.
-        // (1) raw pos2: position of pVPos relative to pVNeg in real coordinates.
-        // (2) axis pos2: Orthogonally rotate the position, makes it close to the X_POS direction of pVNeg.
-        //                The reason not do rotation together is that orthogonal rotation can be performed as swapping axis, instead of using Quaternion, which will involve Pi and Cos. (More accurate)
-        // (3) pos2: The position is in the imaginary coordinates. (Must be close to (1,0,0))
-        // (4) raw angle 1: The orientation (X_POS) of pVNeg in real coordinates.
-        // (5) angle 1: The orientation of linkdirNeg in real coordinates.
-        if (isNewLink) {
-            printf("Debug.\n");
-        }
-        VX3_Vec3D<> raw_pos2 = pVPos->position() - pVNeg->position(); 
-        pos2 = raw_pos2; //(1): position of pVPos relative to pVNeg.
-        VX3_Quat3D<> r1 = pVNeg->orientation().Conjugate();
-        pos2 = r1.RotateVec3D(pos2); // (2): into pVNeg coordinates.
-        VX3_Quat3D<> r2 = quat_linkDirection[linkdirNeg].Conjugate();
-        pos2 = r2.RotateVec3D(pos2); // (3): into beam coordinates.
-        // (A) is the same as rotating twice:
-        // VX3_Quat3D<> rotate_pos2 = quat_linkDirection[linkdirNeg].Conjugate() * pVNeg->orientation().Conjugate(); // (A)
-        // pos2 = rotate_pos2.RotateVec3D(raw_pos2);
-        VX3_Quat3D<> raw_angle2 = pVPos->orientation();
-        VX3_Quat3D<> r3 = quat_linkDirection[oppositeDir(linkdirPos)];
-        VX3_Quat3D<> r4 = quat_linkDirection[linkdirNeg].Conjugate();
-        VX3_Quat3D<> r5 = pVNeg->orientation().Conjugate();
-        angle2 = raw_angle2; // (4): orientation of pVPos
-        angle2 = r2 * r1 * angle2 * r3; // (5)
-        // angle2 = rotate_pos2.Conjugate() * angle2;
-        // VX3_Quat3D<> totalRotation = quat_linkDirection[linkdirNeg] * pVNeg->orientation(); // (3) First Rotate according to pVNeg->orientation (on the right), then Rotate according to quat_linkDirection[linkdirNeg] (on the left).
-        // totalRotation = totalRotation.Conjugate();
-        // totalRotation = totalRotation * quat_linkDirection[linkdirNeg];
-        // pos2 = totalRotation.RotateVec3D(raw_pos2); //(8)
-        // debug++;
-        // angle2 = totalRotation * raw_angle2; // (9)
-        // angle1 = VX3_Quat3D<>(); // always (1,0,0,0)
-        old_angle2 = raw_angle2;
-        tmp_angle2 = angle2;
-        old_pos2 = raw_pos2;
-        tmp_pos2 = pos2;
-        if (isNewLink) {
-            printf("Debug.\n");
-            printf("angle2: %e, %e, %e, %e ; (old) %e, %e, %e, %e.\n", 
-                    angle2.w, angle2.x, angle2.y, angle2.z,
-                    raw_angle2.w, raw_angle2.x, raw_angle2.y, raw_angle2.z
-                );
-            printf("pos2: %e, %e, %e; (old) %e, %e, %e.\n",
-                    pos2.x, pos2.y, pos2.z,
-                    raw_pos2.x, raw_pos2.y, raw_pos2.z
-                );
-        }
+
+        VX3_Quat3D<> r1 = pVNeg->orientation().Conjugate(); // (1.) Rotate things from real coordinates into pVNeg's oritentation
+        VX3_Quat3D<> r2 = quat_linkDirection[linkdirNeg].Conjugate(); // (2.) Rotate things from pVNeg's orientation into linkdirNeg's orientation
+        VX3_Quat3D<> r3 = quat_linkDirection[oppositeDir(linkdirPos)]; // (6.) Rotate things from the opposite of linkdirPos's orientation back to pVPos's orientation
+        VX3_Quat3D<> totalRotation = r2*r1; //(3.)
+        VX3_Vec3D<> raw_pos2 = pVPos->position() - pVNeg->position(); //(4.)
+        pos2 = totalRotation.RotateVec3D(raw_pos2); //(8.)
+        angle2 = totalRotation * pVPos->orientation() * r3; // (9.)
     }
     if (false) {
+        // old method
         VX3_Vec3D<> _pos2 = pVPos->position() - pVNeg->position();
         pos2 = toAxisX(_pos2, toAxis(linkdirNeg)); // digit truncation happens here...
         VX3_Quat3D<> _angle1 = pVNeg->orientation();
@@ -177,26 +140,11 @@ __device__ void VX3_Link::orientLink() // updates pos2, angle1, angle2, and smal
                                                         // (after toAxisX())
         pos2 = totalRot.RotateVec3D(pos2);
         angle2 = totalRot * angle2;
-        angle1 = VX3_Quat3D<>(); // zero for now...
-        if (d_kernel->currentTime>=0.2) {
-            printf("%d) angle2: %e, %e, %e, %e \n \t %e, %e, %e, %e \n\t\t\t\t\t (old) %e, %e, %e, %e.\n", linkdirNeg,
-            tmp_angle2.w, tmp_angle2.x, tmp_angle2.y, tmp_angle2.z,
-            angle2.w, angle2.x, angle2.y, angle2.z,
-            old_angle2.w, old_angle2.x, old_angle2.y, old_angle2.z
-        );
-        }
-        if (d_kernel->currentTime>=0.1) {
-            printf("%d) pos2: %e, %e, %e \n \t %e, %e, %e \n\t\t\t\t\t (old) %e, %e, %e.\n", linkdirNeg,
-            tmp_pos2.x, tmp_pos2.y, tmp_pos2.z,
-            pos2.x, pos2.y, pos2.z,
-            old_pos2.x, old_pos2.y, old_pos2.z
-        );
-        }             
+        angle1 = VX3_Quat3D<>(); // zero for now...         
     }
 
     // small angle approximation?
     float SmallTurn = (float)((abs(pos2.z) + abs(pos2.y)) / pos2.x);
-    // SmallTurn=0; // debug: treat everything small angle
     float ExtendPerc = (float)(abs(1 - pos2.x / currentRestLength));
     if (!smallAngle /*&& angle2.IsSmallAngle()*/ && SmallTurn < SA_BOND_BEND_RAD && ExtendPerc < SA_BOND_EXT_PERC) {
         smallAngle = true;
@@ -205,6 +153,14 @@ __device__ void VX3_Link::orientLink() // updates pos2, angle1, angle2, and smal
                               ExtendPerc > HYSTERESIS_FACTOR * SA_BOND_EXT_PERC)) {
         smallAngle = false;
         setBoolState(LOCAL_VELOCITY_VALID, false);
+    }
+
+    if (smallAngle && isNewLink>0) {
+        isNewLink--; //small angle means the link is stabled. wait until SafetyGuard(isNewLink) decreased to 0.
+        if (isNewLink==0) {
+            // Great, this link is stablized, remove one from the whole group.
+            pVNeg->d_group->hasNewLink--;
+        }
     }
 
     if (smallAngle) {                 // Align so Angle1 is all zeros
@@ -225,9 +181,6 @@ __device__ void VX3_Link::orientLink() // updates pos2, angle1, angle2, and smal
 }
 
 __device__ void VX3_Link::updateForces() {
-    if (isNewLink) {
-        // isNewLink -= 1;
-    }
     VX3_Vec3D<double> oldPos2 = pos2;
     VX3_Vec3D<double> oldAngle1v = angle1v;
     VX3_Vec3D<double> oldAngle2v = angle2v; // remember the positions/angles from last timestep to
@@ -239,10 +192,10 @@ __device__ void VX3_Link::updateForces() {
     VX3_Vec3D<double> dAngle1 = 0.5 * (angle1v - oldAngle1v);
     VX3_Vec3D<double> dAngle2 = 0.5 * (angle2v - oldAngle2v);
     // if volume effects..
-    if (!mat->isXyzIndependent() || currentTransverseStrainSum != 0) { // currentTransverseStrainSum != 0 catches when we disable
-                                                                       // poissons mid-simulation
-        // updateTransverseInfo();
-    }
+    // if (!mat->isXyzIndependent() || currentTransverseStrainSum != 0) { // currentTransverseStrainSum != 0 catches when we disable
+    //                                                                    // poissons mid-simulation
+    //     // updateTransverseInfo();
+    // }
     _stress = updateStrain((float)(pos2.x / currentRestLength));
     if (isFailed()) {
         forceNeg = forcePos = momentNeg = momentPos = VX3_Vec3D<double>(0, 0, 0);
@@ -264,7 +217,7 @@ __device__ void VX3_Link::updateForces() {
     momentPos = VX3_Vec3D<double>(a2 * (angle1v.x - angle2v.x), -b2 * pos2.z - b3 * (angle1v.y + 2 * angle2v.y),
                                   b2 * pos2.y - b3 * (angle1v.z + 2 * angle2v.z));
 
-    // local damping:
+    // local damping: (I don't understand this damping calculation. wouldn't damping_force = -velocity * coefficient easier?)
     if (isLocalVelocityValid()) { // if we don't have the basis for a good
                                   // damping calculation, don't do any damping.
         float neg_damp = pVNeg->dampingMultiplier();
@@ -283,10 +236,11 @@ __device__ void VX3_Link::updateForces() {
         momentPos -= 0.5 * pos_damp *
                      VX3_Vec3D<>(sqA2xIp * (dAngle2.x - dAngle1.x), sqB2xFMp * dPos2.z + sqB3xIp * (dAngle1.y + 2 * dAngle2.y),
                                  -sqB2xFMp * dPos2.y + sqB3xIp * (dAngle1.z + 2 * dAngle2.z));
-
+                               
     } else
         setBoolState(LOCAL_VELOCITY_VALID,
                      true); // we're good for next go-around unless something changes
+
     //	transform forces and moments to local voxel coordinates
     if (!smallAngle) {
         forceNeg = angle1.RotateVec3DInv(forceNeg);
@@ -310,8 +264,6 @@ __device__ void VX3_Link::updateForces() {
         toAxisOriginal(&momentNeg, toAxis(linkdirNeg));
         toAxisOriginal(&momentPos, toAxis(linkdirNeg));
     }
-
-
 
     assert(!(forceNeg.x != forceNeg.x) || !(forceNeg.y != forceNeg.y) || !(forceNeg.z != forceNeg.z)); //assert non QNAN
     assert(!(forcePos.x != forcePos.x) || !(forcePos.y != forcePos.y) || !(forcePos.z != forcePos.z)); //assert non QNAN
@@ -391,5 +343,5 @@ __device__ __host__ int VX3_Link::oppositeDir(int linkdir) {
 
 // Because using quaternion to rotate exact 90 degree is impossible, instead, we use this method to do rotation along axis
 __device__ VX3_Vec3D<double> VX3_Link::pseudoRotation(linkDirection linkdir, VX3_Vec3D<double> pos, bool inverse){
-
+    return VX3_Vec3D<>();
 }

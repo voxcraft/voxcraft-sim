@@ -14,19 +14,19 @@ if $BuildSim; then
     cd ../..
     if $RebuildAll; then
         echo "Rebuilding voxcraft-sim."
-        rm build/ -rf
-        mkdir build
+        rm build_Release/ -rf
+        mkdir build_Release
     else
         echo "Making voxcraft-sim."
     fi
-    cd build
+    cd build_Release
     if $RebuildAll; then
-        cmake -DCMAKE_BUILD_TYPE=build -DCUDA_DEBUG=OFF ..
+        cmake -DCMAKE_BUILD_TYPE=Release -DCUDA_DEBUG=OFF ..
     fi
     cmake --build . -j 7
     status=$?
     cd $cwd
-    cp ../../build/voxcraft-sim .
-    cp ../../build/vx3_node_worker .
+    cp ../../build_Release/voxcraft-sim .
+    cp ../../build_Release/vx3_node_worker .
     exit $status
 fi

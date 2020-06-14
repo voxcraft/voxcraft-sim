@@ -54,18 +54,37 @@ def generate_vxd(body, cilia):
     file_content = etree.tostring(VXD, pretty_print=True).decode("utf-8")
     return file_content
 
-world = np.zeros([10,10,10], dtype=int)
+world = np.zeros([30,30,30], dtype=int)
 world_cilia = np.zeros(shape=[3, world.shape[0], world.shape[1], world.shape[2]], dtype=float)
-Senario="Orthogonal attach"
+Senario="voxels fall"
 # Senario="shoot"
-
-if Senario=="voxels fall":
+if Senario=="trivial":
+    body = np.ones(shape=[1,1,3], dtype=int)
+    body[0,0,1] = 0
+    put_into(world, body)
+elif Senario=="two links together":
+    # test ok
+    x,y,z = 2,1,4
+    body_tiny = np.ones(shape=[x,y,z], dtype=int)
+    body_tiny[0,0,1] = body_tiny[1,0,2] =0
+    tiny_cilia = np.zeros(shape=[3,x,y,z])
+    # tiny_cilia = np.random.random(size=[3,x,y,z]) * 0.2
+    put_into(world, body_tiny)
+    put_into(world_cilia, tiny_cilia, prefix=1)
+elif Senario=="fall giggling":
+    # 
+    x,y,z = 2,2,5
+    body_tiny = np.zeros(shape=[x,y,z], dtype=int)
+    body_tiny[0,0,0] = body_tiny[0,0,1] = body_tiny[1,0,1] = body_tiny[1,1,4] =1
+    # tiny_cilia = np.random.random(size=[3,x,y,z]) * 0.2
+    put_into(world, body_tiny)
+elif Senario=="voxels fall":
     # group calculating error
-    body_tiny = np.ones(shape=[2,2,8], dtype=int)
-    body_tiny[np.random.random(size=[2,2,8])<0.5] = 0
-    body_tiny[:,:,5:]=0
-    tiny_cilia = np.zeros(shape=[3,2,2,8])
-    # tiny_cilia = np.random.random(size=[3,2,2,3]) * 0.2
+    x,y,z = 5,5,30
+    body_tiny = np.ones(shape=[x,y,z], dtype=int)
+    body_tiny[np.random.random(size=[x,y,z])<0.9] = 0
+    tiny_cilia = np.zeros(shape=[3,x,y,z])
+    # tiny_cilia = np.random.random(size=[3,x,y,z]) * 0.2
     put_into(world, body_tiny)
     put_into(world_cilia, tiny_cilia, prefix=1)
 elif Senario=="shoot":

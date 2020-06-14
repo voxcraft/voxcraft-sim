@@ -263,10 +263,11 @@ class VX3_Voxel {
     __device__ void receiveSignal(double value, double currentTime, bool force);
     __device__ void getSignal(double currentTime);
 
-    __device__ void syncVectors();
+    __device__ void syncVectors(VX3_VoxelyzeKernel* k);
 
     /* data */
     CVX_Voxel *_voxel;
+    VX3_VoxelyzeKernel* d_kernel;
 
     VX3_MaterialVoxel *mat = NULL;
     int matid;
@@ -317,6 +318,11 @@ class VX3_Voxel {
     VX3_VoxelGroup* d_group = NULL;
     VX3_Vec3D<int> groupPosition;
     __device__ void updateGroup();
+    __device__ void switchGroupTo(VX3_VoxelGroup* group);
+
+    bool freezeAllVoxelsAfterAttach=false; // for debug use.
+
+    VX3_Vec3D<> linMom_previousDt, angMom_previousDt;
 };
 
 #endif // VX3_VOXEL_H

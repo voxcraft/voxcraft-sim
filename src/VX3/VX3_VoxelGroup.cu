@@ -2,18 +2,58 @@
 
 #include "VX3_Voxel.h"
 
-__device__ VX3_VoxelGroup::VX3_VoxelGroup(
-    /* args */) {}
+__device__ VX3_VoxelGroup::VX3_VoxelGroup(VX3_VoxelyzeKernel* k) {
+    d_kernel = k;    
+}
+__device__ VX3_VoxelGroup::~VX3_VoxelGroup() {
+    // if someone is deleting this group, set the d_group of all voxels in this group to NULL
+    for (int i=0;i<d_voxels.size();i++) {
+        if (d_voxels[i]->d_group == this) {
+            d_voxels[i]->d_group = NULL;
+        }
+    }
+}
+
+__device__ VX3_Vec3D<int> VX3_VoxelGroup::moveGroupPosition(VX3_Vec3D<int> from, linkDirection dir, int step) {
+    VX3_Vec3D<int> to = from;
+    switch (dir) {
+    case X_POS:
+        to.x += step;
+        break;
+    case X_NEG:
+        to.x -= step;
+        break;
+    case Y_POS:
+        to.y += step;
+        break;
+    case Y_NEG:
+        to.y -= step;
+        break;
+    case Z_POS:
+        to.z += step;
+        break;
+    case Z_NEG:
+        to.z -= step;
+        break;
+    default:
+        printf("ERROR in moveGroupPosition.\n");
+    }
+    return to;
+}
 
 __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
     if (needRebuild) {
+        // First set *voxel as origin, and negative number is allowed.
+        // After everything is mapped, change origin to (min_x, min_y, min_z).
+        voxel->groupPosition = VX3_Vec3D<int>(0, 0, 0);
+
         // Rebuild a map of Group
         //// BF Search for all neighbors
         VX3_dDictionary<VX3_Voxel *, int> BFS_visited;
         VX3_dQueue<VX3_Voxel *> BFS_Queue;
         VX3_dVector<VX3_Voxel *> BFS_result;
 
-        printf("Start from (%d, %d, %d).\n", voxel->ix, voxel->iy, voxel->iz);
+        // printf("Start from (%d, %d, %d).\n", voxel->groupPosition.x, voxel->groupPosition.y, voxel->groupPosition.z);
         BFS_result.push_back(voxel);
         BFS_visited.set(voxel, 1);
         BFS_Queue.push_back(voxel);
@@ -24,9 +64,10 @@ __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
                 VX3_Voxel *neighbor = v->adjacentVoxel((linkDirection)i);
                 if (neighbor) {
                     if (BFS_visited.get(neighbor) == -1) {
-                        printf("Visit (%d, %d, %d).\n", neighbor->ix, neighbor->iy, neighbor->iz);
+                        neighbor->groupPosition = moveGroupPosition(v->groupPosition, (linkDirection)i);
+                        // printf("Visit (%d, %d, %d).\n", neighbor->groupPosition.x, neighbor->groupPosition.y, neighbor->groupPosition.z);
                         // Set all connected voxels' d_group to this
-                        neighbor->d_group = this;
+                        neighbor->switchGroupTo(this);
 
                         BFS_result.push_back(neighbor);
                         BFS_visited.set(neighbor, 1);
@@ -37,6 +78,7 @@ __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
         }
 
         //// Allocate memory for the map
+        int min_x, min_y, min_z, max_x, max_y, max_z;
         min_x = INT_MAX;
         min_y = INT_MAX;
         min_z = INT_MAX;
@@ -45,21 +87,21 @@ __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
         max_z = 0;
         for (int i = 0; i < BFS_result.size(); i++) {
             VX3_Voxel *v = BFS_result[i];
-            if (v->ix < min_x)
-                min_x = v->ix;
-            if (v->iy < min_y)
-                min_y = v->iy;
-            if (v->iz < min_z)
-                min_z = v->iz;
+            if (v->groupPosition.x < min_x)
+                min_x = v->groupPosition.x;
+            if (v->groupPosition.y < min_y)
+                min_y = v->groupPosition.y;
+            if (v->groupPosition.z < min_z)
+                min_z = v->groupPosition.z;
 
-            if (v->ix > max_x)
-                max_x = v->ix;
-            if (v->iy > max_y)
-                max_y = v->iy;
-            if (v->iz > max_z)
-                max_z = v->iz;
+            if (v->groupPosition.x > max_x)
+                max_x = v->groupPosition.x;
+            if (v->groupPosition.y > max_y)
+                max_y = v->groupPosition.y;
+            if (v->groupPosition.z > max_z)
+                max_z = v->groupPosition.z;
         }
-        printf("(%d,%d,%d) - (%d,%d,%d)\n", min_x, min_y, min_z, max_x, max_y, max_z);
+        // printf("(%d,%d,%d) - (%d,%d,%d)\n", min_x, min_y, min_z, max_x, max_y, max_z);
         dim_x = max_x - min_x + 1;
         dim_y = max_y - min_y + 1;
         dim_z = max_z - min_z + 1;
@@ -72,8 +114,13 @@ __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
         for (int i = 0; i < dim_x * dim_y * dim_z; i++) {
             d_group_map[i] = NULL;
         }
+        d_voxels.clear();
+        d_surface_voxels.clear();
         for (int i = 0; i < BFS_result.size(); i++) {
             VX3_Voxel *v = BFS_result[i];
+            v->groupPosition.x -= min_x;
+            v->groupPosition.y -= min_y;
+            v->groupPosition.z -= min_z;
 
             int offset = getVoxelOffset(v);
             d_group_map[offset] = v;
@@ -85,14 +132,13 @@ __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
                 }
             }
         }
-
         needRebuild = false;
     }
 }
 
 __device__ int VX3_VoxelGroup::getVoxelOffset(VX3_Voxel *voxel) {
     // calculate the offset for a voxel
-    return to1D(voxel->ix - min_x, voxel->iy - min_y, voxel->iz - min_z);
+    return to1D(voxel->groupPosition.x, voxel->groupPosition.y, voxel->groupPosition.z);
 }
 __device__ int VX3_VoxelGroup::to1D(int x, int y, int z) {
     if (x < 0 || y < 0 || z < 0 || x >= dim_x || y >= dim_y || z >= dim_z)
@@ -119,120 +165,55 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
         printf("This method should be call from voxel_host's d_group.\n");
         return false;
     }
-    // Determine Angle
-    VX3_Quat3D<double> q1 = voxel_host->orientation();
-    VX3_Quat3D<double> q2 = voxel_remote->orientation();
-    // printf("q1 w=%f,x=%f,y=%f,z=%f, ", q1.w, q1.x, q1.y, q1.z);
-    // printf("q2 w=%f,x=%f,y=%f,z=%f\n", q2.w, q2.x, q2.y, q2.z);
-    VX3_Quat3D<double> q2to1 = q2.Conjugate() * q1;
-    // printf("q2to1 w=%f,x=%f,y=%f,z=%f\n", q2to1.w, q2to1.x, q2to1.y, q2to1.z);
-
-    int potential_link_1 = -1, potential_link_2 = -1;
-    // Quaternion = cos(degree) + sin(degree)(a i+b j+c k)
-    // when degree = -135, -90, -45, 0, 45, 90, 135, 180, it is orthogonal
-    // If we allow +- 8 degree from orthogonal, that is:
-    // check if w is in (cos(-135-8) ~ cos(-135+8)) or (cos(-90-8) ~ cos(-90+8)) or (cos(-45-8) ~ cos(-45+8)) , etc.
-    float w = abs(q2to1.w);
-    bool almost_orthogonal = false;
-    if ((w < 0.139173) || (w > 0.601815 && w < 0.798636) || (w > 0.990268)) {
-        almost_orthogonal = true;
-    }
-    if (almost_orthogonal) {
-        // Rotate voxel_remote in lattice to align with voxel_host
-        if (true) {
-            // printf("this special case.");
-            voxel_remote->d_group->reorient_lattice();
-        }
-
-        // Almost in the same direction
-        VX3_Vec3D<double> raw_pos = voxel_remote->position() - voxel_host->position();
-        VX3_Vec3D<double> pos_1 = q1.RotateVec3DInv(raw_pos);  // make the pos relative to voxel_host
-        VX3_Vec3D<double> pos_2 = q2.RotateVec3DInv(-raw_pos); // make the pos relative to voxel_remote
-
-        // printf("relative pos_1: %f, %f, %f\n\n", pos_1.x, pos_1.y, pos_1.z);
-        if (abs(pos_1.x) > abs(pos_1.y) && abs(pos_1.x) > abs(pos_1.z)) {
-            // X-axis
-            potential_link_1 = (int)(pos_1.x > 0 ? X_POS : X_NEG);
-        } else if (abs(pos_1.y) > abs(pos_1.z)) {
-            // Y-axis
-            potential_link_1 = (int)(pos_1.y > 0 ? Y_POS : Y_NEG);
+    // Given two voxels, determine the best way to attach them.
+    VX3_Vec3D<int> offset_of_link = VX3_Vec3D<int>(0,0,0);
+    int potential_link_1, potential_link_2;
+    VX3_Quat3D<double> relativeRotation = voxel_remote->orientation().Conjugate() * voxel_host->orientation();
+    if (relativeRotation.w > 0.96) // within 15 degree
+    {
+        VX3_Vec3D<> raw_pos = voxel_remote->position() - voxel_host->position();
+        VX3_Vec3D<> pos = voxel_host->orientation().RotateVec3DInv(raw_pos); // the position of remote voxel relative to host voxel.
+        if (abs(pos.x) > abs(pos.y) && abs(pos.x) > abs(pos.z)) {
+            potential_link_1 = (int)(pos.x > 0 ? X_POS : X_NEG);
+            offset_of_link.x = pos.x > 0 ? 1 : -1;
+        } else if (abs(pos.y) > abs(pos.z)) {
+            potential_link_1 = (int)(pos.y > 0 ? Y_POS : Y_NEG);
+            offset_of_link.y = pos.y > 0 ? 1 : -1;
         } else {
-            // Z-axis
-            potential_link_1 = (int)(pos_1.z > 0 ? Z_POS : Z_NEG);
+            potential_link_1 = (int)(pos.z > 0 ? Z_POS : Z_NEG);
+            offset_of_link.z = pos.z > 0 ? 1 : -1;
         }
-
-        // printf("relative pos_2: %f, %f, %f\n\n", pos_2.x, pos_2.y, pos_2.z);
-        if (abs(pos_2.x) > abs(pos_2.y) && abs(pos_2.x) > abs(pos_2.z)) {
-            // X-axis
-            potential_link_2 = (int)(pos_2.x > 0 ? X_POS : X_NEG);
-        } else if (abs(pos_2.y) > abs(pos_2.z)) {
-            // Y-axis
-            potential_link_2 = (int)(pos_2.y > 0 ? Y_POS : Y_NEG);
-        } else {
-            // Z-axis
-            potential_link_2 = (int)(pos_2.z > 0 ? Z_POS : Z_NEG);
-        }
-    }
-
-    if (potential_link_1 == -1 || potential_link_2 == -1) {
+        potential_link_2 = oppositeDir(potential_link_1); // only support oppositeDirection attachment for now. Arbitrary attachment is much more difficult.
+    } else {
         // Too large of an angle
         return false;
     }
-    int remote_ix, remote_iy, remote_iz;
-    // TODO: should rotate remote according to q2to1
-    // Assume direction is X_NEG for now
-    remote_ix = -voxel_remote->iy;
-    remote_iy = voxel_remote->ix;
-    remote_iz = voxel_remote->iz;
+    // Start checking for compatibility.
+    // e.g. a 2D example:
+    //     Host: 0,0 - 1,0 - 2,0
+    //                  ?
+    //     Remote:     0,1
+    //                  |
+    //                 0,0
+    // potential_link_1 = Y_NEG
+    // position_of_remote_voxel_in_host_group = Voxel(in remote group).groupPosition + remote_diff;
+    // remote_diff = Host.groupPosition + offset_of_link - Remote.groupPosition
+    // so (0,0) in Remote group becomes (1,-2).
 
-    int diff_ix = voxel_host->ix - remote_ix - min_x;
-    int diff_iy = voxel_host->iy - remote_iy - min_y;
-    int diff_iz = voxel_host->iz - remote_iz - min_z;
-    switch ((linkDirection)potential_link_1) {
-    case X_POS:
-        diff_ix++;
-        break;
-    case X_NEG:
-        diff_ix--;
-        break;
-    case Y_POS:
-        diff_iy++;
-        break;
-    case Y_NEG:
-        diff_iy--;
-        break;
-    case Z_POS:
-        diff_iz++;
-        break;
-    case Z_NEG:
-        diff_iz--;
-        break;
-    default:
-        printf("TODO: no valid link direction.\n");
-    }
-
-    // Only need to consider surface voxel
-    // for (int i = 0; i < d_surface_voxels.size(); i++) {
-    //     printf("Surface 1: %d, %d, %d. \n", d_surface_voxels[i]->ix - min_x, d_surface_voxels[i]->iy - min_y, d_surface_voxels[i]->iz - min_z);
-    // }
+    VX3_Vec3D<int> remote_diff = VX3_Vec3D<int>(0,0,0);
+    remote_diff = voxel_host->groupPosition + offset_of_link - voxel_remote->groupPosition;
 
     for (int i = 0; i < voxel_remote->d_group->d_surface_voxels.size(); i++) {
-        remote_ix = -voxel_remote->d_group->d_surface_voxels[i]->iy;
-        remote_iy = voxel_remote->d_group->d_surface_voxels[i]->ix;
-        remote_iz = voxel_remote->d_group->d_surface_voxels[i]->iz;
-        int remote_x = remote_ix + diff_ix;
-        int remote_y = remote_iy + diff_iy;
-        int remote_z = remote_iz + diff_iz;
-        // printf("Surface 2: %d, %d, %d. \n", remote_x, remote_y, remote_z);
-
-        int offset = to1D(remote_x, remote_y, remote_z);
+        VX3_Voxel *v = voxel_remote->d_group->d_surface_voxels[i];
+        VX3_Vec3D<int> position_of_remote_voxel_in_host_group = v->groupPosition + remote_diff;
+        int offset = to1D(position_of_remote_voxel_in_host_group.x, position_of_remote_voxel_in_host_group.y, position_of_remote_voxel_in_host_group.z);
         if (offset == -1) {
             // good, because out of range
         } else if (d_group_map[offset] == NULL) {
             // good, because empty position
         } else {
             // printf("Not Compatible. Offset %d\n", offset);
-            // return false;
+            return false;
         }
     }
     // printf("Compatible.\n");
@@ -241,43 +222,26 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
     return true;
 }
 
-__device__ void VX3_VoxelGroup::reorient_lattice() {
-    // int c = 0;
-    // VX3_Link* tmp[6];
-    // VX3_dDictionary<VX3_Link *, int> link_visited;
-    // for (int i=0;i<d_voxels.size();i++) {
-    //     // 1. change link->axis
-    //     for (int j=0;j<6;j+=2) {
-    //         VX3_Link* link = d_voxels[i]->links[j];
-    //         if (link) {
-    //             if (link_visited.get(link)==-1) {
-    //                 link_visited.set(link, 1);
-    //                 printf("%d) link %p.\n", c++, link);
-    //                 // if (link->axis == X_AXIS) {
-    //                 //     link->axis = Y_AXIS;
-    //                 //     // VX3_Voxel *tmp;
-    //                 //     // tmp = link->pVNeg;
-    //                 //     // link->pVNeg = link->pVPos;
-    //                 //     // link->pVPos = tmp;
-    //                 // } else {
-    //                 //     link->axis = X_AXIS;
-    //                 // }
-    //                 link->reset();
-    //                 link->isNewLink = 10;
-    //             }
-    //         }
-    //     }
-    //     // 2. change links
-    //     for (int j=0;j<6;j++) {
-    //         tmp[j] = d_voxels[i]->links[j];
-    //     }
-    //     d_voxels[i]->links[(int)X_POS] = tmp[(int)Y_NEG];
-    //     d_voxels[i]->links[(int)X_NEG] = tmp[(int)Y_POS];
-    //     d_voxels[i]->links[(int)Y_POS] = tmp[(int)X_POS];
-    //     d_voxels[i]->links[(int)Y_NEG] = tmp[(int)X_NEG];
-    //     // 3. change orientation
-    //     // d_voxels[i]->orient = d_voxels[i]->orient * q2to1
-    //     double num71 = cos(3.1415926/4.0);
-    //     d_voxels[i]->orient = VX3_Quat3D<double>(num71, 0, 0, num71);
-    // }
+__device__ int VX3_VoxelGroup::oppositeDir(int linkdir) { // TODO: this function is common in three classes, make a generalization?
+    // X_NEG for X_POS, etc.
+    int residual = linkdir % 2;
+    return linkdir - residual + !(linkdir % 2);
+}
+
+__device__ void VX3_VoxelGroup::updateAverageMomentum(double currentTime) {
+    if (average_updated_time == currentTime)
+        return;
+    if (atomicCAS(&updateAverageMutex, 0, 1) == 0) {
+        // only one call needed. other simultaneous calls just leave.
+        average_updated_time = currentTime;
+        average_linMom = VX3_Vec3D<>();
+        average_angMom = VX3_Vec3D<>();
+        for (int i=0;i<d_voxels.size();i++) {
+            average_linMom += d_voxels[i]->linMom_previousDt;
+            average_angMom += d_voxels[i]->angMom_previousDt;
+        }
+        average_linMom /= d_voxels.size();
+        average_angMom /= d_voxels.size();
+        atomicExch(&updateAverageMutex, 0);
+    }
 }

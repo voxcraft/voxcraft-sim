@@ -52,7 +52,8 @@ VX3_Voxel::~VX3_Voxel() {
     }
 }
 
-__device__ void VX3_Voxel::syncVectors() {
+__device__ void VX3_Voxel::syncVectors(VX3_VoxelyzeKernel* k) {
+    d_kernel = k;
     d_signal.value = 0;
     d_signal.activeTime = 0;
 
@@ -173,10 +174,14 @@ __device__ VX3_Vec3D<float> VX3_Voxel::cornerOffset(voxelCorner corner) const {
 
 // http://klas-physics.googlecode.com/svn/trunk/src/general/Integrator.cpp (reference)
 __device__ void VX3_Voxel::timeStep(double dt, double currentTime, VX3_VoxelyzeKernel *k) {
+    linMom_previousDt = linMom;
+    angMom_previousDt = angMom;
 
-    if (k->d_attach_manager->debug) {
-        return;
-        //freeze all voxels when new link forms. just for a snapshot to analyze the position and angles.
+    if (freezeAllVoxelsAfterAttach) {
+        if (k->d_attach_manager->totalLinksFormed>=1) {
+            return;
+            //freeze all voxels when new link forms. just for a snapshot to analyze the position and angles.
+        }
     }
     previousDt = dt;
     if (dt == 0.0f)
@@ -210,11 +215,11 @@ __device__ void VX3_Voxel::timeStep(double dt, double currentTime, VX3_VoxelyzeK
 
     assert(!(curForce.x != curForce.x) || !(curForce.y != curForce.y) || !(curForce.z != curForce.z)); // assert non QNAN
     linMom += curForce * dt;
-    // debug: after first link formed, disable momentum.
-    // if (k->d_attach_manager->debug) {
-    //     linMom = VX3_Vec3D<>();
-    // }
-    
+    //damp the giggling after new link formed.
+    if (d_group->hasNewLink) {
+        linMom = linMom * 0.99; // TODO: keep damping until damped???
+    }
+
     VX3_Vec3D<double> translate(linMom * (dt * mat->_massInverse)); // movement of the voxel this timestep
 
     //	we need to check for friction conditions here (after calculating the translation) and stop things accordingly
@@ -240,10 +245,10 @@ __device__ void VX3_Voxel::timeStep(double dt, double currentTime, VX3_VoxelyzeK
     VX3_Vec3D<> curMoment = moment();
     angMom += curMoment * dt;
 
-    // debug: after first link formed, disable momentum.
-    // if (k->d_attach_manager->debug) {
-    //     angMom = VX3_Vec3D<>();
-    // }
+    // // damp the giggling after new link formed.
+    if (d_group->hasNewLink) {
+        angMom = angMom * 0.99; // TODO: keep damping until damped???
+    }
 
     orient = VX3_Quat3D<>(angMom * (dt * mat->_momentInertiaInverse)) * orient; // update the orientation
     if (ext) {
@@ -560,7 +565,16 @@ __device__ void VX3_Voxel::generateNearby(int linkDepth, int gindex, bool surfac
 
 __device__ void VX3_Voxel::updateGroup() {
     if (d_group==NULL) {
-        d_group = new VX3_VoxelGroup();
+        d_group = new VX3_VoxelGroup(d_kernel);
         d_group->updateGroup(this);
     }
+}
+
+__device__ void VX3_Voxel::switchGroupTo(VX3_VoxelGroup* group) {
+    if (d_group) {
+        // TODO: check all memory in that group is freed if necessary.
+        // use delete because this is created by new. (new and delete, malloc and free)
+        // delete d_group;
+    }
+    d_group = group;
 }

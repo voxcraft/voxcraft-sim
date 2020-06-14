@@ -1,6 +1,7 @@
 <VXA Version="1.1">
     <Simulator>
         <EnableCilia>1</EnableCilia>
+        <Integration>0.9</Integration>
         <AttachDetach>
             <EnableCollision>1</EnableCollision>
             <EnableAttach>1</EnableAttach>
@@ -9,10 +10,10 @@
                     <mtCONST>1</mtCONST>
                 </Condition_0>
             </AttachCondition>
-            <SafetyGuard>1</SafetyGuard>
+            <SafetyGuard>500</SafetyGuard>
         </AttachDetach>
         <RecordHistory>
-            <RecordStepSize>10</RecordStepSize>
+            <RecordStepSize>100</RecordStepSize>
             <RecordVoxel>1</RecordVoxel>
             <RecordLink>1</RecordLink>
         </RecordHistory>
@@ -25,7 +26,7 @@
             <StopConditionFormula>
                 <mtSUB>
                 <mtVAR>t</mtVAR>
-                <mtCONST>1</mtCONST>
+                <mtCONST>4</mtCONST>
                 </mtSUB>
             </StopConditionFormula>
         </StopCondition>
@@ -47,14 +48,14 @@
                     <Sticky>1</Sticky>
                     <Cilia>0.1</Cilia>
                     <MatModel>0</MatModel>
-                    <Elastic_Mod>1e+05</Elastic_Mod>
+                    <Elastic_Mod>1e+04</Elastic_Mod>
                     <Fail_Stress>0</Fail_Stress>
                     <Density>1e+3</Density>
                     <Poissons_Ratio>0.35</Poissons_Ratio>
                     <CTE>0</CTE>
                     <MaterialTempPhase>0</MaterialTempPhase>
                     <uStatic>1</uStatic>
-                    <uDynamic>0.6</uDynamic>
+                    <uDynamic>0.3</uDynamic>
                 </Mechanical>
             </Material>
         </Palette>
