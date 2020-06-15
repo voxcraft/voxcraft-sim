@@ -121,7 +121,7 @@ void VX3_VoxelyzeKernel::cleanup() {
 /* Cuda methods : cannot use any CVX_xxx, and no std::, no boost::, and no
  * filesystem. */
 
-__device__ void VX3_VoxelyzeKernel::syncVectors() {
+__device__ void VX3_VoxelyzeKernel::deviceInit() {
     d_v_linkMats.clear();
     d_v_collisions.clear();
     d_targets.clear();
@@ -141,19 +141,19 @@ __device__ void VX3_VoxelyzeKernel::syncVectors() {
     }
 
     for (int i = 0; i < num_d_voxelMats; i++) {
-        d_voxelMats[i].syncVectors();
+        d_voxelMats[i].deviceInit();
     }
 
     for (int i = 0; i < num_d_linkMats; i++) {
-        d_linkMats[i].syncVectors();
+        d_linkMats[i].deviceInit();
     }
 
     for (int i = 0; i < num_d_voxels; i++) {
-        d_voxels[i].syncVectors(this);
+        d_voxels[i].deviceInit(this);
     }
     
     for (int i = 0; i < num_d_links; i++) {
-        d_links[i].syncVectors(this);
+        d_links[i].deviceInit(this);
     }
 
     for (int i = 0; i < num_d_voxels; i++) {

@@ -15,6 +15,8 @@ public:
 
 	VX3_Material( CVX_Material* p, VX3_VoxelyzeKernel* k );
 
+	__device__ void deviceInit();
+
 	__device__ VX3_Material(float youngsModulus=1e6f, float density=1e3f); //!< Default Constructor. @param[in] youngsModulus The Young's Modulus (stiffness) of this material in Pascals. @param[in] density The density of this material in Kg/m^3
 	//__device__ virtual ~VX3_Material(void) {}; //!< Destructor. Specified as virtual so we can just keep track of generic material pointers for voxel and link materials.
 	__device__ VX3_Material(const VX3_Material& vIn) {*this = vIn;} //!< Copy constructor
@@ -95,10 +97,6 @@ public:
 
 	__device__ bool setYieldFromData(float percentStrainOffset=0.2); //!< Sets sigmaYield and epsilonYield assuming strainData, stressData, E, and failStrain are set correctly.
 	__device__ float strain(float stress); //!< Returns a simple reverse lookup of the first strain that yields this stress from data point lookup.
-
-	//VX3_vector
-	__device__ void syncVectors();
-
 
 
 /* data */

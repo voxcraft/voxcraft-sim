@@ -2,15 +2,11 @@
 
 #include "VX3_Voxel.h"
 
-__device__ VX3_VoxelGroup::VX3_VoxelGroup(VX3_VoxelyzeKernel* k) {
-    d_kernel = k;    
-}
-__device__ VX3_VoxelGroup::~VX3_VoxelGroup() {
+__device__ VX3_VoxelGroup::VX3_VoxelGroup(VX3_VoxelyzeKernel *k) { d_kernel = k; }
+__device__ void VX3_VoxelGroup::switchAllVoxelsTo(VX3_VoxelGroup *group) {
     // if someone is deleting this group, set the d_group of all voxels in this group to NULL
-    for (int i=0;i<d_voxels.size();i++) {
-        if (d_voxels[i]->d_group == this) {
-            d_voxels[i]->d_group = NULL;
-        }
+    for (int i = 0; i < d_voxels.size(); i++) {
+        d_voxels[i]->d_group = group;
     }
 }
 
@@ -42,7 +38,7 @@ __device__ VX3_Vec3D<int> VX3_VoxelGroup::moveGroupPosition(VX3_Vec3D<int> from,
 }
 
 __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
-    if (atomicCAS(&buildMutex, 0, 1)==0) {
+    if (atomicCAS(&buildMutex, 0, 1) == 0) {
         // only allow one call to update(build) this group ( might be call simultaneously from VX3_Voxels )
         if (needRebuild) {
             needRebuild = false;
@@ -113,6 +109,9 @@ __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
                 d_group_map = NULL;
             }
             d_group_map = (VX3_Voxel **)malloc(dim_x * dim_y * dim_z * sizeof(VX3_Voxel *));
+            if (!d_group_map) {
+                printf("Out of Memory: d_group_map.\n");
+            }
             for (int i = 0; i < dim_x * dim_y * dim_z; i++) {
                 d_group_map[i] = NULL;
             }
@@ -157,7 +156,7 @@ __device__ VX3_Vec3D<int> VX3_VoxelGroup::to3D(int offset) {
     y = residual % dim_y;
     residual = (int)((residual - y) / dim_y);
     x = residual;
-    return VX3_Vec3D<int>(x,y,z);
+    return VX3_Vec3D<int>(x, y, z);
 }
 
 __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *voxel_remote, int *ret_linkdir_1, int *ret_linkdir_2) {
@@ -166,7 +165,7 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
         return false;
     }
     // Given two voxels, determine the best way to attach them.
-    VX3_Vec3D<int> offset_of_link = VX3_Vec3D<int>(0,0,0);
+    VX3_Vec3D<int> offset_of_link = VX3_Vec3D<int>(0, 0, 0);
     int potential_link_1, potential_link_2;
     VX3_Quat3D<double> relativeRotation = voxel_remote->orientation().Conjugate() * voxel_host->orientation();
     if (relativeRotation.w > 0.96) // within 15 degree
@@ -200,7 +199,7 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
     // remote_diff = Host.groupPosition + offset_of_link - Remote.groupPosition
     // so (0,0) in Remote group becomes (1,-2).
 
-    VX3_Vec3D<int> remote_diff = VX3_Vec3D<int>(0,0,0);
+    VX3_Vec3D<int> remote_diff = VX3_Vec3D<int>(0, 0, 0);
     remote_diff = voxel_host->groupPosition + offset_of_link - voxel_remote->groupPosition;
 
     for (int i = 0; i < voxel_remote->d_group->d_surface_voxels.size(); i++) {

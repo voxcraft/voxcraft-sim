@@ -27,13 +27,14 @@ class VX3_VoxelyzeKernel {
 
     void cleanup();
 
+    __device__ void deviceInit();
+
     /* Cuda methods */
     __device__ bool doTimeStep(float dt = -1.0f);
     __device__ double recommendedTimeStep();
     __device__ void updateCurrentCenterOfMass();
     __device__ bool StopConditionMet();
     __device__ void updateTemperature();
-    __device__ void syncVectors();
     __device__ void updateAttach();
     __device__ void updateDetach();
     __device__ void regenerateSurfaceVoxels();

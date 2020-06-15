@@ -9,9 +9,11 @@ class VX3_Voxel;
 class VX3_MaterialLink;
 
 class VX3_Link {
-  public:
+public:
     VX3_Link(CVX_Link *p, VX3_VoxelyzeKernel *k);
     __device__ VX3_Link(VX3_Voxel *voxel1, linkDirection dir1, VX3_Voxel *voxel2, linkDirection dir2, VX3_VoxelyzeKernel *k);
+
+    __device__ void deviceInit(VX3_VoxelyzeKernel *k);
 
     __device__ void reset(); //!< Resets all current state information about
                              //!< this link to the initial value.
@@ -20,20 +22,24 @@ class VX3_Link {
         return positiveEnd ? pVPos : pVNeg;
     } //!< Returns a pointer to one of the two voxels that compose this link.
       //!< @param[in] positiveEnd Specifies which voxel is desired.
-    __device__ VX3_Vec3D<> force(VX3_Voxel* voxel) const {
-        if (pVNeg == voxel) { return forceNeg; }
-        else if (pVPos == voxel) { return forcePos; }
-        else { 
+    __device__ VX3_Vec3D<> force(VX3_Voxel *voxel) const {
+        if (pVNeg == voxel) {
+            return forceNeg;
+        } else if (pVPos == voxel) {
+            return forcePos;
+        } else {
             printf("ERROR in VX3_Link::force().\n");
-            return VX3_Vec3D<>(0,0,0);
+            return VX3_Vec3D<>(0, 0, 0);
         }
     }
-    __device__ VX3_Vec3D<> moment(VX3_Voxel* voxel) const {
-        if (pVNeg == voxel) { return momentNeg; }
-        else if (pVPos == voxel) { return momentPos; }
-        else { 
+    __device__ VX3_Vec3D<> moment(VX3_Voxel *voxel) const {
+        if (pVNeg == voxel) {
+            return momentNeg;
+        } else if (pVPos == voxel) {
+            return momentPos;
+        } else {
             printf("ERROR in VX3_Link::moment().\n");
-            return VX3_Vec3D<>(0,0,0);
+            return VX3_Vec3D<>(0, 0, 0);
         }
     }
     // [Deprecated] old method assume link is alway NEG->POS
@@ -207,20 +213,6 @@ class VX3_Link {
         }
     }
 
-    __device__ void test();
-
-    // __device__ void updateForces();
-    // __device__ VX3_Quat3D<double> orientLink(/*double restLength*/);
-    // //updates pos2, angle1, angle2, and smallAngle. returns the rotation
-    // quaternion (after toAxisX) used to get to this orientation
-
-    // template <typename T>
-    // __device__ VX3_Vec3D<T> toAxisX		(const VX3_Vec3D<T>& v)	const
-    // {switch (ax){case Y_AXIS: return VX3_Vec3D<T>(v.y, -v.x, v.z); case
-    // Z_AXIS: return VX3_Vec3D<T>(v.z, v.y, -v.x); default: return v;}}
-    // //transforms a VX3_Vec3D in the original orientation of the bond to that
-    // as if the bond was in +X direction
-
     /*data*/
 
     VX3_VoxelyzeKernel *d_kernel; // saved pointer to the whole simulation
@@ -230,8 +222,7 @@ class VX3_Link {
     VX3_Vec3D<> momentNeg, momentPos;
 
     float strain;
-    float maxStrain,
-        /*maxStrainRatio,*/ strainOffset; // keep track of the maximums for
+    float maxStrain, strainOffset; // keep track of the maximums for
                                           // yield/fail/nonlinear materials (and
                                           // the ratio of the maximum from 0 to
                                           // 1 [all positive end strain to all
@@ -261,22 +252,11 @@ class VX3_Link {
 
     bool isDetached = false;
 
-	// for Secondary Experiment
+    // for Secondary Experiment
     bool removed = false;
 
-    int debug=0;
-    __device__ linkAxis toAxis(linkDirection linkdir) {
-        int i = (int)linkdir;
-        i = (int) ((i-(i%2))/2);
-        return (linkAxis) i;
-    };
-
-    VX3_Quat3D<double> quat_linkDirection[6];   // precalculate rotation for different link direction
-                                                // quat_linkDirection[linkDirection].RotateVector for rotating from raw coordinates to coordinates corresponding direction.
-    __device__ void syncVectors(VX3_VoxelyzeKernel *k);
-
-    __device__ VX3_Vec3D<double> pseudoRotation(linkDirection linkdir, VX3_Vec3D<double> pos, bool inverse=false);
-
+    VX3_Quat3D<double> quat_linkDirection[6]; // precalculate rotation for different link direction
+                                              // quat_linkDirection[linkDirection].RotateVector for rotating from raw coordinates to coordinates corresponding direction.
 };
 
 #endif // VX3_LINK_H

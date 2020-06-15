@@ -21,7 +21,7 @@ VX3_Link::VX3_Link(CVX_Link *p, VX3_VoxelyzeKernel *k)
 }
 // VX3_Link can also be initialized in device
 __device__ VX3_Link::VX3_Link(VX3_Voxel *voxelNeg, linkDirection dirNeg, VX3_Voxel *voxelPos, linkDirection dirPos, VX3_VoxelyzeKernel *k) {
-    syncVectors(k);
+    deviceInit(k);
     voxelNeg->links[dirNeg] = this;
     voxelPos->links[dirPos] = this;
     pVNeg = voxelNeg;
@@ -35,7 +35,7 @@ __device__ VX3_Link::VX3_Link(VX3_Voxel *voxelNeg, linkDirection dirNeg, VX3_Vox
     reset();
 }
 
-__device__ void VX3_Link::syncVectors(VX3_VoxelyzeKernel *k) {
+__device__ void VX3_Link::deviceInit(VX3_VoxelyzeKernel *k) {
     d_kernel = k;
 
     double num71 = cos(CUDART_PIO4);
@@ -328,8 +328,3 @@ __device__ float VX3_Link::a2() const { return mat->_a2; }
 __device__ float VX3_Link::b1() const { return mat->_b1; }
 __device__ float VX3_Link::b2() const { return mat->_b2; }
 __device__ float VX3_Link::b3() const { return mat->_b3; }
-
-// Because using quaternion to rotate exact 90 degree is impossible, instead, we use this method to do rotation along axis
-__device__ VX3_Vec3D<double> VX3_Link::pseudoRotation(linkDirection linkdir, VX3_Vec3D<double> pos, bool inverse){
-    return VX3_Vec3D<>();
-}

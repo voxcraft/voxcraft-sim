@@ -52,7 +52,7 @@ VX3_Voxel::~VX3_Voxel() {
     }
 }
 
-__device__ void VX3_Voxel::syncVectors(VX3_VoxelyzeKernel* k) {
+__device__ void VX3_Voxel::deviceInit(VX3_VoxelyzeKernel* k) {
     d_kernel = k;
     d_signal.value = 0;
     d_signal.activeTime = 0;
@@ -174,9 +174,6 @@ __device__ VX3_Vec3D<float> VX3_Voxel::cornerOffset(voxelCorner corner) const {
 
 // http://klas-physics.googlecode.com/svn/trunk/src/general/Integrator.cpp (reference)
 __device__ void VX3_Voxel::timeStep(double dt, double currentTime, VX3_VoxelyzeKernel *k) {
-    linMom_previousDt = linMom;
-    angMom_previousDt = angMom;
-
     if (freezeAllVoxelsAfterAttach) {
         if (k->d_attach_manager->totalLinksFormed>=1) {
             return;
@@ -571,10 +568,16 @@ __device__ void VX3_Voxel::updateGroup() {
 }
 
 __device__ void VX3_Voxel::switchGroupTo(VX3_VoxelGroup* group) {
+    if (d_group==group)
+        return;
     if (d_group) {
         // TODO: check all memory in that group is freed if necessary.
         // use delete because this is created by new. (new and delete, malloc and free)
-        // delete d_group;
+        VX3_VoxelGroup* to_delete = d_group; // because d_group->switchAllVoxelsTo() will change the pointer d_group, so save it here for deletion.
+        d_group->switchAllVoxelsTo(group);
+        delete to_delete;
+        // Free this memory seems will spend a lot of time checking conditions, just leave it there for now.
+    } else {
+        d_group = group;
     }
-    d_group = group;
 }

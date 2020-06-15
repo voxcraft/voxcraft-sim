@@ -83,6 +83,7 @@ elif Senario=="voxels fall":
     x,y,z = 5,5,20
     body_tiny = np.ones(shape=[x,y,z], dtype=int)
     body_tiny[np.random.random(size=[x,y,z])<0.9] = 0
+    # body_tiny[:,:,3:] = 0
     tiny_cilia = np.zeros(shape=[3,x,y,z])
     # tiny_cilia = np.random.random(size=[3,x,y,z]) * 0.2
     put_into(world, body_tiny)

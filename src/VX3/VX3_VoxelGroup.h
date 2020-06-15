@@ -21,7 +21,7 @@ public:
     int hasNewLink = 0; // how many new links in this group.
 
     __device__ VX3_VoxelGroup(VX3_VoxelyzeKernel *k);
-    __device__ ~VX3_VoxelGroup();
+    __device__ void switchAllVoxelsTo(VX3_VoxelGroup* group);
     __device__ VX3_Vec3D<int> moveGroupPosition(VX3_Vec3D<int> from, linkDirection dir, int step = 1); // return the step next position in the group
     __device__ void updateGroup(VX3_Voxel *voxel); // Update all the group info that voxel is in. BFS.
     __device__ int to1D(VX3_Vec3D<int> groupPosition); // for generating an index(offset) for `d_group_map` from groupPosition
