@@ -223,6 +223,8 @@ class VX3_Link {
 
     /*data*/
 
+    VX3_VoxelyzeKernel *d_kernel; // saved pointer to the whole simulation
+
     VX3_Voxel *pVNeg, *pVPos;
     VX3_Vec3D<> forceNeg, forcePos;
     VX3_Vec3D<> momentNeg, momentPos;
@@ -263,7 +265,6 @@ class VX3_Link {
     bool removed = false;
 
     int debug=0;
-    __device__ __host__ int oppositeDir(int linkdir);
     __device__ linkAxis toAxis(linkDirection linkdir) {
         int i = (int)linkdir;
         i = (int) ((i-(i%2))/2);
@@ -276,7 +277,6 @@ class VX3_Link {
 
     __device__ VX3_Vec3D<double> pseudoRotation(linkDirection linkdir, VX3_Vec3D<double> pos, bool inverse=false);
 
-    VX3_VoxelyzeKernel *d_kernel;
 };
 
 #endif // VX3_LINK_H

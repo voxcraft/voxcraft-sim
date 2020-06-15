@@ -9,31 +9,24 @@ class VX3_Voxel;
 class VX3_VoxelGroup {
 public:
     /* data */
-    VX3_VoxelyzeKernel* d_kernel;
-    int dim_x, dim_y, dim_z;
-    // int min_x, min_y, min_z;
-    // int max_x, max_y, max_z;
+    VX3_VoxelyzeKernel *d_kernel; // saved pointer to the whole simulation
+    int dim_x, dim_y, dim_z; // dimension of this group
 
-    VX3_Voxel **d_group_map = NULL;
-    VX3_dVector<VX3_Voxel *> d_surface_voxels;
-    VX3_dVector<VX3_Voxel *> d_voxels;
+    VX3_Voxel **d_group_map = NULL; // store 3-dimensional voxel pointers
+    VX3_dVector<VX3_Voxel *> d_surface_voxels; // all surface voxels in this group
+    VX3_dVector<VX3_Voxel *> d_voxels; // all voxels in this group
     bool needRebuild = true;
+    int buildMutex = 0; // only allow one call to update(build) this group
 
-    int hasNewLink = 0;
-    VX3_Vec3D<> average_linMom, average_angMom;
-    double average_updated_time = 0;
-    int updateAverageMutex = 0;
+    int hasNewLink = 0; // how many new links in this group.
 
-    __device__ VX3_VoxelGroup(VX3_VoxelyzeKernel* k);
+    __device__ VX3_VoxelGroup(VX3_VoxelyzeKernel *k);
     __device__ ~VX3_VoxelGroup();
+    __device__ VX3_Vec3D<int> moveGroupPosition(VX3_Vec3D<int> from, linkDirection dir, int step = 1); // return the step next position in the group
     __device__ void updateGroup(VX3_Voxel *voxel); // Update all the group info that voxel is in. BFS.
-    __device__ int to1D(int x, int y, int z);
-    __device__ void to3D(int offset, int *ret_x, int *ret_y, int *ret_z);
-    __device__ int getVoxelOffset(VX3_Voxel *voxel);
-    __device__ bool isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *voxel_remote, int* ret_linkdir_1, int* ret_linkdir_2);
-    __device__ VX3_Vec3D<int> moveGroupPosition(VX3_Vec3D<int> from, linkDirection dir, int step=1);
-    __device__ int oppositeDir(int linkdir);
-    __device__ void updateAverageMomentum(double currentTime);
+    __device__ int to1D(VX3_Vec3D<int> groupPosition); // for generating an index(offset) for `d_group_map` from groupPosition
+    __device__ VX3_Vec3D<int> to3D(int offset); // get groupPosition back from an index(offset)
+    __device__ bool isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *voxel_remote, int *ret_linkdir_1, int *ret_linkdir_2);
 };
 
 #endif // VX3_VOXELGROUP_H

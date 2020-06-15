@@ -5,11 +5,6 @@
 
 __device__ VX3_AttachManager::VX3_AttachManager(VX3_VoxelyzeKernel *k) { d_kernel = k; }
 
-__device__ int VX3_AttachManager::oppositeDir(int linkdir) {
-    // X_NEG for X_POS, etc.
-    int residual = linkdir % 2;
-    return linkdir - residual + !(linkdir % 2);
-}
 __device__ bool VX3_AttachManager::tryAttach(VX3_Voxel *voxel1, VX3_Voxel *voxel2) {
     // Simple preliminary filter
     //// determined by formula
@@ -34,7 +29,7 @@ __device__ bool VX3_AttachManager::tryAttach(VX3_Voxel *voxel1, VX3_Voxel *voxel
         if (diff.Length2() > 1)
             return false;
         linkdir_1 = (diff.x == 1 ? 1 : 0) + (diff.y == 1 ? 3 : 0) + (diff.y == -1 ? 2 : 0) + (diff.z == 1 ? 5 : 0) + (diff.z == -1 ? 4 : 0);
-        linkdir_2 = oppositeDir(linkdir_1);
+        linkdir_2 = oppositeDirection(linkdir_1);
 
     } else {
         // Different groups, check for compatibility
@@ -51,7 +46,7 @@ __device__ bool VX3_AttachManager::tryAttach(VX3_Voxel *voxel1, VX3_Voxel *voxel
     bool ret = false;
     // Start Attach!
     // Other potential attachments are ignored, no wait.
-    if (atomicCAS(&mutex, 0, 1) == 0) {
+    if (atomicCAS(&attachmentMutex, 0, 1) == 0) {
         // Entering Critical Area
         if (voxel1->links[linkdir_1] == NULL && voxel2->links[linkdir_2] == NULL) {
             VX3_Link *pL;
@@ -75,7 +70,7 @@ __device__ bool VX3_AttachManager::tryAttach(VX3_Voxel *voxel1, VX3_Voxel *voxel
                 totalLinksFormed++;
             }
         }
-        atomicExch(&mutex, 0);
+        atomicExch(&attachmentMutex, 0);
     }
 
     return ret;

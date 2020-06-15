@@ -54,7 +54,7 @@ def generate_vxd(body, cilia):
     file_content = etree.tostring(VXD, pretty_print=True).decode("utf-8")
     return file_content
 
-world = np.zeros([30,30,30], dtype=int)
+world = np.zeros([30,30,200], dtype=int)
 world_cilia = np.zeros(shape=[3, world.shape[0], world.shape[1], world.shape[2]], dtype=float)
 Senario="voxels fall"
 # Senario="shoot"
@@ -80,7 +80,7 @@ elif Senario=="fall giggling":
     put_into(world, body_tiny)
 elif Senario=="voxels fall":
     # group calculating error
-    x,y,z = 5,5,30
+    x,y,z = 5,5,20
     body_tiny = np.ones(shape=[x,y,z], dtype=int)
     body_tiny[np.random.random(size=[x,y,z])<0.9] = 0
     tiny_cilia = np.zeros(shape=[3,x,y,z])

@@ -18,6 +18,7 @@ __device__ VX3_Vec3D<double> linkDirectionVec3D(linkDirection linkdir) {
     default:
         printf("ERROR.\n");
     }
+    return VX3_Vec3D<>();
 }
 
 __global__ void kernel() {

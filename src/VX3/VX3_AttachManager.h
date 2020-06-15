@@ -7,15 +7,14 @@ class VX3_VoxelyzeKernel;
 class VX3_AttachManager {
 public:
     /* data */
-    VX3_VoxelyzeKernel *d_kernel;
-    int mutex = 0;
+    VX3_VoxelyzeKernel *d_kernel; // saved pointer to the whole simulation
+    int attachmentMutex = 0; // only one attachment can happen at a time
 
     /* method */
     __device__ VX3_AttachManager(VX3_VoxelyzeKernel *k);
     __device__ bool tryAttach(VX3_Voxel *voxel1, VX3_Voxel *voxel2);
-    __device__ int oppositeDir(int linkdir);
 
-    int OnlyFormOneLink = false; // for debug
+    int OnlyFormOneLink = false; // for debug use
     int totalLinksFormed = 0;
 };
 
