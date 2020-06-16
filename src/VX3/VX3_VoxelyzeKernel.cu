@@ -696,7 +696,7 @@ __device__ void handle_collision_attachment(VX3_Voxel *voxel1, VX3_Voxel *voxel2
         return;
 
     VX3_Vec3D<double> diff = voxel1->pos - voxel2->pos;
-    watchDistance = (voxel1->baseSizeAverage() + voxel2->baseSizeAverage()) * COLLISION_ENVELOPE_RADIUS;
+    watchDistance = (voxel1->baseSizeAverage() + voxel2->baseSizeAverage()) * COLLISION_ENVELOPE_RADIUS * watchDistance;
 
     if (diff.x > watchDistance || diff.x < -watchDistance)
         return;

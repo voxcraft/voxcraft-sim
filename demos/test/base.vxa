@@ -3,6 +3,7 @@
         <EnableCilia>1</EnableCilia>
         <Integration>0.9</Integration>
         <AttachDetach>
+            <watchDistance>10</watchDistance>
             <EnableCollision>1</EnableCollision>
             <EnableAttach>1</EnableAttach>
             <AttachCondition>
@@ -17,6 +18,8 @@
             <RecordVoxel>1</RecordVoxel>
             <RecordLink>1</RecordLink>
         </RecordHistory>
+        <ForceField>
+        </ForceField>
         <Damping>
             <BondDampingZ>1</BondDampingZ>
             <ColDampingZ>0.8</ColDampingZ>
@@ -25,8 +28,8 @@
         <StopCondition>
             <StopConditionFormula>
                 <mtSUB>
-                <mtVAR>t</mtVAR>
-                <mtCONST>4</mtCONST>
+                    <mtVAR>t</mtVAR>
+                    <mtCONST>4</mtCONST>
                 </mtSUB>
             </StopConditionFormula>
         </StopCondition>
@@ -64,9 +67,13 @@
             <Y_Voxels>1</Y_Voxels>
             <Z_Voxels>2</Z_Voxels>
             <Data>
-                <Layer><![CDATA[0]]></Layer>
-                <Layer><![CDATA[1]]></Layer>
+                <Layer>
+                    <![CDATA[0]]>
+                </Layer>
+                <Layer>
+                    <![CDATA[1]]>
+                </Layer>
             </Data>
         </Structure>
     </VXC>
-    </VXA>
+</VXA>

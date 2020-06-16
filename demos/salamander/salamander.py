@@ -6,7 +6,10 @@ np.random.seed(1)
 import binvox_rw
 
 print("Start")
-with open('./salamander.binvox', 'rb') as f:
+
+os.system("sh rebuild.sh")
+
+with open('./salamander_100.binvox', 'rb') as f:
     model = binvox_rw.read_as_3d_array(f)
 
 body = model.data

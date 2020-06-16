@@ -577,6 +577,7 @@ __device__ void VX3_Voxel::switchGroupTo(VX3_VoxelGroup* group) {
         d_group->switchAllVoxelsTo(group);
         delete to_delete;
         // Free this memory seems will spend a lot of time checking conditions, just leave it there for now.
+        // d_group = group;
     } else {
         d_group = group;
     }

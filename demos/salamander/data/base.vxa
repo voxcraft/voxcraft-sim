@@ -19,7 +19,7 @@
     <AttachDetach>
       <EnableCollision>1</EnableCollision>
       <EnableAttach>1</EnableAttach>
-      <watchDistance>1</watchDistance>
+      <watchDistance>10</watchDistance>
       <SafetyGuard>500</SafetyGuard>
       <AttachCondition>
         <Condition_0>

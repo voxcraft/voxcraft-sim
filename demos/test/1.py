@@ -80,7 +80,7 @@ elif Senario=="fall giggling":
     put_into(world, body_tiny)
 elif Senario=="voxels fall":
     # group calculating error
-    x,y,z = 5,5,20
+    x,y,z = 30,30,200
     body_tiny = np.ones(shape=[x,y,z], dtype=int)
     body_tiny[np.random.random(size=[x,y,z])<0.9] = 0
     # body_tiny[:,:,3:] = 0

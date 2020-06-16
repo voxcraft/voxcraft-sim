@@ -46,6 +46,14 @@ __device__ __host__ static inline linkAxis toAxis(linkDirection direction) {
     return (linkAxis)((int)direction / 2);
 } 
 
+template <class T> __device__ static inline void debug_array(T* array, int size) {
+    T memory[1024];
+    for (int i=0;i<size&&i<1024;i++) {
+        memory[i] = array[i];
+        printf("memory %p\n", memory[i]);
+    }
+}
+
 #define COLORCODE_RED "\033[0;31m" 
 #define COLORCODE_BOLD_RED "\033[1;31m\n" 
 #define COLORCODE_GREEN "\033[0;32m" 
