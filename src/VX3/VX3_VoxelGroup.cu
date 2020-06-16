@@ -48,7 +48,13 @@ __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
     if (atomicCAS(&buildMutex, 0, 1) == 0) {
         // only allow one call to update(build) this group ( might be call simultaneously from VX3_Voxels )
         bool leave = false;
+        long retry = 0;
         while (!leave) {
+            if (retry ++ > 10000) {
+                printf("Force break the waiting loop. checkMutex is %d.\n", checkMutex);
+                break; // if checkMutex never reduce to zero, the program might stuck here.
+                // To avoid lock. so it will fail to rebuild group map this time, but it will rebuild next time, otherwise no voxels will attach to this group.
+            }
             if (checkMutex == 0) {
                 if (needRebuild) {
                     // First set *voxel as origin, and negative number is allowed.
