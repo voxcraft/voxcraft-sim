@@ -1,0 +1,41 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/src/Utils",
+                "${workspaceFolder}/src/VX3",
+                "${workspaceFolder}/src/VXA",
+                "${workspaceFolder}/src/old",
+                "${workspaceFolder}/src",
+                "/usr/local/cuda/include"
+            ],
+            "forcedInclude": [
+                "/usr/local/cuda/include/cuda.h",
+                "/usr/local/cuda/include/cuda_runtime.h",
+                "/usr/local/cuda/include/cuda_runtime_api.h",
+                "/usr/local/cuda/include/device_atomic_functions.h",
+                "/usr/local/cuda/include/device_launch_parameters.h"
+            ],
+            "defines": [
+                "atomicCAS(a,b,c)=0",
+                "atomicExch(a,b)=0"
+            ],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "clang-x64",
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/src/Utils",
+                    "${workspaceFolder}/src/VX3",
+                    "${workspaceFolder}/src/VXA",
+                    "${workspaceFolder}/src/old",
+                    "${workspaceFolder}/src",
+                    "/usr/local/cuda/include"
+                ]
+            }
+        }
+    ],
+    "version": 4
+}
