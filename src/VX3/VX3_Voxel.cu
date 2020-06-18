@@ -573,9 +573,9 @@ __device__ void VX3_Voxel::switchGroupTo(VX3_VoxelGroup* group) {
     if (d_group) {
         // TODO: check all memory in that group is freed if necessary.
         // use delete because this is created by new. (new and delete, malloc and free)
-        VX3_VoxelGroup* to_delete = d_group; // because d_group->switchAllVoxelsTo() will change the pointer d_group, so save it here for deletion.
+        // VX3_VoxelGroup* to_delete = d_group; // because d_group->switchAllVoxelsTo() will change the pointer d_group, so save it here for deletion.
         d_group->switchAllVoxelsTo(group);
-        delete to_delete;
+        // delete to_delete;
         // Free this memory seems will spend a lot of time checking conditions, just leave it there for now.
         // d_group = group;
     } else {
