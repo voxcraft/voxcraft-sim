@@ -3,9 +3,10 @@
         <EnableCilia>1</EnableCilia>
         <Integration>0.9</Integration>
         <AttachDetach>
-            <watchDistance>10</watchDistance>
+            <watchDistance>3</watchDistance>
             <EnableCollision>1</EnableCollision>
             <EnableAttach>1</EnableAttach>
+            <EnableDetach>0</EnableDetach>
             <AttachCondition>
                 <Condition_0>
                     <mtCONST>1</mtCONST>
@@ -29,7 +30,7 @@
             <StopConditionFormula>
                 <mtSUB>
                     <mtVAR>t</mtVAR>
-                    <mtCONST>4</mtCONST>
+                    <mtCONST>1</mtCONST>
                 </mtSUB>
             </StopConditionFormula>
         </StopCondition>
@@ -52,7 +53,7 @@
                     <Cilia>0.1</Cilia>
                     <MatModel>0</MatModel>
                     <Elastic_Mod>1e+04</Elastic_Mod>
-                    <Fail_Stress>0</Fail_Stress>
+                    <Fail_Stress>1e+3</Fail_Stress>
                     <Density>1e+3</Density>
                     <Poissons_Ratio>0.35</Poissons_Ratio>
                     <CTE>0</CTE>

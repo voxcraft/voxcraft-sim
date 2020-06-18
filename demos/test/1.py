@@ -56,7 +56,7 @@ def generate_vxd(body, cilia):
 
 world = np.zeros([30,30,200], dtype=int)
 world_cilia = np.zeros(shape=[3, world.shape[0], world.shape[1], world.shape[2]], dtype=float)
-Senario="voxels fall"
+Senario="regular_fall"
 # Senario="shoot"
 if Senario=="trivial":
     body = np.ones(shape=[1,1,3], dtype=int)
@@ -78,6 +78,17 @@ elif Senario=="fall giggling":
     body_tiny[0,0,0] = body_tiny[0,0,1] = body_tiny[1,0,1] = body_tiny[1,1,4] =1
     # tiny_cilia = np.random.random(size=[3,x,y,z]) * 0.2
     put_into(world, body_tiny)
+elif Senario=="regular_fall":
+    # group calculating error
+    x,y,z = 5,5,5
+    body_tiny = np.ones(shape=[x,y,z], dtype=int)
+    for i,x in enumerate(np.nditer(body_tiny, op_flags=['readwrite'])):
+        x[...] = (i%2==0)
+    # body_tiny[:,:,3:] = 0
+    tiny_cilia = np.zeros(shape=[3,x,y,z])
+    # tiny_cilia = np.random.random(size=[3,x,y,z]) * 0.2
+    put_into(world, body_tiny)
+    put_into(world_cilia, tiny_cilia, prefix=1)
 elif Senario=="voxels fall":
     # group calculating error
     x,y,z = 30,30,200
