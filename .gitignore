@@ -5,6 +5,7 @@ cmake-build-debug
 .vscode
 
 # Compiled Object files
+build/
 *.slo
 *.lo
 *.o

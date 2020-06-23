@@ -446,7 +446,7 @@ void CollisionSystem::build_tree() {
     } else {
         gridSize = num_SM;
     }
-    build_tree_kernel<<<gridSize, blockSize>>>(N - 1, N, build_bvh_tree);
+    build_tree_kernel<<<gridSize, blockSize>>>(0, N, build_bvh_tree);
     CUDA_CHECK_AFTER_CALL();
     VcudaDeviceSynchronize();
 
@@ -497,14 +497,22 @@ int CollisionSystem::find_collisions_device() {
     find_potential_collisions_kernel<<<gridSize, blockSize>>>(N - 1, N, find_potential_collisions);
     CUDA_CHECK_AFTER_CALL();
     VcudaDeviceSynchronize();
+    printf("Considering %d potential collisions...\n", potential_collisions_idx_d_ptr[0]);
 
     if (potential_collisions_idx_d_ptr[0] > MAX_COLLISIONS_PER_OBJECT * N) {
         num_collisions_d_ptr[0] = -1;
         return -1;
     }
-    num_collisions_d_ptr[0] = potential_collisions_idx_d_ptr[0];
-    thrust::copy(thrust::device, potential_collisions_d_ptr, potential_collisions_d_ptr + potential_collisions_idx_d_ptr[0], collisions_d_ptr);
-    return potential_collisions_idx_d_ptr[0];
+    // num_collisions_d_ptr[0] = potential_collisions_idx_d_ptr[0];
+    // thrust::copy(thrust::device, potential_collisions_d_ptr,potential_collisions_d_ptr +   potential_collisions_idx_d_ptr[0], collisions_d_ptr);
+
+    unsigned int colCount = thrust::copy_if(thrust::device, potential_collisions_d_ptr,
+        potential_collisions_d_ptr + potential_collisions_idx_d_ptr[0],
+        collisions_d_ptr,
+        check_potential_collisions) - collisions_d_ptr;
+
+    num_collisions_d_ptr[0] = colCount;
+    return num_collisions_d_ptr[0];
 }
 
 __host__

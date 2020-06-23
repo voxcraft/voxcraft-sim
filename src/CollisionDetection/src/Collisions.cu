@@ -172,6 +172,7 @@ unsigned int fill_bvh_tree_with_bounding_boxes_func::operator()(int leafIdx) {
 
 __device__
 void find_potential_collisions_func::operator()(unsigned int idx) {
+    // int IDX_OF_INTEREST = 205;
     if (potentialCollisionIdx[0] >= MAX_NUM_COLLISIONS) {
         return;
     }
@@ -183,11 +184,24 @@ void find_potential_collisions_func::operator()(unsigned int idx) {
     *stackPtr++ = 0xFFFFFFFF; // push onto stack.
     unsigned int node = 0; // root of BVH tree.
 
+    // if (idx == IDX_OF_INTEREST) {
+    //     printf("\ninternalChildrenA: ");
+    //     for (int i = 0; i < NUM_INTERNAL; i++) {
+    //         printf("%u ", internalChildrenA[i]);
+    //     }
+    //     printf("\n\n");   
+    //     printf("internalChildrenB: ");
+    //     for (int i = 0; i < NUM_INTERNAL; i++) {
+    //         printf("%u ", internalChildrenB[i]);
+    //     }
+    //     printf("\n");     
+    // }
+
     do {
         unsigned int childL = internalChildrenA[node];
         unsigned int childR = internalChildrenB[node];
-        bool overlapL = overlap(boundingBoxTree + idx, boundingBoxTree + childL);
-        bool overlapR = overlap(boundingBoxTree + idx, boundingBoxTree + childR);
+        bool overlapL =  overlap(boundingBoxTree + idx, boundingBoxTree + childL);
+        bool overlapR =  overlap(boundingBoxTree + idx, boundingBoxTree + childR);
 
         unsigned int childLR = childL;
         unsigned int childRR = childR;
@@ -206,9 +220,21 @@ void find_potential_collisions_func::operator()(unsigned int idx) {
             overlapR = false;
         }
 
+        // if (idx == IDX_OF_INTEREST) {
+        //     printf("\n\nBEGIN: NUM_INTERNAL = %u\n", NUM_INTERNAL);
+        //     printf("Idx %d\n", IDX_OF_INTEREST);
+        //     printf("childL %u childR %u\n", childL, childR);
+        //     printf("childLR %u childRR %u\n", childLR, childRR);
+        //     printf("OverlapL: %d and OverlapR: %d\n", int(overlapL), int(overlapR));
+        // }
+
         if (childL != idx && overlapL && childL >= NUM_INTERNAL) {
             // potential collision found. add to list.
             unsigned int childLId = sortedMortonIds[childL - NUM_INTERNAL];
+            // if (idx == IDX_OF_INTEREST) {
+            //     printf("Collision between %d and %d\n", thisObjectId, childLId);
+            // }
+
             currCollisionIdx = atomicInc(potentialCollisionIdx, 0xFFFFFFFF);
             if (currCollisionIdx >= MAX_NUM_COLLISIONS) {
                 return;
@@ -219,6 +245,10 @@ void find_potential_collisions_func::operator()(unsigned int idx) {
         if (childR != idx && overlapR && childR >= NUM_INTERNAL) {
             // potential collision found. add to list
             unsigned int childRId = sortedMortonIds[childR - NUM_INTERNAL];
+            // if (idx == IDX_OF_INTEREST) {
+            //     printf("Collision between %d and %d\n", thisObjectId, childRId);
+            // }
+            
             currCollisionIdx = atomicInc(potentialCollisionIdx, 0xFFFFFFFF);
             if (currCollisionIdx >= MAX_NUM_COLLISIONS) {
                 return;
@@ -231,10 +261,19 @@ void find_potential_collisions_func::operator()(unsigned int idx) {
 
         if (!traverseL && !traverseR) {
             node = *--stackPtr; // pop
+            // if (idx == IDX_OF_INTEREST) {
+            //     printf("Idx %d popping an element (node: %u) off stack\n", IDX_OF_INTEREST, node);
+            // }
         } else {
             node = (traverseL) ? childL : childR;
+            // if (idx == IDX_OF_INTEREST) {
+            //     printf("Idx %d will traverse to node %u next.\n", IDX_OF_INTEREST, node);
+            // }
             if (traverseL && traverseR) {
                 *stackPtr++ = childR; // push
+                // if (idx == IDX_OF_INTEREST) {
+                //     printf("Idx %d pushing an element (node: %u) on stack\n", IDX_OF_INTEREST,  childR);
+                // }
             }
         }
     } while (node != 0xFFFFFFFF);

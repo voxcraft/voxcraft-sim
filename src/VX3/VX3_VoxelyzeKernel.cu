@@ -1,3 +1,4 @@
+#include "VX3_Collision.h"
 #include "VX3_MemoryCleaner.h"
 #include "VX3_VoxelyzeKernel.cuh"
 
@@ -71,7 +72,7 @@ VX3_VoxelyzeKernel::VX3_VoxelyzeKernel(CVX_Sim *In) {
     VcudaMalloc((void **) &d_initialPosition, num_d_voxels * sizeof(Vec3D<>));
 
     // Create the collison system and copy it to the device.
-    h_collision_system = new CollisionSystem(num_d_voxels, 32, false);
+    h_collision_system = new CollisionSystem(num_d_voxels, 1024, false);
     VcudaMalloc((void **) &d_collision_system, sizeof(CollisionSystem));
     VcudaMemcpy(d_collision_system, h_collision_system, sizeof(CollisionSystem), cudaMemcpyHostToDevice);
 
@@ -295,7 +296,21 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
     }
 
     if (enableAttach || EnableCollision) { // either attachment and collision need measurement for pairwise distances
-        updateAttach();
+        printf("Step %lu has %d surface voxels and %d total voxels.\n", CurStepCount,  num_d_surface_voxels, num_d_voxels);
+        updateAttach(0);
+        updateAttach(1);
+        if (tmpCollisionCount != 0) {
+            // print all voxel info.
+            // for (int print_idx = 0; print_idx < num_d_surface_voxels; print_idx++) {
+            //     auto currVox = d_surface_voxels[print_idx];
+            //     auto pos = currVox->pos;
+            //     double r = currVox->baseSizeAverage() * COLLISION_ENVELOPE_RADIUS;
+
+            //     printf("Voxel %d at idx (%d %d %d) is at pos (%.15f %.15f %.15f) with r: %.15f\n", print_idx, currVox->ix, currVox->iy, currVox->iz, pos.x, pos.y, pos.z, r);   
+            // }
+            assert(0);
+        }
+        printf("\n\n");
     }
     if (enableDetach) {
         updateDetach();
@@ -405,11 +420,12 @@ __device__ void VX3_VoxelyzeKernel::removeVoxels() {
     }
 
 }
-__device__ void VX3_VoxelyzeKernel::updateAttach() {
+__device__ void VX3_VoxelyzeKernel::updateAttach(int mode) {
     // for each surface voxel pair, check distance < watchDistance, make a new
     // link between these two voxels, updateSurface().
     int blockSize;
     int minGridSize;
+    tmpCollisionCount = 0;
     if (false) {
         // the parameters of grid are set in gpu_update_voxels, so detection only useful after initialization
         if (gridLowerBound != gridUpperBound) {
@@ -452,55 +468,8 @@ __device__ void VX3_VoxelyzeKernel::updateAttach() {
             CUDA_CHECK_AFTER_CALL();
             VcudaDeviceSynchronize();
         }
-    } else if (true) {
-        // Tree based collision detection!
-        int num_cols = 0;
+    } else if (mode == 0) {
 
-        // copy position information for each voxel into the collision system.
-        int gridSize_voxels, blockSize_voxels;
-        cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_collision_system_pos_radius, 0, num_d_surface_voxels); // Dynamically calculate blockSize
-        gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
-        blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
-
-        gpu_update_collision_system_pos_radius<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, watchDistance, this);
-        CUDA_CHECK_AFTER_CALL();
-        VcudaDeviceSynchronize();
-
-        // if number of surface voxels has changed, we need to re-init the collision detection tree.
-        // Note that as voxels move, it makes sense to re-build the tree to improve the performance of tree traversal in the
-        // find_collisions_device() method of the CollisionSystem, however rebuilding the tree is not necessary to have accurate collision detection.
-
-        if (d_collision_system->N != num_d_surface_voxels || CurStepCount%100 == 1) {
-            d_collision_system->N = num_d_surface_voxels;
-            d_collision_system->end =d_collision_system->start + num_d_surface_voxels;
-            d_collision_system->find_potential_collisions.NUM_INTERNAL = num_d_surface_voxels - 1;
-
-            d_collision_system->update_x_pos_ranks();
-            d_collision_system->update_y_pos_ranks();
-            d_collision_system->update_z_pos_ranks();
-            d_collision_system->update_mortons();
-            d_collision_system->build_tree();
-        }
-        d_collision_system->update_bounding_boxes();
-        num_cols = d_collision_system->find_collisions_device();
-        // printf("Step %lu with %d surface voxels and %d total voxels found %d collisions\n", CurStepCount, num_d_surface_voxels, num_d_voxels, num_cols);
-
-        if (num_cols == 0 ) { // no collisions were detected.
-            return;
-        } else if (num_cols < 0 ) {
-            // ran out of pre-alloated memory for the collision system... :(
-            printf(COLORCODE_BOLD_RED "CollisionSystem ran out of memory for collisions. Please set a higher value of MAX_COLLISIONS_PER_OBJECT\n" COLORCODE_RESET);
-            assert(0);
-        } else {
-            // we found collisions!
-            cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_sync_collisions, 0,
-                    num_d_surface_voxels); // Dynamically calculate blockSize
-            gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
-            blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
-            gpu_update_sync_collisions<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_cols, watchDistance, this);
-            CUDA_CHECK_AFTER_CALL();
-        }
-    } else  {
         // Pairwise detection O(n ^ 2)
         blockSize = 16;
         dim3 dimBlock(blockSize, blockSize);
@@ -510,6 +479,88 @@ __device__ void VX3_VoxelyzeKernel::updateAttach() {
                 this); // invoke two dimensional gpu threads 'CUDA C++ Programming
         // Guide', Nov 2019, P52.
         CUDA_CHECK_AFTER_CALL();
+        VcudaDeviceSynchronize();
+        printf("Mode 0 -- Step %lu found %d collisions.\n", CurStepCount, tmpCollisionCount);
+        
+    } else if (mode == 1) {
+        if (num_d_surface_voxels == 1) {
+            return;
+        }
+        // Tree based collision detection!
+        int num_cols = 0;
+
+        // copy position information for each voxel into the collision system.
+        int num_SM, curDeviceId, gridSize, blockSize;
+        cudaGetDevice(&curDeviceId);
+        cudaDeviceGetAttribute(&num_SM, cudaDevAttrMultiProcessorCount, curDeviceId);
+        blockSize = (num_d_surface_voxels-1)/num_SM;
+        if (num_SM * blockSize < (num_d_surface_voxels)) {
+            blockSize += 1;
+        }
+        if (blockSize > 256) {
+            blockSize = 256;
+            gridSize = (num_d_surface_voxels + 255)/256; 
+        } else {
+            gridSize = num_SM;
+        }
+
+        gpu_update_collision_system_pos_radius<<<gridSize, blockSize>>>(d_surface_voxels, num_d_surface_voxels, watchDistance, this);
+        CUDA_CHECK_AFTER_CALL();
+        VcudaDeviceSynchronize();
+
+        // if number of surface voxels has changed, we need to re-init the collision detection tree.
+        // Note that as voxels move, it makes sense to re-build the tree to improve the performance of tree traversal in the
+        // find_collisions_device() method of the CollisionSystem, however rebuilding the tree is not necessary to have accurate collision detection.
+
+        if (true || d_collision_system->N != num_d_surface_voxels || CurStepCount%200 == 1) {
+            d_collision_system->N = num_d_surface_voxels;
+            d_collision_system->end =d_collision_system->start + num_d_surface_voxels;
+            d_collision_system->find_potential_collisions.NUM_INTERNAL = num_d_surface_voxels - 1;
+
+            d_collision_system->update_x_pos_ranks();
+            VcudaDeviceSynchronize();
+            d_collision_system->update_y_pos_ranks();
+            VcudaDeviceSynchronize();
+            d_collision_system->update_z_pos_ranks();
+            VcudaDeviceSynchronize();
+            d_collision_system->update_mortons();
+            VcudaDeviceSynchronize();
+            d_collision_system->build_tree();
+            VcudaDeviceSynchronize();
+        }
+        d_collision_system->update_bounding_boxes();
+        VcudaDeviceSynchronize();
+        num_cols = d_collision_system->find_collisions_device();
+        VcudaDeviceSynchronize();
+        if (num_cols == 0 ) { // no collisions were detected.
+            return;
+        } else if (num_cols < 0 ) {
+            // ran out of pre-alloated memory for the collision system... :(
+            printf(COLORCODE_BOLD_RED "CollisionSystem ran out of memory for collisions. Please set a higher value of MAX_COLLISIONS_PER_OBJECT\n" COLORCODE_RESET);
+            assert(0);
+        } else {
+            int num_SM, curDeviceId, gridSize, blockSize;
+            cudaGetDevice(&curDeviceId);
+            cudaDeviceGetAttribute(&num_SM, cudaDevAttrMultiProcessorCount, curDeviceId);
+            blockSize = (num_cols-1)/num_SM;
+            if (num_SM * blockSize < (num_cols)) {
+                blockSize += 1;
+            }
+            if (blockSize > 256) {
+                blockSize = 256;
+                gridSize = (num_cols + 255)/256; 
+            } else {
+                gridSize = num_SM;
+            }
+    
+            gpu_update_sync_collisions<<<gridSize, blockSize>>>(d_surface_voxels, num_cols, watchDistance, this);
+            CUDA_CHECK_AFTER_CALL();
+            VcudaDeviceSynchronize();
+            printf("Mode 1 -- Step %lu found %d real collisions and %d potential collisions\n", CurStepCount, tmpCollisionCount,  num_cols);
+            return;
+        }
+    }  else {
+        assert(0); // Mode must be 0 or 1
     }
 }
 
@@ -767,8 +818,22 @@ __device__ void handle_collision_attachment(VX3_Voxel *voxel1, VX3_Voxel *voxel2
         collision.updateContactForce();
         cache_contactForce1 = collision.contactForce(voxel1);
         cache_contactForce2 = collision.contactForce(voxel2);
-        voxel1->contactForce += cache_contactForce1;
-        voxel2->contactForce += cache_contactForce2;
+        // voxel1->contactForce += cache_contactForce1;
+        // voxel2->contactForce += cache_contactForce2;
+        
+        atomicAdd(&(voxel1->contactForce.x), cache_contactForce1.x);
+        atomicAdd(&(voxel1->contactForce.y), cache_contactForce1.y);
+        atomicAdd(&(voxel1->contactForce.z), cache_contactForce1.z);
+        
+        atomicAdd(&(voxel2->contactForce.x), cache_contactForce2.x);
+        atomicAdd(&(voxel2->contactForce.y), cache_contactForce2.y);
+        atomicAdd(&(voxel2->contactForce.z), cache_contactForce2.z);
+
+        atomicAdd(&(k->tmpCollisionCount), 1);
+        auto v1pos = voxel1->pos;
+        auto v2pos = voxel2->pos;
+        // printf("Collision between (%d %d %d -- %.2f %.2f %.2f %.2f) and (%d %d %d -- %.2f %.2f %.2f %.2f)\n", voxel1->ix, voxel1->iy, voxel1->iz, v1pos.x, v1pos.y, v1pos.z, voxel1->baseSizeAverage(), voxel2->ix, voxel2->iy, voxel2->iz, v2pos.x, v2pos.y, v2pos.z, voxel2->baseSizeAverage());
+
         if ((voxel1->mat->isTarget && !voxel2->mat->isTarget) || (voxel2->mat->isTarget && !voxel1->mat->isTarget)) {
             atomicAdd(&k->collisionCount, 1);
             if (k->EnableSignals) {
@@ -899,13 +964,16 @@ __device__ void handle_collision_attachment(VX3_Voxel *voxel1, VX3_Voxel *voxel2
 __global__ void gpu_update_collision_system_pos_radius(VX3_Voxel **surface_voxels, int num, double watchDistance, VX3_VoxelyzeKernel *k) {
     unsigned int voxelId = threadIdx.x + blockIdx.x * blockDim.x;
     if (voxelId < num) {
+        // printf("Updating Voxel %u (%u %u %u)\n",  voxelId, threadIdx.x, blockIdx.x, blockDim.x);
         float x, y, z, r;
         auto currentVoxel = surface_voxels[voxelId];
         auto pos = currentVoxel->pos;
         x = (float) pos.x;
         y = (float) pos.y;
         z = (float) pos.z;
-        r = (float) (currentVoxel->baseSizeAverage() * watchDistance);
+        r = (float) currentVoxel->baseSizeAverage() * (float) COLLISION_ENVELOPE_RADIUS;
+        assert (r > 0);
+        printf("Voxel %4u at (%15.10f %15.10f %15.10f %15.10f)\n", voxelId, x, y, z, r);
         k->d_collision_system->x_pos_d_ptr[voxelId] = x;
         k->d_collision_system->y_pos_d_ptr[voxelId] = y;
         k->d_collision_system->z_pos_d_ptr[voxelId] = z;
@@ -922,10 +990,9 @@ __global__ void gpu_update_sync_collisions(VX3_Voxel **surface_voxels, int num, 
         if (voxel1->removed || voxel2->removed) {
             return;
         }
-        handle_collision_attachment(voxel1, voxel2, watchDistance, k);
+        handle_collision_attachment(voxel2, voxel1, watchDistance, k);
     }
 }
-
 
 __global__ void gpu_update_attach(VX3_Voxel **surface_voxels, int num, double watchDistance, VX3_VoxelyzeKernel *k) {
     int first = threadIdx.x + blockIdx.x * blockDim.x;

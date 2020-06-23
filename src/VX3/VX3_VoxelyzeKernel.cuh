@@ -36,7 +36,7 @@ class VX3_VoxelyzeKernel {
     __device__ bool StopConditionMet();
     __device__ void updateTemperature();
     __device__ void syncVectors();
-    __device__ void updateAttach();
+    __device__ void updateAttach(int mode);
     __device__ void updateDetach();
     __device__ void regenerateSurfaceVoxels();
     __device__ VX3_MaterialLink *combinedMaterial(VX3_MaterialVoxel *mat1, VX3_MaterialVoxel *mat2);
@@ -124,6 +124,7 @@ class VX3_VoxelyzeKernel {
     VX3_MathTreeToken StopConditionFormula[1024];
 
     int collisionCount = 0;
+    int tmpCollisionCount = 0;
 
     //Calculate Angle
     //A---B----C
