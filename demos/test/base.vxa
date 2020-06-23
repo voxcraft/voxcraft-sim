@@ -1,12 +1,17 @@
 <VXA Version="1.1">
     <Simulator>
+        <SecondaryExperiment>1</SecondaryExperiment>
+        <ReinitializeInitialPositionAfterThisManySeconds>5.1</ReinitializeInitialPositionAfterThisManySeconds>
+        <MaxDistInVoxelLengthsToCountAsPair>3</MaxDistInVoxelLengthsToCountAsPair>
         <EnableCilia>1</EnableCilia>
-        <Integration>0.9</Integration>
+        <Integration>
+            <DtFrac>1.0</DtFrac>
+        </Integration>
         <AttachDetach>
-            <watchDistance>3</watchDistance>
+            <watchDistance>1</watchDistance>
             <EnableCollision>1</EnableCollision>
             <EnableAttach>1</EnableAttach>
-            <EnableDetach>0</EnableDetach>
+            <EnableDetach>1</EnableDetach>
             <AttachCondition>
                 <Condition_0>
                     <mtCONST>1</mtCONST>
@@ -19,8 +24,7 @@
             <RecordVoxel>1</RecordVoxel>
             <RecordLink>1</RecordLink>
         </RecordHistory>
-        <ForceField>
-        </ForceField>
+        <ForceField></ForceField>
         <Damping>
             <BondDampingZ>1</BondDampingZ>
             <ColDampingZ>0.8</ColDampingZ>
@@ -30,7 +34,7 @@
             <StopConditionFormula>
                 <mtSUB>
                     <mtVAR>t</mtVAR>
-                    <mtCONST>1</mtCONST>
+                    <mtCONST>11</mtCONST>
                 </mtSUB>
             </StopConditionFormula>
         </StopCondition>
