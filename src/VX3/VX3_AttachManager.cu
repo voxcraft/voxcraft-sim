@@ -65,7 +65,7 @@ __device__ bool VX3_AttachManager::tryAttach(VX3_Voxel *voxel1, VX3_Voxel *voxel
 
                 d_kernel->isSurfaceChanged = true;
                 printf("New Link formed.\n");
-                d_kernel->EnableCilia = false; // for debug: no cilia after attachment.
+                // d_kernel->EnableCilia = false; // for debug: no cilia after attachment.
                 ret = true;
                 totalLinksFormed++;
             }
