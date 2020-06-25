@@ -59,9 +59,9 @@
             "program": "${workspaceFolder}/build/vx3_node_worker",
             "args": [
                 "-i",
-                "${workspaceFolder}/demos/test/workspace/locally/20200609192157.vxt",
+                "${workspaceFolder}/demos/test/workspace/locally/20200625104143.vxt",
                 "-o",
-                "${workspaceFolder}/demos/test/workspace/locally/20200609192157.vxr",
+                "${workspaceFolder}/demos/test/workspace/locally/20200625104143.vxr",
                 "-f"
             ],
             "stopAtEntry": false,

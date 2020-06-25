@@ -4,9 +4,6 @@ set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
 project(voxcraft-sim LANGUAGES CXX CUDA)
 set(CMAKE_CXX_STANDARD 17)
 
-include_directories(/usr/local/cuda/include) # for cuda intellisense
-include_directories(3rdparty/cub) # for cub
-
 include_directories(src)
 include_directories(src/VX3)
 include_directories(src/Utils)
@@ -19,8 +16,9 @@ file( GLOB VXA_SRC_cpp src/VXA/*.cpp )
 file( GLOB OLD_SRC src/old/*.c* )
 file(GLOB_RECURSE COLLISION_DETECT_SRC src/Cu-Collision-Detection/src/* src/Cu-Collision-Detection/include/*)
 
-# find_package(Thrust REQUIRED CONFIG)
-# thrust_create_target(Thrust)
+set(Thrust_DIR 3rdparty/thrust/thrust/cmake)
+find_package(Thrust REQUIRED CONFIG)
+thrust_create_target(Thrust)
 
 add_library(voxelyze.3.0 ${VX3_SRC_cu} ${VX3_SRC_cpp} ${VXA_SRC_cpp} ${OLD_SRC} ${COLLISION_DETECT_SRC})
 add_executable(voxcraft-sim src/Executables/voxcraft-sim.cpp)
@@ -33,34 +31,35 @@ target_link_libraries(vx3_test PUBLIC voxelyze.3.0)
 # for Boost
 set(Boost_USE_STATIC_LIBS   ON)
 find_package(Boost REQUIRED COMPONENTS filesystem thread chrono program_options)
-# target_link_libraries(voxelyze.3.0 PUBLIC ${Boost_LIBRARIES} Thrust)
-target_link_libraries(voxelyze.3.0 PUBLIC ${Boost_LIBRARIES})
+target_link_libraries(voxelyze.3.0 PUBLIC ${Boost_LIBRARIES} Thrust)
 target_link_libraries(voxcraft-sim PUBLIC ${Boost_LIBRARIES})
 target_link_libraries(vx3_node_worker PUBLIC ${Boost_LIBRARIES})
 target_link_libraries(vx3_node_daemon PUBLIC ${Boost_LIBRARIES})
 
 
 # CUDA options
+find_package(CUDA) # for CUDA_SELECT_NVCC_ARCH_FLAGS function
+CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS)
+
+set_target_properties(voxelyze.3.0 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(vx3_node_worker PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(vx3_test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+
 if(NOT DEFINED CUDA_DEBUG)
   set(CUDA_DEBUG "-G or not" ON)
   message("Set CUDA_DEBUG to ON.")
 endif(NOT DEFINED CUDA_DEBUG)
-set_target_properties(voxelyze.3.0 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-set_target_properties(vx3_node_worker PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-set_target_properties(vx3_test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-    #-G means debug info in GPU, so you can step in GPU kernels
-    if (CUDA_DEBUG)
-      message("Compile with debug information.")
-      target_compile_options(voxelyze.3.0     PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-G -arch=compute_60 -code=sm_60>)
-      target_compile_options(vx3_node_worker  PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-G -arch=compute_60 -code=sm_60>)
-      target_compile_options(vx3_test         PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-G -arch=compute_60 -code=sm_60>)
-    else (CUDA_DEBUG)
-      target_compile_options(voxelyze.3.0     PUBLIC $<$<COMPILE_LANGUAGE:CUDA>: -arch=compute_60 -code=sm_60>)
-      target_compile_options(vx3_node_worker  PUBLIC $<$<COMPILE_LANGUAGE:CUDA>: -arch=compute_60 -code=sm_60>)
-      target_compile_options(vx3_test         PUBLIC $<$<COMPILE_LANGUAGE:CUDA>: -arch=compute_60 -code=sm_60>)
-    endif(CUDA_DEBUG)
-list(APPEND CMAKE_CUDA_FLAGS "-gencode=arch=compute_60,code=sm_60")
+#-G means debug info in GPU, so you can step in GPU kernels
+if (CUDA_DEBUG)
+  message("Compile with debug information.")
+  set(CUDA_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-G ${ARCH_FLAGS}>)
+else (CUDA_DEBUG)
+  set(CUDA_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>: ${ARCH_FLAGS}>)
+endif(CUDA_DEBUG)
 
+target_compile_options(voxelyze.3.0     PUBLIC ${CUDA_OPTIONS})
+target_compile_options(vx3_node_worker  PUBLIC ${CUDA_OPTIONS})
+target_compile_options(vx3_test         PUBLIC ${CUDA_OPTIONS})
 
 #for gtest
 ################################
@@ -105,7 +104,7 @@ if (test)
 
   set_target_properties(runUnitTests PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
-  target_compile_options(runUnitTests         PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-G -arch=compute_60 -code=compute_60>)
+  target_compile_options(runUnitTests PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-G ${ARCH_FLAGS}>) # always with -G
 endif()
 
 set(CMAKE_VERBOSE_MAKEFILE OFF) #turn on if we want to debug in compilation.

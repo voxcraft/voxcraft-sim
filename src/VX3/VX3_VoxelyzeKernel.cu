@@ -564,7 +564,7 @@ __device__ void VX3_VoxelyzeKernel::updateAttach(int mode) {
             gpu_update_sync_collisions<<<gridSize, blockSize>>>(d_surface_voxels, num_cols, watchDistance, this);
             CUDA_CHECK_AFTER_CALL();
             VcudaDeviceSynchronize();
-            printf("Step %lu with %d surface voxels and %d total voxels found %d real collisions and %d potential collisions\n", CurStepCount, num_d_surface_voxels, num_d_voxels, tmpCollisionCount,  num_cols);
+            // printf("Step %lu with %d surface voxels and %d total voxels found %d real collisions and %d potential collisions\n", CurStepCount, num_d_surface_voxels, num_d_voxels, tmpCollisionCount,  num_cols);
             
             // for (int i = 0; i < 2* num_d_surface_voxels - 1; i++) {
             //     BoundingBox b = d_collision_system->bounding_boxes_d_ptr[i];
