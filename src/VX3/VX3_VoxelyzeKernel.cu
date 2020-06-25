@@ -296,21 +296,13 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
     }
 
     if (enableAttach || EnableCollision) { // either attachment and collision need measurement for pairwise distances
-        printf("Step %lu has %d surface voxels and %d total voxels.\n", CurStepCount,  num_d_surface_voxels, num_d_voxels);
-        updateAttach(0);
+        // updateAttach(0);
+        // int num_cols = tmpCollisionCount;
         updateAttach(1);
-        if (tmpCollisionCount != 0) {
-            // print all voxel info.
-            // for (int print_idx = 0; print_idx < num_d_surface_voxels; print_idx++) {
-            //     auto currVox = d_surface_voxels[print_idx];
-            //     auto pos = currVox->pos;
-            //     double r = currVox->baseSizeAverage() * COLLISION_ENVELOPE_RADIUS;
-
-            //     printf("Voxel %d at idx (%d %d %d) is at pos (%.15f %.15f %.15f) with r: %.15f\n", print_idx, currVox->ix, currVox->iy, currVox->iz, pos.x, pos.y, pos.z, r);   
-            // }
-            assert(0);
-        }
-        printf("\n\n");
+        // if(num_cols != tmpCollisionCount) {
+            // printf("ERROR!!\n N2 algorithm found a different number of collisions than the Tree algorithm did!\n N2: %d\nTree: %d\n", num_cols, tmpCollisionCount);
+        // }
+        // assert(tmpCollisionCount == num_cols);    
     }
     if (enableDetach) {
         updateDetach();
@@ -474,13 +466,11 @@ __device__ void VX3_VoxelyzeKernel::updateAttach(int mode) {
         blockSize = 16;
         dim3 dimBlock(blockSize, blockSize);
         dim3 dimGrid((num_d_surface_voxels + dimBlock.x - 1) / dimBlock.x, (num_d_surface_voxels + dimBlock.y - 1) / dimBlock.y);
-        // printf("num_d_surface_voxels %d\n", num_d_surface_voxels);
         gpu_update_attach<<<dimGrid, dimBlock>>>(d_surface_voxels, num_d_surface_voxels, watchDistance,
                 this); // invoke two dimensional gpu threads 'CUDA C++ Programming
         // Guide', Nov 2019, P52.
         CUDA_CHECK_AFTER_CALL();
         VcudaDeviceSynchronize();
-        printf("Mode 0 -- Step %lu found %d collisions.\n", CurStepCount, tmpCollisionCount);
         
     } else if (mode == 1) {
         if (num_d_surface_voxels == 1) {
@@ -512,26 +502,33 @@ __device__ void VX3_VoxelyzeKernel::updateAttach(int mode) {
         // Note that as voxels move, it makes sense to re-build the tree to improve the performance of tree traversal in the
         // find_collisions_device() method of the CollisionSystem, however rebuilding the tree is not necessary to have accurate collision detection.
 
-        if (true || d_collision_system->N != num_d_surface_voxels || CurStepCount%200 == 1) {
+        if ( d_collision_system->N != num_d_surface_voxels || CurStepCount <= 1) {
             d_collision_system->N = num_d_surface_voxels;
-            d_collision_system->end =d_collision_system->start + num_d_surface_voxels;
-            d_collision_system->find_potential_collisions.NUM_INTERNAL = num_d_surface_voxels - 1;
+            d_collision_system->end = d_collision_system->start + num_d_surface_voxels;
+            printf("Step %lu Updated Collision System surface voxel counts\n", CurStepCount);
+            VcudaDeviceSynchronize();
 
             d_collision_system->update_x_pos_ranks();
-            VcudaDeviceSynchronize();
             d_collision_system->update_y_pos_ranks();
-            VcudaDeviceSynchronize();
             d_collision_system->update_z_pos_ranks();
-            VcudaDeviceSynchronize();
             d_collision_system->update_mortons();
-            VcudaDeviceSynchronize();
             d_collision_system->build_tree();
-            VcudaDeviceSynchronize();
+        }
+        if (CurStepCount%200 == 1 && CurStepCount > 100) {
+            d_collision_system->update_x_pos_ranks();
+        } else if (CurStepCount%200 == 2 && CurStepCount > 100) {
+            d_collision_system->update_y_pos_ranks();
+        } else if (CurStepCount%200 == 3 && CurStepCount > 100) {
+            d_collision_system->update_z_pos_ranks();
+        } else if (CurStepCount%200 == 4 && CurStepCount > 100) {
+            d_collision_system->update_mortons();
+        } else if (CurStepCount%200 == 5 && CurStepCount > 100) {
+            d_collision_system->build_tree();
         }
         d_collision_system->update_bounding_boxes();
-        VcudaDeviceSynchronize();
+
         num_cols = d_collision_system->find_collisions_device();
-        VcudaDeviceSynchronize();
+
         if (num_cols == 0 ) { // no collisions were detected.
             return;
         } else if (num_cols < 0 ) {
@@ -556,10 +553,57 @@ __device__ void VX3_VoxelyzeKernel::updateAttach(int mode) {
             gpu_update_sync_collisions<<<gridSize, blockSize>>>(d_surface_voxels, num_cols, watchDistance, this);
             CUDA_CHECK_AFTER_CALL();
             VcudaDeviceSynchronize();
-            printf("Mode 1 -- Step %lu found %d real collisions and %d potential collisions\n", CurStepCount, tmpCollisionCount,  num_cols);
+            printf("Step %lu with %d surface voxels and %d total voxels found %d real collisions and %d potential collisions\n", CurStepCount, num_d_surface_voxels, num_d_voxels, tmpCollisionCount,  num_cols);
+            
+            // for (int i = 0; i < 2* num_d_surface_voxels - 1; i++) {
+            //     BoundingBox b = d_collision_system->bounding_boxes_d_ptr[i];
+            //     printf("BoundingBox %d: [(%5.2f %5.2f), (%5.2f %5.2f), (%5.2f %5.2f)]\n", i, b.x_min, b.x_max, b.y_min, b.y_max, b.z_min, b.z_max);
+            // }
+            // printf("morton_numbers = [");
+            // for (int i = 0; i < num_d_surface_voxels; i++) {
+            //     printf("%lu, ", d_collision_system->mortons_d_ptr[i]);
+            // }
+            // printf("]\n\nleaf_parents = [");
+            // for (int i = 0; i < num_d_surface_voxels; i++) {
+            //     printf("%u, ", d_collision_system->leaf_parent_d_ptr[i]);
+            // }
+            // printf("]\n\ninternal_parent = [");
+            // for (int i = 0; i < num_d_surface_voxels - 1; i++) {
+            //     printf("%u, ", d_collision_system->internal_parent_d_ptr[i]);
+            // }
+            
+            // printf("]\n\ninternal_childA = [");
+            // for (int i = 0; i < num_d_surface_voxels - 1; i++) {
+            //     printf("%u, ", d_collision_system->internal_childA_d_ptr[i]);
+            // }
+            
+            // printf("]\n\ninternal_childB = [");
+            // for (int i = 0; i < num_d_surface_voxels - 1; i++) {
+            //     printf("%u, ", d_collision_system->internal_childB_d_ptr[i]);
+            // }
+
+            // printf("]\n\nBBoxFlags = [");
+            // for (int i = 0; i < num_d_surface_voxels - 1; i++) {
+            //     printf("%u, ", d_collision_system->internal_node_bbox_complete_flag_d_ptr[i]);
+            // }
+            
+            // printf("]\n\n");
+
+            // for (int obj_id = 0; obj_id < 10; obj_id++) {
+            //     printf("Voxel %d: (%.4f %.4f %.4f %.4f)\n", obj_id, d_surface_voxels[obj_id]->pos.x, 
+            //                                                         d_surface_voxels[obj_id]->pos.y,
+            //                                                         d_surface_voxels[obj_id]->pos.z,
+            //                                                         (float) d_surface_voxels[obj_id]->baseSizeAverage() * (float) COLLISION_ENVELOPE_RADIUS * 2.f);
+            // }
+            // printf("X   pos are sorted: %d\n", (int) thrust::is_sorted(thrust::device, d_collision_system->x_pos_d_ptr, d_collision_system->x_pos_d_ptr + d_collision_system->N));
+            // printf("Y   pos are sorted: %d\n", (int) thrust::is_sorted(thrust::device, d_collision_system->y_pos_d_ptr, d_collision_system->y_pos_d_ptr + d_collision_system->N));
+            // printf("Z   pos are sorted: %d\n", (int) thrust::is_sorted(thrust::device, d_collision_system->z_pos_d_ptr, d_collision_system->z_pos_d_ptr + d_collision_system->N));
+            // printf("Mortons are sorted: %d\n", (int) thrust::is_sorted(thrust::device, d_collision_system->mortons_d_ptr, d_collision_system->mortons_d_ptr + d_collision_system->N));
+            // assert(0);
             return;
         }
     }  else {
+        printf("Please specify a mode in updateAttach(int mode)\n");
         assert(0); // Mode must be 0 or 1
     }
 }
@@ -832,7 +876,6 @@ __device__ void handle_collision_attachment(VX3_Voxel *voxel1, VX3_Voxel *voxel2
         atomicAdd(&(k->tmpCollisionCount), 1);
         auto v1pos = voxel1->pos;
         auto v2pos = voxel2->pos;
-        // printf("Collision between (%d %d %d -- %.2f %.2f %.2f %.2f) and (%d %d %d -- %.2f %.2f %.2f %.2f)\n", voxel1->ix, voxel1->iy, voxel1->iz, v1pos.x, v1pos.y, v1pos.z, voxel1->baseSizeAverage(), voxel2->ix, voxel2->iy, voxel2->iz, v2pos.x, v2pos.y, v2pos.z, voxel2->baseSizeAverage());
 
         if ((voxel1->mat->isTarget && !voxel2->mat->isTarget) || (voxel2->mat->isTarget && !voxel1->mat->isTarget)) {
             atomicAdd(&k->collisionCount, 1);
@@ -971,9 +1014,8 @@ __global__ void gpu_update_collision_system_pos_radius(VX3_Voxel **surface_voxel
         x = (float) pos.x;
         y = (float) pos.y;
         z = (float) pos.z;
-        r = (float) currentVoxel->baseSizeAverage() * (float) COLLISION_ENVELOPE_RADIUS;
+        r = (float) currentVoxel->baseSizeAverage() * (float) COLLISION_ENVELOPE_RADIUS * 1.001f;
         assert (r > 0);
-        printf("Voxel %4u at (%15.10f %15.10f %15.10f %15.10f)\n", voxelId, x, y, z, r);
         k->d_collision_system->x_pos_d_ptr[voxelId] = x;
         k->d_collision_system->y_pos_d_ptr[voxelId] = y;
         k->d_collision_system->z_pos_d_ptr[voxelId] = z;

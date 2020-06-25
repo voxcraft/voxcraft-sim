@@ -14,7 +14,7 @@
 #include "VX3_Voxel.h"
 #include "VX_Enums.h"
 
-#include "../CollisionDetection/include/CollisionSystem.cuh"
+#include "../Cu-Collision-Detection/include/CollisionSystem.cuh"
 
 /*
  * VX3_VoxelyzeKernel is a GPU mock class of CVoxelyze

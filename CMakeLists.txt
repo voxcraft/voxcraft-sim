@@ -16,7 +16,7 @@ file( GLOB VX3_SRC_cu src/VX3/*.cu )
 file( GLOB VX3_SRC_cpp src/VX3/*.cpp )
 file( GLOB VXA_SRC_cpp src/VXA/*.cpp )
 file( GLOB OLD_SRC src/old/*.c* )
-file(GLOB_RECURSE COLLISION_DETECT_SRC src/CollisionDetection/*)
+file(GLOB_RECURSE COLLISION_DETECT_SRC src/Cu-Collision-Detection/src/* src/Cu-Collision-Detection/include/*)
 
 find_package(Thrust REQUIRED CONFIG)
 thrust_create_target(Thrust)
