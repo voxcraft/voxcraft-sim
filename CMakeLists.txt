@@ -39,8 +39,9 @@ target_link_libraries(vx3_node_daemon PUBLIC ${Boost_LIBRARIES})
 
 # CUDA options
 find_package(CUDA) # for CUDA_SELECT_NVCC_ARCH_FLAGS function
-CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS)
+CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS 6.0 6.5 7.0)
 list(GET ARCH_FLAGS -1 ARCH_FLAG) # use newest architecture
+message("Using GPU Architecture: " ${ARCH_FLAG})
 set(ARCH_FLAGS "-gencode" ${ARCH_FLAG})
 
 set_target_properties(voxelyze.3.0 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
