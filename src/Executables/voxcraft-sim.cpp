@@ -28,8 +28,8 @@ int main(int argc, char** argv) {
     po::options_description desc(APP_DESCRIPTION);
     desc.add_options()
     ("help,h", "produce help message")
-    ("locally,l", "If this machine already has GPUs, locally run tasks on this machine.")
-    ("nodes,n", po::value<int>(), "The number of nodes you want to start simultaneously. (Not implemented.)")
+    // ("locally,l", "If this machine already has GPUs, locally run tasks on this machine.")
+    // ("nodes,n", po::value<int>(), "The number of nodes you want to start simultaneously. (Not implemented.)")
     ("input,i", po::value<std::string>(), "Set input directory path which contains a generation of VXA files.")
     ("output,o", po::value<std::string>(), "Set output file path for report. (e.g. report_1.xml)")
     ("worker,w", po::value<std::string>(), "Specify which worker you want to use. vx3_node_worker by default.")
@@ -45,17 +45,17 @@ int main(int argc, char** argv) {
     }
     bool has_output = (bool)vm.count("output");
     bool run_locally = true;
-    if (vm.count("nodes") && vm.count("locally")) {
-        std::cout << "ERROR: -n and -s cannot use together.\n";
-        std::cout << desc << "\n";
-        return 1;
-    }
-    if (!vm.count("nodes")) {
-        std::cout << "Running simulation locally by default.\n";
-        run_locally = true;
-    } else {
-        run_locally = false;
-    }
+    // if (vm.count("nodes") && vm.count("locally")) {
+    //     std::cout << "ERROR: -n and -s cannot use together.\n";
+    //     std::cout << desc << "\n";
+    //     return 1;
+    // }
+    // if (!vm.count("nodes")) {
+    //     std::cout << "Running simulation locally by default.\n";
+    //     run_locally = true;
+    // } else {
+    //     run_locally = false;
+    // }
     fs::path input(vm["input"].as<std::string>());
     fs::path output;
     if (has_output) {

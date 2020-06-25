@@ -1,7 +1,10 @@
+# Custom
 build
+build_Release
 cmake-build-debug
 release
-.vscode
+workspace
+a.history
 
 # Prerequisites
 *.d

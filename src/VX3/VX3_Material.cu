@@ -460,7 +460,7 @@ __device__ bool VX3_Material::updateDerived() {
     return true;
 }
 
-__device__ void VX3_Material::syncVectors() {
+__device__ void VX3_Material::deviceInit() {
     // hd_strainData -> d_strainData
     d_strainData.clear();
     d_strainData.push_back(0.0f);

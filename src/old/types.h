@@ -18,6 +18,7 @@ enum linkDirection {
     Z_POS=4,			//!< Positive Z direction
     Z_NEG=5				//!< Negative Z direction
 }; 
+
 //! Defines each of 8 corners of a voxel.
 enum voxelCorner {
     NNN = 0, //0b000

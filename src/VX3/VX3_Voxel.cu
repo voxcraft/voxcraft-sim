@@ -52,11 +52,25 @@ VX3_Voxel::~VX3_Voxel() {
     }
 }
 
-__device__ void VX3_Voxel::syncVectors() {
+__device__ void VX3_Voxel::deviceInit(VX3_VoxelyzeKernel* k) {
+    d_kernel = k;
     d_signal.value = 0;
     d_signal.activeTime = 0;
 
     d_signals.clear();
+
+    // init linkdir
+    for (int i=0;i<6;i++) {
+        if (links[i]) {
+            if (links[i]->pVNeg==this) {
+                links[i]->linkdirNeg = (linkDirection)i;
+            } else if (links[i]->pVPos==this) {
+                links[i]->linkdirPos = (linkDirection)i;
+            } else {
+                printf("linkdir initialization error.\n");
+            }
+        }
+    }
 }
 __device__ VX3_Voxel *VX3_Voxel::adjacentVoxel(linkDirection direction) const {
     VX3_Link *pL = links[(int)direction];
@@ -160,6 +174,12 @@ __device__ VX3_Vec3D<float> VX3_Voxel::cornerOffset(voxelCorner corner) const {
 
 // http://klas-physics.googlecode.com/svn/trunk/src/general/Integrator.cpp (reference)
 __device__ void VX3_Voxel::timeStep(double dt, double currentTime, VX3_VoxelyzeKernel *k) {
+    if (freezeAllVoxelsAfterAttach) {
+        if (k->d_attach_manager->totalLinksFormed>=1) {
+            return;
+            //freeze all voxels when new link forms. just for a snapshot to analyze the position and angles.
+        }
+    }
     previousDt = dt;
     if (dt == 0.0f)
         return;
@@ -192,6 +212,10 @@ __device__ void VX3_Voxel::timeStep(double dt, double currentTime, VX3_VoxelyzeK
 
     assert(!(curForce.x != curForce.x) || !(curForce.y != curForce.y) || !(curForce.z != curForce.z)); // assert non QNAN
     linMom += curForce * dt;
+    //damp the giggling after new link formed.
+    if (d_group->hasNewLink) {
+        linMom = linMom * 0.99; // TODO: keep damping until damped???
+    }
 
     VX3_Vec3D<double> translate(linMom * (dt * mat->_massInverse)); // movement of the voxel this timestep
 
@@ -217,6 +241,11 @@ __device__ void VX3_Voxel::timeStep(double dt, double currentTime, VX3_VoxelyzeK
     // Rotation
     VX3_Vec3D<> curMoment = moment();
     angMom += curMoment * dt;
+
+    // // damp the giggling after new link formed.
+    if (d_group->hasNewLink) {
+        angMom = angMom * 0.99; // TODO: keep damping until damped???
+    }
 
     orient = VX3_Quat3D<>(angMom * (dt * mat->_momentInertiaInverse)) * orient; // update the orientation
     if (ext) {
@@ -352,10 +381,10 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
     // forces from internal bonds
     VX3_Vec3D<double> totalForce(0, 0, 0);
     for (int i = 0; i < 6; i++) {
-        if (links[i])
-            totalForce += links[i]->force(isNegative((linkDirection)i)); // total force in LCS
+        if (links[i]) {
+            totalForce += links[i]->force(this); // total force in LCS
+        }
     }
-
     totalForce = orient.RotateVec3D(totalForce); // from local to global coordinates
     assert(!(totalForce.x != totalForce.x) || !(totalForce.y != totalForce.y) || !(totalForce.z != totalForce.z)); // assert non QNAN
 
@@ -384,7 +413,7 @@ __device__ VX3_Vec3D<double> VX3_Voxel::moment() {
     VX3_Vec3D<double> totalMoment(0, 0, 0);
     for (int i = 0; i < 6; i++) {
         if (links[i]) {
-            totalMoment += links[i]->moment(isNegative((linkDirection)i)); // total force in LCS
+            totalMoment += links[i]->moment(this); // total force in LCS
         }
     }
     totalMoment = orient.RotateVec3D(totalMoment);
@@ -529,4 +558,27 @@ __device__ void VX3_Voxel::enableCollisions(bool enabled, float watchRadius) {
 
 __device__ void VX3_Voxel::generateNearby(int linkDepth, int gindex, bool surfaceOnly) {
     assert(false); // not used. near by has logic flaws.
+}
+
+__device__ void VX3_Voxel::updateGroup() {
+    if (d_group==NULL) {
+        d_group = new VX3_VoxelGroup(d_kernel);
+        d_group->updateGroup(this);
+    }
+}
+
+__device__ void VX3_Voxel::switchGroupTo(VX3_VoxelGroup* group) {
+    if (d_group==group)
+        return;
+    if (d_group) {
+        // TODO: check all memory in that group is freed if necessary.
+        // use delete because this is created by new. (new and delete, malloc and free)
+        // VX3_VoxelGroup* to_delete = d_group; // because d_group->switchAllVoxelsTo() will change the pointer d_group, so save it here for deletion.
+        d_group->switchAllVoxelsTo(group);
+        // delete to_delete;
+        // Free this memory seems will spend a lot of time checking conditions, just leave it there for now.
+        // d_group = group;
+    } else {
+        d_group = group;
+    }
 }

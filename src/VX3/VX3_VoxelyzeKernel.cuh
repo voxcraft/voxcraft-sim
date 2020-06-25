@@ -13,6 +13,7 @@
 #include "VX3_MaterialLink.h"
 #include "VX3_Voxel.h"
 #include "VX_Enums.h"
+#include "VX3_AttachManager.h"
 
 #include "../Cu-Collision-Detection/include/CollisionSystem.cuh"
 
@@ -28,6 +29,7 @@ class VX3_VoxelyzeKernel {
 
     void cleanup();
 
+    __device__ void deviceInit();
 
     /* Cuda methods */
     __device__ bool doTimeStep(float dt = -1.0f);
@@ -35,7 +37,6 @@ class VX3_VoxelyzeKernel {
     __device__ void updateCurrentCenterOfMass();
     __device__ bool StopConditionMet();
     __device__ void updateTemperature();
-    __device__ void syncVectors();
     __device__ void updateAttach(int mode);
     __device__ void updateDetach();
     __device__ void regenerateSurfaceVoxels();
@@ -165,6 +166,8 @@ class VX3_VoxelyzeKernel {
     bool InitialPositionReinitialized = false;
 
     int EnableExpansion=0;
+
+    VX3_AttachManager* d_attach_manager;
 };
 
 #endif // VX3_VOXELYZE_KERNEL_H

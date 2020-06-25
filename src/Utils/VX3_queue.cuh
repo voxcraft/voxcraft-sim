@@ -69,11 +69,11 @@ template <typename T> class VX3_dQueue {
                     }
                     if (main) {
                         memcpy(new_main, main, sizeof_chunk * sizeof(T));
-                        memcpy(new_main + sizeof_chunk * sizeof(T), main, sizeof_chunk * sizeof(T));
+                        memcpy(new_main + sizeof_chunk, main, sizeof_chunk * sizeof(T));
                         delete main;
                     } else {
                         memcpy(new_main, default_memory, sizeof_chunk * sizeof(T));
-                        memcpy(new_main + sizeof_chunk * sizeof(T), default_memory, sizeof_chunk * sizeof(T));
+                        memcpy(new_main + sizeof_chunk, default_memory, sizeof_chunk * sizeof(T));
                     }
                     main = new_main;
 
