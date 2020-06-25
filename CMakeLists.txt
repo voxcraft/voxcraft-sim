@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.5.0)
 set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
-set(Thrust_DIR /home/panda/cuda_installed/thrust/thrust/cmake)
 project(voxcraft-sim LANGUAGES CXX CUDA)
 set(CMAKE_CXX_STANDARD 17)
 
