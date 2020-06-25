@@ -1,0 +1,36 @@
+{
+    "version": "2.0.0",
+    "command": "sh",
+    "args": [
+        "-c"
+    ],
+    "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "showReuseMessage": false,
+    },
+    "tasks": [
+        {
+            "label": "cmake all",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceRoot}/build"
+            },
+            "args": [
+                "cmake -DCMAKE_BUILD_TYPE=Debug ..; make -j 8"
+            ]
+        },
+        {
+            "label": "make test",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceRoot}/build"
+            },
+            "args": [
+                "cmake -DCMAKE_BUILD_TYPE=Debug ..; make vx3_test"
+            ]
+        },
+    ]
+}

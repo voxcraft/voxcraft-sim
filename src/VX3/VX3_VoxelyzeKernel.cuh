@@ -13,6 +13,7 @@
 #include "VX3_MaterialLink.h"
 #include "VX3_Voxel.h"
 #include "VX_Enums.h"
+#include "VX3_AttachManager.h"
 
 /*
  * VX3_VoxelyzeKernel is a GPU mock class of CVoxelyze
@@ -26,13 +27,14 @@ class VX3_VoxelyzeKernel {
 
     void cleanup();
 
+    __device__ void deviceInit();
+
     /* Cuda methods */
     __device__ bool doTimeStep(float dt = -1.0f);
     __device__ double recommendedTimeStep();
     __device__ void updateCurrentCenterOfMass();
     __device__ bool StopConditionMet();
     __device__ void updateTemperature();
-    __device__ void syncVectors();
     __device__ void updateAttach();
     __device__ void updateDetach();
     __device__ void regenerateSurfaceVoxels();
@@ -159,6 +161,8 @@ class VX3_VoxelyzeKernel {
     bool InitialPositionReinitialized = false;
 
     int EnableExpansion=0;
+
+    VX3_AttachManager* d_attach_manager;
 };
 
 #endif // VX3_VOXELYZE_KERNEL_H

@@ -1,0 +1,120 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "unitTest",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/runUnitTests",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/local/cuda/bin/cuda-gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "cmake all",
+        },
+        {
+            "name": "Debug Salamander",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/vx3_node_worker",
+            "args": [
+                "-i",
+                "${workspaceFolder}/demos/salamander/workspace/locally/20200603203952.vxt",
+                "-o",
+                "${workspaceFolder}/demos/salamander/workspace/locally/20200603203952.vxr",
+                "-f"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/demos/salamander",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/local/cuda/bin/cuda-gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "cmake all",
+        },
+        {
+            "name": "Debug test/1.py",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/vx3_node_worker",
+            "args": [
+                "-i",
+                "${workspaceFolder}/demos/test/workspace/locally/20200609192157.vxt",
+                "-o",
+                "${workspaceFolder}/demos/test/workspace/locally/20200609192157.vxr",
+                "-f"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/demos/test",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/local/cuda/bin/cuda-gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "cmake all",
+        },
+        {
+            "name": "Debug test",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/vx3_test",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/demos/test",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/local/cuda/bin/cuda-gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "make test",
+        },
+        {
+            "name": "Python: test/1.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/demos/test/1.py",
+            "cwd": "${workspaceFolder}/demos/test/",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: salamander",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/demos/salamander/salamander.py",
+            "cwd": "${workspaceFolder}/demos/salamander/",
+            "console": "integratedTerminal"
+        }
+    ]
+}

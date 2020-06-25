@@ -1,6 +1,7 @@
 // Implementation of double hashing dictionary. Refer to https://en.wikipedia.org/wiki/Double_hashing and https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-006-introduction-to-algorithms-fall-2011/lecture-videos/lecture-10-open-addressing-cryptographic-hashing/
 #if !defined(VX3_DICTIONARY_H)
 #define VX3_DICTIONARY_H
+#include <stdio.h>
 #include <assert.h>
 #include <curand.h>
 #include <curand_kernel.h>
@@ -18,7 +19,7 @@ template <typename T, typename U>
 class VX3_dDictionary {
 public:
     // Initialization. seed is for testing purpose.
-    __device__ __host__ __inline__ VX3_dDictionary(){}
+    __device__ __host__ __inline__ VX3_dDictionary(){ clear(); }
     __device__ __inline__ void clear(int seed=0) {
         random_seed = seed;
         num_elements = 0;

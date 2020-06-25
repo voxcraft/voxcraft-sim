@@ -32,7 +32,9 @@ public:
 	__device__ VX3_Vec3D(const T dx, const T dy, const T dz) {x = dx; y = dy; z = dz;} //!< Constructor with specified individual values.
 	__device__ VX3_Vec3D(const VX3_Vec3D<T>& s) {x = s.x; y = s.y; z = s.z;} //!< Copy constructor.
 
-	__device__ inline void debug() { debugDevice("Vec3D", printf("x:%f, y:%f, z:%f\t", x, y, z) ); }
+	__device__ inline void debug() { 
+		printf("(Vec3D) x:%e, y:%e, z:%e\n", x, y, z);
+	}
 
 #ifdef WIN32
 	__device__ bool IsValid() const {return !_isnan((double)x) && _finite((double)x) && !_isnan((double)y) && _finite((double)y) && !_isnan((double)z) && _finite((double)z);} //!< Returns true if all values are valid numbers.

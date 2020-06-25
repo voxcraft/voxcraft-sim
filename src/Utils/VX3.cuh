@@ -37,6 +37,22 @@ __device__ __inline__ int random(int max, int random_seed=0) {
     curand_init(random_seed, 0, 0, &state);
     return curand(&state) % max;
 }
+#include "types.h"
+// Get Opposite linkDirection. X_NEG for X_POS, etc.
+__device__ __host__ static inline int oppositeDirection(int linkdir) {
+    return (linkdir%2==0)?linkdir+1:linkdir-1;
+}
+__device__ __host__ static inline linkAxis toAxis(linkDirection direction) {
+    return (linkAxis)((int)direction / 2);
+} 
+
+template <class T> __device__ static inline void debug_array(T* array, int size) {
+    T memory[1024];
+    for (int i=0;i<size&&i<1024;i++) {
+        memory[i] = array[i];
+        printf("memory %p\n", memory[i]);
+    }
+}
 
 #define COLORCODE_RED "\033[0;31m" 
 #define COLORCODE_BOLD_RED "\033[1;31m\n" 

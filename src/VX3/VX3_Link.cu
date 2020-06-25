@@ -1,3 +1,5 @@
+#include "math_constants.h"
+
 #include "VX3_Link.h"
 #include "VX3_MaterialLink.h"
 #include "VX3_VoxelyzeKernel.cuh"
@@ -5,22 +7,12 @@
 
 VX3_Link::VX3_Link(CVX_Link *p, VX3_VoxelyzeKernel *k)
     : forceNeg(p->forceNeg), forcePos(p->forcePos), momentNeg(p->momentNeg), momentPos(p->momentPos), strain(p->strain),
-      maxStrain(p->maxStrain), strainOffset(p->strainOffset), boolStates(p->boolStates), axis(p->axis), strainRatio(p->strainRatio),
+      maxStrain(p->maxStrain), strainOffset(p->strainOffset), boolStates(p->boolStates), strainRatio(p->strainRatio),
       pos2(p->pos2), angle1v(p->angle1v), angle2v(p->angle2v), angle1(p->angle1), angle2(p->angle2), smallAngle(p->smallAngle),
       currentRestLength(p->currentRestLength), currentTransverseArea(p->currentTransverseArea),
       currentTransverseStrainSum(p->currentTransverseStrainSum), _stress(p->_stress) {
     pVNeg = k->h_lookup_voxels[p->pVNeg];
     pVPos = k->h_lookup_voxels[p->pVPos];
-    // for (int i=0;i<k->num_d_voxels;i++) {
-    // 	if (k->h_voxels[i] == p->pVNeg) {
-    // 		pVNeg = &k->d_voxels[i];
-    // 		assert(pVNeg == k->h_lookup_voxels[p->pVNeg]);
-    // 	}
-    // 	if (k->h_voxels[i] == p->pVPos) {
-    // 		pVPos = &k->d_voxels[i];
-    // 	}
-    // }
-
     for (int i = 0; i < k->num_d_linkMats; i++) {
         if (k->h_linkMats[i] == p->mat) {
             mat = &k->d_linkMats[i];
@@ -28,31 +20,31 @@ VX3_Link::VX3_Link(CVX_Link *p, VX3_VoxelyzeKernel *k)
     }
 }
 // VX3_Link can also be initialized in device
-__device__ VX3_Link::VX3_Link(VX3_Voxel *voxel1, linkDirection dir1, VX3_Voxel *voxel2, linkDirection dir2, linkAxis link_axis,
-                              VX3_VoxelyzeKernel *k) {
-    // TODO: is this the right orientation? let's see...
-
-    voxel1->links[dir1] = this;
-    voxel2->links[dir2] = this;
-    axis = link_axis;
-    pVNeg = voxel2;
-    pVPos = voxel1;
-    // for (int i=0;i<6;i++) {
-    // 	if (voxel1->links[i]==NULL) {
-    // 		voxel1->links[i]=this;
-    // 		break;
-    // 	}
-    // }
-    // for (int i=0;i<6;i++) {
-    // 	if (voxel2->links[i]==NULL) {
-    // 		voxel2->links[i]=this;
-    // 		break;
-    // 	}
-    // }
-    //
-    mat = k->combinedMaterial(voxel1->material(), voxel2->material());
+__device__ VX3_Link::VX3_Link(VX3_Voxel *voxelNeg, linkDirection dirNeg, VX3_Voxel *voxelPos, linkDirection dirPos, VX3_VoxelyzeKernel *k) {
+    deviceInit(k);
+    voxelNeg->links[dirNeg] = this;
+    voxelPos->links[dirPos] = this;
+    pVNeg = voxelNeg;
+    pVPos = voxelPos;
+    linkdirNeg = dirNeg;
+    linkdirPos = dirPos;
+    
+    mat = k->combinedMaterial(voxelNeg->material(), voxelPos->material());
     boolStates = 0;
+
     reset();
+}
+
+__device__ void VX3_Link::deviceInit(VX3_VoxelyzeKernel *k) {
+    d_kernel = k;
+
+    double num71 = cos(CUDART_PIO4);
+    quat_linkDirection[(int)X_POS] = VX3_Quat3D<double>(1,0,0,0);
+    quat_linkDirection[(int)X_NEG] = VX3_Quat3D<double>(0,0,0,-1);
+    quat_linkDirection[(int)Y_POS] = VX3_Quat3D<double>(num71,0,0,num71);
+    quat_linkDirection[(int)Y_NEG] = VX3_Quat3D<double>(num71,0,0,-num71);
+    quat_linkDirection[(int)Z_POS] = VX3_Quat3D<double>(num71,0,-num71,0);
+    quat_linkDirection[(int)Z_NEG] = VX3_Quat3D<double>(num71,0,num71,0);
 }
 
 __device__ void VX3_Link::reset() {
@@ -79,28 +71,72 @@ __device__ bool VX3_Link::isFailed() const { return mat->isFailed(maxStrain); }
 
 __device__ void VX3_Link::updateRestLength() {
     // update rest length according to temperature of both end
-    currentRestLength = 0.5 * (pVNeg->baseSize(axis) + pVPos->baseSize(axis));
+    currentRestLength = 0.5 * (pVNeg->baseSize(toAxis(linkdirNeg)) + pVPos->baseSize(toAxis(linkdirPos)));
 }
 
 __device__ void VX3_Link::updateTransverseInfo() {
-    currentTransverseArea = 0.5f * (pVNeg->transverseArea(axis) + pVPos->transverseArea(axis));
-    currentTransverseStrainSum = 0.5f * (pVNeg->transverseStrainSum(axis) + pVPos->transverseStrainSum(axis));
+    currentTransverseArea = 0.5f * (pVNeg->transverseArea(toAxis(linkdirNeg)) + pVPos->transverseArea(toAxis(linkdirPos)));
+    currentTransverseStrainSum = 0.5f * (pVNeg->transverseStrainSum(toAxis(linkdirNeg)) + pVPos->transverseStrainSum(toAxis(linkdirPos)));
 }
 
-__device__ VX3_Quat3D<double> VX3_Link::orientLink() // updates pos2, angle1, angle2, and smallAngle
-{
-    VX3_Vec3D<> _pos2 = pVPos->position() - pVNeg->position();
-    pos2 = toAxisX(_pos2); // digit truncation happens here...
-    VX3_Quat3D<> _angle1 = pVNeg->orientation();
-    angle1 = toAxisX(_angle1);
-    VX3_Quat3D<> _angle2 = pVPos->orientation();
-    angle2 = toAxisX(_angle2);
+/*
+    Important Notes [Sida's Best Guess]:
 
-    VX3_Quat3D<double> totalRot = angle1.Conjugate(); // keep track of the total rotation of this bond
-                                                      // (after toAxisX())
-    pos2 = totalRot.RotateVec3D(pos2);
-    angle2 = totalRot * angle2;
-    angle1 = VX3_Quat3D<>(); // zero for now...
+    refer to: VX3_Link_orientLink.jpg
+
+    In local coordinates, the link is always in the X_POS direction. pVNeg--->pVPos
+
+    raw_pos2: position of pVPos relative to pVNeg in raw coordinates.
+    local_pos2: position of pVPos relative to pVNeg in local coordinates.
+    raw_angle1: orientation of pVNeg in raw coordinates.
+    raw_angle2: orientation of pVPos in raw coordinates.
+    totalRotation: a Quat rotate from real (raw) coordinates to local coordinates.
+    pos2: position of pVPos in local corrdinates.
+    angle1: pVNeg's orientation in local coordinates.
+    angle2: pVPos's orientation in local coordinates
+    final pos2: position of pVPos relative to rest place in local coordinates.
+
+    About Quat3D=sin(theta/2)+cos(theta/2)(ijk-vector): When the observer look from ijk-vector to the origin, the rotation is counter-clockwise angle theta.
+ */
+__device__ void VX3_Link::orientLink() // updates pos2, angle1, angle2, and smallAngle
+{
+    if (true) {
+        // New method, using quant_linkDirection.
+        // 1. pVNeg->orientation
+        // 2. linkdirNeg
+        // 1+2 => 3. totalRotation
+        // 4. raw pos2
+        // 5. pVPos->orientation
+        // 6. linkdirPos
+        // 5+6 => 7. raw angle2
+        // 3+4 => 8. pos2
+        // 3+7 => 9. angle2
+        // Imagine that pVNeg is placed on the origin, and the linkdirNeg is pointing towards +X direction.
+
+        VX3_Quat3D<> r1 = pVNeg->orientation().Conjugate(); // (1.) Rotate things from real coordinates into pVNeg's oritentation
+        VX3_Quat3D<> r2 = quat_linkDirection[linkdirNeg].Conjugate(); // (2.) Rotate things from pVNeg's orientation into linkdirNeg's orientation
+        VX3_Quat3D<> r3 = quat_linkDirection[oppositeDirection(linkdirPos)]; // (6.) Rotate things from the opposite of linkdirPos's orientation back to pVPos's orientation
+        VX3_Quat3D<> totalRotation = r2*r1; //(3.)
+        VX3_Vec3D<> raw_pos2 = pVPos->position() - pVNeg->position(); //(4.)
+        pos2 = totalRotation.RotateVec3D(raw_pos2); //(8.)
+        angle2 = totalRotation * pVPos->orientation() * r3; // (9.)
+        angle1=  VX3_Quat3D<>(); // always zero
+    }
+    if (false) {
+        // old method
+        VX3_Vec3D<> _pos2 = pVPos->position() - pVNeg->position();
+        pos2 = toAxisX(_pos2, toAxis(linkdirNeg)); // digit truncation happens here...
+        VX3_Quat3D<> _angle1 = pVNeg->orientation();
+        angle1 = toAxisX(_angle1, toAxis(linkdirNeg));
+        VX3_Quat3D<> _angle2 = pVPos->orientation();
+        angle2 = toAxisX(_angle2, toAxis((linkDirection)oppositeDirection(linkdirPos)));
+
+        VX3_Quat3D<double> totalRot = angle1.Conjugate(); // keep track of the total rotation of this bond
+                                                        // (after toAxisX())
+        pos2 = totalRot.RotateVec3D(pos2);
+        angle2 = totalRot * angle2;
+        angle1 = VX3_Quat3D<>(); // zero for now...         
+    }
 
     // small angle approximation?
     float SmallTurn = (float)((abs(pos2.z) + abs(pos2.y)) / pos2.x);
@@ -114,22 +150,32 @@ __device__ VX3_Quat3D<double> VX3_Link::orientLink() // updates pos2, angle1, an
         setBoolState(LOCAL_VELOCITY_VALID, false);
     }
 
+    //small angle means the link is stabled. wait until SafetyGuard(isNewLink) decreased to 0.
+    if (smallAngle && isNewLink>0) {
+        isNewLink--;
+        if (isNewLink==0) {
+            // Great, this link is stablized, remove one from the whole group.
+            pVNeg->d_group->hasNewLink--;
+        }
+    }
+
+    // is small angle, we are using ideal X_POS direction as local direction
+    // otherwise, we are using the direction from the center of mass of pVNeg to pVPos. Then, angle1 is not 0 anymore.
     if (smallAngle) {                 // Align so Angle1 is all zeros
         pos2.x -= currentRestLength;  // only valid for small angles
     } else {                          // Large angle. Align so that Pos2.y, Pos2.z are zero.
         angle1.FromAngleToPosX(pos2); // get the angle to align Pos2 with the X axis
-        totalRot = angle1 * totalRot; // update our total rotation to reflect this
         angle2 = angle1 * angle2;     // rotate angle2
         pos2 = VX3_Vec3D<>(pos2.Length() - currentRestLength, 0, 0);
     }
-
+    // angle1.Rotate() can rotate everything from imaginary perfect beam corrdinates to real beam coordinates.
+    // angle2.Rotate() can rotate everything from real coordinates to real beam coordinates.
+    // Roughly speaking, angle1 is pVNeg's rotation in beam coordinates, angle2 is pVPos's, ignoring the linkDirection.
     angle1v = angle1.ToRotationVector();
     angle2v = angle2.ToRotationVector();
 
     assert(!(angle1v.x != angle1v.x) || !(angle1v.y != angle1v.y) || !(angle1v.z != angle1v.z)); // assert non QNAN
     assert(!(angle2v.x != angle2v.x) || !(angle2v.y != angle2v.y) || !(angle2v.z != angle2v.z)); // assert non QNAN
-
-    return totalRot;
 }
 
 __device__ void VX3_Link::updateForces() {
@@ -146,7 +192,7 @@ __device__ void VX3_Link::updateForces() {
     // if volume effects..
     if (!mat->isXyzIndependent() || currentTransverseStrainSum != 0) { // currentTransverseStrainSum != 0 catches when we disable
                                                                        // poissons mid-simulation
-        // updateTransverseInfo();
+        updateTransverseInfo();
     }
     _stress = updateStrain((float)(pos2.x / currentRestLength));
     if (isFailed()) {
@@ -168,27 +214,31 @@ __device__ void VX3_Link::updateForces() {
                                   b2 * pos2.y - b3 * (2 * angle1v.z + angle2v.z));
     momentPos = VX3_Vec3D<double>(a2 * (angle1v.x - angle2v.x), -b2 * pos2.z - b3 * (angle1v.y + 2 * angle2v.y),
                                   b2 * pos2.y - b3 * (angle1v.z + 2 * angle2v.z));
-    // local damping:
+
+    // local damping: (I don't understand this damping calculation. wouldn't damping_force = -velocity * coefficient easier?)
     if (isLocalVelocityValid()) { // if we don't have the basis for a good
                                   // damping calculation, don't do any damping.
+        float neg_damp = pVNeg->dampingMultiplier();
+        float pos_damp = pVPos->dampingMultiplier();
 
         float sqA1 = mat->_sqA1, sqA2xIp = mat->_sqA2xIp, sqB1 = mat->_sqB1, sqB2xFMp = mat->_sqB2xFMp, sqB3xIp = mat->_sqB3xIp;
         VX3_Vec3D<double> posCalc(sqA1 * dPos2.x, sqB1 * dPos2.y - sqB2xFMp * (dAngle1.z + dAngle2.z),
                                   sqB1 * dPos2.z + sqB2xFMp * (dAngle1.y + dAngle2.y));
 
-        forceNeg += pVNeg->dampingMultiplier() * posCalc;
-        forcePos -= pVPos->dampingMultiplier() * posCalc;
+        forceNeg += neg_damp * posCalc;
+        forcePos -= pos_damp * posCalc;
 
-        momentNeg -= 0.5 * pVNeg->dampingMultiplier() *
+        momentNeg -= 0.5 * neg_damp *
                      VX3_Vec3D<>(-sqA2xIp * (dAngle2.x - dAngle1.x), sqB2xFMp * dPos2.z + sqB3xIp * (2 * dAngle1.y + dAngle2.y),
                                  -sqB2xFMp * dPos2.y + sqB3xIp * (2 * dAngle1.z + dAngle2.z));
-        momentPos -= 0.5 * pVPos->dampingMultiplier() *
+        momentPos -= 0.5 * pos_damp *
                      VX3_Vec3D<>(sqA2xIp * (dAngle2.x - dAngle1.x), sqB2xFMp * dPos2.z + sqB3xIp * (dAngle1.y + 2 * dAngle2.y),
                                  -sqB2xFMp * dPos2.y + sqB3xIp * (dAngle1.z + 2 * dAngle2.z));
-
+                               
     } else
         setBoolState(LOCAL_VELOCITY_VALID,
                      true); // we're good for next go-around unless something changes
+
     //	transform forces and moments to local voxel coordinates
     if (!smallAngle) {
         forceNeg = angle1.RotateVec3DInv(forceNeg);
@@ -197,31 +247,27 @@ __device__ void VX3_Link::updateForces() {
     forcePos = angle2.RotateVec3DInv(forcePos);
     momentPos = angle2.RotateVec3DInv(momentPos);
 
-    toAxisOriginal(&forceNeg);
-    toAxisOriginal(&forcePos);
-    toAxisOriginal(&momentNeg);
-    toAxisOriginal(&momentPos);
-    // printf("momentNeg: (%f, %f, %f).\n", momentNeg.x, momentNeg.y,
-    // momentNeg.z);
-    if (isNewLink) {
-        // for debug
-        forceNeg = forceNeg * 0.01;
-        forcePos = forcePos * 0.01;
-        momentNeg = momentNeg * 0.01;
-        momentPos = momentPos * 0.01;
-        isNewLink -= 1;
+    // Rewrite Rotation back, so linkNeg and linkPos don't need to be paired. (For arbitrary attachment.)
+    if (true) {
+        // new method
+        forceNeg = quat_linkDirection[linkdirNeg].RotateVec3D(forceNeg);
+        forcePos = quat_linkDirection[linkdirNeg].RotateVec3D(forcePos);
+        momentNeg = quat_linkDirection[linkdirNeg].RotateVec3D(momentNeg);
+        momentPos = quat_linkDirection[linkdirNeg].RotateVec3D(momentPos);
+    } 
+    if (false) {
+        // old method
+        toAxisOriginal(&forceNeg, toAxis(linkdirNeg));
+        toAxisOriginal(&forcePos, toAxis(linkdirNeg));
+        toAxisOriginal(&momentNeg, toAxis(linkdirNeg));
+        toAxisOriginal(&momentPos, toAxis(linkdirNeg));
     }
-    // assert(!(forceNeg.x != forceNeg.x) || !(forceNeg.y != forceNeg.y) ||
-    // !(forceNeg.z != forceNeg.z)); //assert non QNAN assert(!(forcePos.x !=
-    // forcePos.x) || !(forcePos.y != forcePos.y) || !(forcePos.z !=
-    // forcePos.z)); //assert non QNAN
+
+    assert(!(forceNeg.x != forceNeg.x) || !(forceNeg.y != forceNeg.y) || !(forceNeg.z != forceNeg.z)); //assert non QNAN
+    assert(!(forcePos.x != forcePos.x) || !(forcePos.y != forcePos.y) || !(forcePos.z != forcePos.z)); //assert non QNAN
 }
 
 __device__ float VX3_Link::updateStrain(float axialStrain) {
-    // int di = 0;
-
-    strain = axialStrain; // redundant?
-
     if (mat->linear) {
 
         if (axialStrain > maxStrain)

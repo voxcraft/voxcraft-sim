@@ -17,7 +17,7 @@ __global__ void CUDA_Simulation(VX3_VoxelyzeKernel *d_voxelyze_3, int num_simula
                    d_v3->vxa_filename);
             return;
         }
-        d_v3->syncVectors();           // Everytime we pass a class with VX3_vectors in
+        d_v3->deviceInit();           // Everytime we pass a class with VX3_vectors in
                                        // it, we should sync hd_vector to d_vector first.
         d_v3->saveInitialPosition();
         d_v3->isSurfaceChanged = true; // trigger surface regenerating and calculate normal thrust for the first time
@@ -60,6 +60,11 @@ __global__ void CUDA_Simulation(VX3_VoxelyzeKernel *d_voxelyze_3, int num_simula
         // d_v3->initialCenterOfMass.x*1000, d_v3->initialCenterOfMass.y*1000,
         // d_v3->initialCenterOfMass.z*1000);
         for (int j = 0; j < 1000000; j++) { // Maximum Steps 1000000
+            //for debug
+            // if (j==1000) {
+            //     d_v3->d_voxels[0].d_group->reorient_lattice();
+            // }
+            //
             if (d_v3->StopConditionMet())
                 break;
             if (!d_v3->doTimeStep()) {

@@ -1,6 +1,9 @@
+# Custom
 build
+build_Release
 release
-.vscode
+workspace
+a.history
 
 # Prerequisites
 *.d
