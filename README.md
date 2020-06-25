@@ -10,15 +10,10 @@ This repo is one of the three parts of voxcraft software.
 
 Learn more about the whole voxcraft project (not just software) to get a bigger picture, please refer to: https://voxcraft.github.io/
 
-# Dependencies
-* Thrust: Install as `git clone --recurse-submodules https://github.com/thrust/thrust`
-    * compile with cmake -DThrust_DIR=/path/to/thrust/thrust/cmake 
-    
-	
 
 # Installation
-* Modify the instances of "compute_70" and "sm_70" in the CMakeLists.txt file to your compute capability represented as an integer. For example if you had a 6.1 GPU you would have a compute capability of 61. To figure out your compute capability see Wikipedia's CUDA  [article](https://en.wikipedia.org/wiki/CUDA).
 
+* First of all, make sure you have an available Nvidia GPU.
 
 ## On DeepGreen
 
@@ -34,7 +29,7 @@ Create a new notebook and go to Menu->Runtime->Change runtime type, select GPU.
 
 Then, run the script:
 ```python
-!git clone https://github.com/voxcraft/voxcraft-sim.git; cd voxcraft-sim/;
+!git clone https://github.com/voxcraft/voxcraft-sim.git; cd voxcraft-sim/; git submodule update --init --recursive;
 
 print("Source code downloaded.")
 
@@ -66,6 +61,7 @@ sudo apt-get install -y git cmake libboost-all-dev
 
 git clone https://github.com/voxcraft/voxcraft-sim.git
 cd voxcraft-sim
+git submodule update --init --recursive
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release -DCUDA_DEBUG=OFF ..
