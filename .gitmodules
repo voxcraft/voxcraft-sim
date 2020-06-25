@@ -1,3 +1,6 @@
 [submodule "src/Cu-Collision-Detection"]
 	path = src/Cu-Collision-Detection
 	url = https://github.com/davidmatthews1uvm/Cu-Collision-Detection
+[submodule "3rdparty/cub"]
+	path = 3rdparty/cub
+	url = https://github.com/NVlabs/cub.git
