@@ -505,7 +505,7 @@ __device__ void VX3_VoxelyzeKernel::updateAttach(int mode) {
         if ( d_collision_system->N != num_d_surface_voxels || CurStepCount <= 1) {
             d_collision_system->N = num_d_surface_voxels;
             d_collision_system->end = d_collision_system->start + num_d_surface_voxels;
-            printf("Step %lu Updated Collision System surface voxel counts\n", CurStepCount);
+            //printf("Step %lu Updated Collision System surface voxel counts\n", CurStepCount);
             VcudaDeviceSynchronize();
 
             d_collision_system->update_x_pos_ranks();
