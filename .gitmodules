@@ -1,0 +1,3 @@
+[submodule "src/Cu-Collision-Detection"]
+	path = src/Cu-Collision-Detection
+	url = https://github.com/davidmatthews1uvm/Cu-Collision-Detection

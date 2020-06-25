@@ -1,6 +1,7 @@
 # Custom
 build
 build_Release
+cmake-build-debug
 release
 workspace
 a.history
@@ -9,6 +10,7 @@ a.history
 *.d
 
 # Compiled Object files
+build/
 *.slo
 *.lo
 *.o
@@ -37,3 +39,6 @@ a.history
 *.exe
 *.out
 *.app
+
+# IDEs
+*.idea

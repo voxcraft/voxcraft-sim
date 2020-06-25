@@ -5,6 +5,10 @@
 #include <stack>
 #include <utility>
 
+#include <ctime>
+#include <ratio>
+#include <chrono>
+
 #include "VX3_VoxelyzeKernel.cuh"
 #include "VX_Sim.h" //readVXA
 
@@ -60,63 +64,61 @@ __global__ void CUDA_Simulation(VX3_VoxelyzeKernel *d_voxelyze_3, int num_simula
         // d_v3->initialCenterOfMass.x*1000, d_v3->initialCenterOfMass.y*1000,
         // d_v3->initialCenterOfMass.z*1000);
         for (int j = 0; j < 1000000; j++) { // Maximum Steps 1000000
-            //for debug
-            // if (j==1000) {
-            //     d_v3->d_voxels[0].d_group->reorient_lattice();
-            // }
-            //
-            if (d_v3->StopConditionMet())
+            if (d_v3->StopConditionMet()) {
+                printf("Stopping after %d timesteps\n", j);
                 break;
+            }
+
             if (!d_v3->doTimeStep()) {
                 printf(COLORCODE_BOLD_RED "\n%d) Simulation %d Diverged: %s.\n" COLORCODE_RESET, device_index, thread_index,
                        d_v3->vxa_filename);
                 break;
             }
-            if (d_v3->RecordStepSize) { // output History file
-                if (j % real_stepsize == 0) {
-                    if (d_v3->RecordVoxel) {
-                        // Voxels
-                        printf("<<<Step%d Time:%f>>>", j, d_v3->currentTime);
-                        for (int i = 0; i < d_v3->num_d_surface_voxels; i++) {
-                            auto v = d_v3->d_surface_voxels[i];
-                            if (v->removed)
-                                continue;
-                            if (v->isSurface()) {
-                                printf("%.1f,%.1f,%.1f,", v->pos.x * vs, v->pos.y * vs, v->pos.z * vs);
-                                printf("%.1f,%.2f,%.2f,%.2f,", v->orient.AngleDegrees(), v->orient.x, v->orient.y, v->orient.z);
-                                VX3_Vec3D<double> ppp, nnn;
-                                nnn = v->cornerOffset(NNN);
-                                ppp = v->cornerOffset(PPP);
-                                printf("%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,", nnn.x * vs, nnn.y * vs, nnn.z * vs, ppp.x * vs, ppp.y * vs,
-                                       ppp.z * vs);
-                                printf("%d,", v->mat->matid); // for coloring
-                                printf("%.1f,", v->localSignal);  // for coloring as well.
-                                printf(";");
-                            }
-                        }
-                        printf("<<<>>>");
-                    }
-                    if (d_v3->RecordLink) {
-                        // Links
-                        printf("|[[[%d]]]", j);
-                        for (int i = 0; i < d_v3->d_v_links.size(); i++) {
-                            auto l = d_v3->d_v_links[i];
-                            if (l->removed)
-                                continue;
-                            // only draw links that are not detached.
-                            if (!l->isDetached) {
-                                auto v1 = l->pVPos;
-                                printf("%.4f,%.4f,%.4f,", v1->pos.x, v1->pos.y, v1->pos.z);
-                                auto v2 = l->pVNeg;
-                                printf("%.4f,%.4f,%.4f,", v2->pos.x, v2->pos.y, v2->pos.z);
-                                printf(";");
-                            }
-                        }
-                        printf("[[[]]]");
-                    }
-                    printf("\n");
-                }
-            }
+           if (d_v3->RecordStepSize) { // output History file
+               if (j % real_stepsize == 0) {
+                   if (d_v3->RecordVoxel) {
+                       // Voxels
+                       printf("<<<Step%d Time:%f>>>", j, d_v3->currentTime);
+                       for (int i = 0; i < d_v3->num_d_surface_voxels; i++) {
+                           auto v = d_v3->d_surface_voxels[i];
+                           if (v->removed)
+                               continue;
+                           if (v->isSurface()) {
+                               printf("%.1f,%.1f,%.1f,", v->pos.x * vs, v->pos.y * vs, v->pos.z * vs);
+                               printf("%.1f,%.2f,%.2f,%.2f,", v->orient.AngleDegrees(), v->orient.x, v->orient.y, v->orient.z);
+                               VX3_Vec3D<double> ppp, nnn;
+                               nnn = v->cornerOffset(NNN);
+                               ppp = v->cornerOffset(PPP);
+                               printf("%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,", nnn.x * vs, nnn.y * vs, nnn.z * vs, ppp.x * vs, ppp.y * vs,
+                                      ppp.z * vs);
+                               printf("%d,", v->mat->matid); // for coloring
+                               printf("%.1f,", v->localSignal);  // for coloring as well.
+                               printf(";");
+                           }
+                       }
+                       printf("<<<>>>");
+                   }
+                   if (d_v3->RecordLink) {
+                       // Links
+                       printf("|[[[%d]]]", j);
+                       for (int i = 0; i < d_v3->d_v_links.size(); i++) {
+                           auto l = d_v3->d_v_links[i];
+                           if (l->removed)
+                               continue;
+                           // only draw links that are not detached.
+                           if (!l->isDetached) {
+                               auto v1 = l->pVPos;
+                               printf("%.4f,%.4f,%.4f,", v1->pos.x, v1->pos.y, v1->pos.z);
+                               auto v2 = l->pVNeg;
+                               printf("%.4f,%.4f,%.4f,", v2->pos.x, v2->pos.y, v2->pos.z);
+                               printf(";");
+                           }
+                       }
+                       printf("[[[]]]");
+                   }
+                   printf("\n");
+               }
+           }
         }
         d_v3->updateCurrentCenterOfMass();
         d_v3->computeFitness();
@@ -145,6 +147,7 @@ void VX3_SimulationManager::start() {
         auto files = sub_batches[device_index];
         if (files.size()) {
             VcudaSetDevice(device_index);
+            cudaDeviceSetLimit(cudaLimitPrintfFifoSize, 1<<26);
             printf("=== set device to %d for %ld simulations ===\n", device_index, files.size());
             // readVXA(base)
             readVXD(base, files, device_index);
@@ -414,8 +417,18 @@ void VX3_SimulationManager::startKernel(int num_simulation, int device_index) {
     //             num_simulation * sizeof(VX3_VoxelyzeKernel),
     //             cudaMemcpyDeviceToHost);
     enlargeGPUHeapSize();
+    using namespace std::chrono;
+    high_resolution_clock::time_point t1 = high_resolution_clock::now();
+
+
     CUDA_Simulation<<<numBlocks, threadsPerBlock>>>(d_voxelyze_3s[device_index], num_simulation, device_index);
     CUDA_CHECK_AFTER_CALL();
+    VcudaDeviceSynchronize();
+
+    high_resolution_clock::time_point t2 = high_resolution_clock::now();
+
+    duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
+    printf("Simulation took %.4f seconds.\n", time_span.count());
 }
 
 void VX3_SimulationManager::collectResults(int num_simulation, int device_index) {

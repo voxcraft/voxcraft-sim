@@ -15,6 +15,8 @@
 #include "VX_Enums.h"
 #include "VX3_AttachManager.h"
 
+#include "../Cu-Collision-Detection/include/CollisionSystem.cuh"
+
 /*
  * VX3_VoxelyzeKernel is a GPU mock class of CVoxelyze
  * Usage: setup a CVoxelyze, and use the constructor function to initialize a VX3_VoxelyzeKernel.
@@ -35,7 +37,7 @@ class VX3_VoxelyzeKernel {
     __device__ void updateCurrentCenterOfMass();
     __device__ bool StopConditionMet();
     __device__ void updateTemperature();
-    __device__ void updateAttach();
+    __device__ void updateAttach(int mode);
     __device__ void updateDetach();
     __device__ void regenerateSurfaceVoxels();
     __device__ VX3_MaterialLink *combinedMaterial(VX3_MaterialVoxel *mat1, VX3_MaterialVoxel *mat2);
@@ -99,6 +101,8 @@ class VX3_VoxelyzeKernel {
     float watchDistance;  //(in voxel units) Distance between voxels (not including 2*boundingRadius for each voxel) to watch for collisions from.
 
     // bool* d_collisionsStale;
+    CollisionSystem *d_collision_system;
+    CollisionSystem *h_collision_system;
     VX3_dVector<VX3_Collision *> d_v_collisions;
 
     bool enableAttach;
@@ -121,6 +125,7 @@ class VX3_VoxelyzeKernel {
     VX3_MathTreeToken StopConditionFormula[1024];
 
     int collisionCount = 0;
+    int tmpCollisionCount = 0;
 
     //Calculate Angle
     //A---B----C

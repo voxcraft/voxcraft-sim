@@ -10,7 +10,15 @@ This repo is one of the three parts of voxcraft software.
 
 Learn more about the whole voxcraft project (not just software) to get a bigger picture, please refer to: https://voxcraft.github.io/
 
+# Dependencies
+* Thrust: Install as `git clone --recurse-submodules https://github.com/thrust/thrust`
+    * compile with cmake -DThrust_DIR=/path/to/thrust/thrust/cmake 
+    
+	
+
 # Installation
+* Modify the instances of "compute_70" and "sm_70" in the CMakeLists.txt file to your compute capability represented as an integer. For example if you had a 6.1 GPU you would have a compute capability of 61. To figure out your compute capability see Wikipedia's CUDA  [article](https://en.wikipedia.org/wiki/CUDA).
+
 
 ## On DeepGreen
 
