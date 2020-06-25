@@ -1,8 +1,10 @@
-# Prerequisites
-*.d
 build
 cmake-build-debug
+release
 .vscode
+
+# Prerequisites
+*.d
 
 # Compiled Object files
 build/
