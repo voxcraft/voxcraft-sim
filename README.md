@@ -64,6 +64,10 @@ cmake -DCMAKE_BUILD_TYPE=Release -DCUDA_DEBUG=OFF ..
 make -j 10
 ```
 
+### Notes
+* Building been tested on a CMAKE versions 3.12 and newer.
+* Versions of boost known to work: 1.65.1 and 1.67.0
+
 Now you will have two executables: `voxcraft-sim` and `vx3_node_worker`. Copy them to your environment and the simulation is ready to use.
 
 Try one of the demos:
