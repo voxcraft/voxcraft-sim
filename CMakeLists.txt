@@ -44,6 +44,7 @@ list(REMOVE_ITEM ARCH_FLAGS "arch=compute_75,code=sm_75")
 list(GET ARCH_FLAGS -1 ARCH_FLAG) # use newest architecture
 message("Using GPU Architecture: " ${ARCH_FLAG})
 set(ARCH_FLAGS "-gencode" ${ARCH_FLAG})
+list(APPEND CMAKE_CUDA_FLAGS -gencode=${ARCH_FLAG})
 
 set_target_properties(voxelyze.3.0 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(vx3_node_worker PROPERTIES CUDA_SEPARABLE_COMPILATION ON)

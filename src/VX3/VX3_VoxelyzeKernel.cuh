@@ -168,6 +168,8 @@ class VX3_VoxelyzeKernel {
     int EnableExpansion=0;
 
     VX3_AttachManager* d_attach_manager;
+
+    int mutexRotateSingleton=0;
 };
 
 #endif // VX3_VOXELYZE_KERNEL_H

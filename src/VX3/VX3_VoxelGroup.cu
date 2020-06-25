@@ -50,7 +50,7 @@ __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
         bool leave = false;
         long retry = 0;
         while (!leave) {
-            if (retry ++ > 10000) {
+            if (retry++ > 10000) {
                 printf("Force break the waiting loop. checkMutex is %d.\n", checkMutex);
                 break; // if checkMutex never reduce to zero, the program might stuck here.
                 // To avoid lock. so it will fail to rebuild group map this time, but it will rebuild next time, otherwise no voxels will attach to this group.
@@ -182,7 +182,22 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
     VX3_Vec3D<int> offset_of_link = VX3_Vec3D<int>(0, 0, 0);
     int potential_link_1, potential_link_2;
     VX3_Quat3D<double> relativeRotation = voxel_remote->orientation().Conjugate() * voxel_host->orientation();
-    if (relativeRotation.w > 0.96) // within 15 degree
+    bool hasSingleton = false;
+
+    if (true) {
+        if (atomicCAS(&d_kernel->mutexRotateSingleton, 0, 1) == 0) {
+            if (voxel_remote->linkCount() == 0) { // host has link, but remote has not. so rotate the remote
+                voxel_remote->orient = voxel_host->orient;
+                hasSingleton = true;
+            } else if (voxel_host->linkCount() == 0) { // voxel host has no link, so rotate the host
+                voxel_host->orient = voxel_remote->orient;
+                hasSingleton = true;
+            }
+            atomicExch(&d_kernel->mutexRotateSingleton, 0);
+        }
+    }
+
+    if (relativeRotation.w > 0.96 || hasSingleton) // within 15 degree
     {
         VX3_Vec3D<> raw_pos = voxel_remote->position() - voxel_host->position();
         VX3_Vec3D<> pos = voxel_host->orientation().RotateVec3DInv(raw_pos); // the position of remote voxel relative to host voxel.
@@ -200,6 +215,17 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
     } else {
         // Too large of an angle
         return false;
+    }
+
+    if (hasSingleton) { // no need to use group map to check for singletons
+        if (voxel_host->links[potential_link_1] == NULL and voxel_remote->links[potential_link_2] == NULL) {
+            *ret_linkdir_1 = potential_link_1;
+            *ret_linkdir_2 = potential_link_2;
+            return true;
+        } else {
+            printf("BAD Singleton rotation.\n");
+            return false;
+        }
     }
 
     // Start checking for compatibility.
