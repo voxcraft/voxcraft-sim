@@ -39,7 +39,8 @@ target_link_libraries(vx3_node_daemon PUBLIC ${Boost_LIBRARIES})
 
 # CUDA options
 find_package(CUDA) # for CUDA_SELECT_NVCC_ARCH_FLAGS function
-CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS 6.0 6.5 7.0)
+CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS)
+list(REMOVE_ITEM ARCH_FLAGS "arch=compute_75,code=sm_75")
 list(GET ARCH_FLAGS -1 ARCH_FLAG) # use newest architecture
 message("Using GPU Architecture: " ${ARCH_FLAG})
 set(ARCH_FLAGS "-gencode" ${ARCH_FLAG})
