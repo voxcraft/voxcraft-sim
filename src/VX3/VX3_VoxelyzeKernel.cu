@@ -72,7 +72,7 @@ VX3_VoxelyzeKernel::VX3_VoxelyzeKernel(CVX_Sim *In) {
     VcudaMalloc((void **) &d_initialPosition, num_d_voxels * sizeof(Vec3D<>));
 
     // Create the collison system and copy it to the device.
-    h_collision_system = new CollisionSystem(num_d_voxels, 1024, false);
+    h_collision_system = new CollisionSystem(num_d_voxels, 128, false);
     VcudaMalloc((void **) &d_collision_system, sizeof(CollisionSystem));
     VcudaMemcpy(d_collision_system, h_collision_system, sizeof(CollisionSystem), cudaMemcpyHostToDevice);
 
