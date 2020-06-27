@@ -251,7 +251,8 @@ public:
     int isNewLink = 0;
 
     bool isDetached = false;
-
+    __device__ void detach();
+    
     // for Secondary Experiment
     bool removed = false;
 
