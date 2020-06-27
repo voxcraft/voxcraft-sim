@@ -24,7 +24,6 @@ __global__ void gpu_insert_lookupgrid(VX3_Voxel **d_surface_voxels, int num, VX3
                                       VX3_Vec3D<> *gridLowerBound, VX3_Vec3D<> *gridDelta, int lookupGrid_n);
 __global__ void gpu_collision_attachment_lookupgrid(VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid, int num, double watchDistance,
                                                     VX3_VoxelyzeKernel *k);
-__global__ void gpu_update_detach(VX3_Link **links, int num, VX3_VoxelyzeKernel *k);
 /* Host methods */
 
 VX3_VoxelyzeKernel::VX3_VoxelyzeKernel(CVX_Sim *In) {
@@ -314,9 +313,6 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
             // printf("ERROR!!\n N2 algorithm found a different number of collisions than the Tree algorithm did!\n N2: %d\nTree: %d\n", num_cols, tmpCollisionCount);
         // }
         // assert(tmpCollisionCount == num_cols);    
-    }
-    if (enableDetach) {
-        updateDetach();
     }
 
     if (EnableCilia) {
@@ -616,22 +612,6 @@ __device__ void VX3_VoxelyzeKernel::updateAttach(int mode) {
     }  else {
         printf("Please specify a mode in updateAttach(int mode)\n");
         assert(0); // Mode must be 0 or 1
-    }
-}
-
-__device__ void VX3_VoxelyzeKernel::updateDetach() {
-    if (d_v_links.size()) {
-        int minGridSize, blockSize;
-        cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_detach, 0,
-                                           d_v_links.size()); // Dynamically calculate blockSize
-        int gridSize_links = (d_v_links.size() + blockSize - 1) / blockSize;
-        int blockSize_links = d_v_links.size() < blockSize ? d_v_links.size() : blockSize;
-        // if (CurStepCount % 1000 == 0 || currentTime>1.0) {
-        //     printf("&d_v_links[0] %p; d_v_links.size() %d. \n", &d_v_links[0], d_v_links.size());
-        // }
-        gpu_update_detach<<<gridSize_links, blockSize_links>>>(&d_v_links[0], d_v_links.size(), this);
-        CUDA_CHECK_AFTER_CALL();
-        VcudaDeviceSynchronize();
     }
 }
 
@@ -1062,29 +1042,5 @@ __global__ void gpu_collision_attachment_lookupgrid(VX3_dVector<VX3_Voxel *> *d_
             }
         }
         CUDA_CHECK_AFTER_CALL();
-    }
-}
-
-__global__ void gpu_update_detach(VX3_Link **links, int num, VX3_VoxelyzeKernel* k) {
-    int gindex = threadIdx.x + blockIdx.x * blockDim.x;
-    if (gindex < num) {
-        VX3_Link *t = links[gindex];
-        if (t->removed)
-            return;
-        if (t->isDetached)
-            return;
-        // clu: vxa: MatModel=1, Fail_Stress=1e+6 => Fail_Stress => failureStress => isFailed.
-        if (t->isFailed()) {
-            t->isDetached = true;
-            for (int i = 0; i < 6; i++) {
-                if (t->pVNeg->links[i] == t) {
-                    t->pVNeg->links[i] = NULL;
-                }
-                if (t->pVPos->links[i] == t) {
-                    t->pVPos->links[i] = NULL;
-                }
-            }
-            k->isSurfaceChanged = true;
-        }
     }
 }
