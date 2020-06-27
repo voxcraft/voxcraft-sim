@@ -39,9 +39,9 @@ __device__ VX3_Vec3D<int> VX3_VoxelGroup::moveGroupPosition(VX3_Vec3D<int> from,
 
 __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
     int min_x, min_y, min_z, max_x, max_y, max_z;
-    min_x = INT_MAX;
-    min_y = INT_MAX;
-    min_z = INT_MAX;
+    min_x = 0;
+    min_y = 0;
+    min_z = 0;
     max_x = 0;
     max_y = 0;
     max_z = 0;
@@ -184,20 +184,37 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
     VX3_Quat3D<double> relativeRotation = voxel_remote->orientation().Conjugate() * voxel_host->orientation();
     bool hasSingleton = false;
 
-    if (true) {
+    if (true) { // Rotate singleton and small bar to align for attachment
         if (atomicCAS(&d_kernel->mutexRotateSingleton, 0, 1) == 0) {
-            if (voxel_remote->linkCount() == 0) { // host has link, but remote has not. so rotate the remote
-                voxel_remote->orient = voxel_host->orient;
+            bool voxel_remote_singleton, voxel_remote_smallbar;
+            int voxel_remote_direction;
+            voxel_remote->isSingletonOrSmallBar(&voxel_remote_singleton, &voxel_remote_smallbar, &voxel_remote_direction);
+            bool voxel_host_singleton, voxel_host_smallbar;
+            int voxel_host_direction;
+            voxel_host->isSingletonOrSmallBar(&voxel_host_singleton, &voxel_host_smallbar, &voxel_host_direction);
+
+            if (voxel_remote_singleton) { // remote has no link. so rotate the remote
+                voxel_remote->changeOrientationTo(voxel_host->orient);
                 hasSingleton = true;
-            } else if (voxel_host->linkCount() == 0) { // voxel host has no link, so rotate the host
-                voxel_host->orient = voxel_remote->orient;
+            } else if (voxel_host_singleton) { // voxel host has no link, so rotate the host
+                voxel_host->changeOrientationTo(voxel_remote->orient);
+                hasSingleton = true;
+            } else if (voxel_remote_smallbar) { // remote is a small bar  // they all have links, detach the one with less link
+                voxel_remote->adjacentVoxel((linkDirection)voxel_remote_direction)->changeOrientationTo(voxel_host->orient);
+                voxel_remote->changeOrientationTo(voxel_host->orient);
+                voxel_remote->links[voxel_remote_direction]->detach();
+                hasSingleton = true;
+            } else if (voxel_host_smallbar) { // host is a small bar
+                voxel_host->adjacentVoxel((linkDirection)voxel_host_direction)->changeOrientationTo(voxel_remote->orient);
+                voxel_host->changeOrientationTo(voxel_remote->orient);
+                voxel_host->links[voxel_host_direction]->detach();
                 hasSingleton = true;
             }
             atomicExch(&d_kernel->mutexRotateSingleton, 0);
         }
     }
 
-    if (relativeRotation.w > 0.96 || hasSingleton) // within 15 degree
+    if (relativeRotation.w > 0.866 || hasSingleton) // within 30 degree
     {
         VX3_Vec3D<> raw_pos = voxel_remote->position() - voxel_host->position();
         VX3_Vec3D<> pos = voxel_host->orientation().RotateVec3DInv(raw_pos); // the position of remote voxel relative to host voxel.
