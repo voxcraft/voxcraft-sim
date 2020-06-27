@@ -8,6 +8,7 @@
                 "${workspaceFolder}/src/VXA",
                 "${workspaceFolder}/src/old",
                 "${workspaceFolder}/src",
+                "${workspaceFolder}/3rdparty/thrust/dependencies/cub",
                 "/usr/local/cuda/include"
             ],
             "forcedInclude": [
@@ -32,6 +33,7 @@
                     "${workspaceFolder}/src/VXA",
                     "${workspaceFolder}/src/old",
                     "${workspaceFolder}/src",
+                    "${workspaceFolder}/3rdparty/thrust/dependencies/cub",
                     "/usr/local/cuda/include"
                 ]
             }
