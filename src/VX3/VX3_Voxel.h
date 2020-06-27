@@ -265,6 +265,10 @@ public:
     __device__ void switchGroupTo(VX3_VoxelGroup *group);
 
     bool freezeAllVoxelsAfterAttach = false; // for debug use.
+
+    // Align singleton and small bar (2 voxels) for attachment
+    __device__ void changeOrientationTo(VX3_Quat3D<> q);
+    __device__ void isSingletonOrSmallBar(bool *isSingleton, bool *isSmallBar, int *SmallBarDirection);
 };
 
 #endif // VX3_VOXEL_H
