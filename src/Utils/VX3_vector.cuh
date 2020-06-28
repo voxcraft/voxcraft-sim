@@ -84,6 +84,9 @@ template <typename T> class VX3_dVector {
                     sizeof_chunk *= 2;
                 }
                 num_main += 1;
+                // if (num_main>10000) {
+                //     DEBUG_PRINT("Something wrong happened: num_main %d.\n", num_main);
+                // }
 
                 // Critical area Body End
                 leave = false;
