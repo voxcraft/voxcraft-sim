@@ -30,7 +30,7 @@ std::vector<std::string> split(const std::string& s, char delimiter)
 }
 
 int main(int argc, char** argv) {
-
+    DEBUG_PRINT("DEBUG mode. DEBUG_PRINT need at least two arguments, so to disable warning, here is %d. \n", 1);
     //setup tools for parsing arguments
     po::options_description desc(APP_DESCRIPTION);
     desc.add_options()
