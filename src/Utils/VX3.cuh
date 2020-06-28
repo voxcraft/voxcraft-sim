@@ -63,6 +63,12 @@ template <class T> __device__ static inline void debug_array(T* array, int size)
 //#define DEBUG_LINE printf("%s(%d): %s\n", __FILE__, __LINE__, u_format_now("at %M:%S").c_str());
 #define CUDA_DEBUG_LINE(str) {printf("%s(%d): %s\n", __FILE__, __LINE__, str);}
 #define DEBUG_LINE_
+// #define DEBUG
+#ifndef NDEBUG
+#define DEBUG_PRINT(fmt, ...) { printf(fmt, __VA_ARGS__); }
+#else
+#define DEBUG_PRINT(fmt, ...) {}
+#endif
 
 #ifndef CUDA_ERROR_CHECK
     __device__ __host__ inline void CUDA_ERROR_CHECK_OUTPUT(cudaError_t code, const char *file, int line, bool abort=false) {
