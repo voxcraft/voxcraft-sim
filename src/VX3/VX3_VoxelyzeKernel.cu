@@ -170,6 +170,9 @@ __device__ void VX3_VoxelyzeKernel::deviceInit() {
 
 
     d_attach_manager = new VX3_AttachManager(this);
+
+    staticWatchDistance = COLLISION_ENVELOPE_RADIUS * watchDistance * voxSize;
+    staticWatchDistance_square = staticWatchDistance * staticWatchDistance;
 }
 __device__ void VX3_VoxelyzeKernel::saveInitialPosition() {
     for (int i = 0; i < num_d_voxels; i++) {
@@ -300,9 +303,11 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
     }
 
     if (isSurfaceChanged) {
-        isSurfaceChanged = false;
-
-        regenerateSurfaceVoxels();
+        if (currentTime >= lastRegenerateSurfaceTime) {
+            lastRegenerateSurfaceTime = currentTime + 0.1; // regenerate at most once per 0.1 second simulation time.
+            isSurfaceChanged = false;
+            regenerateSurfaceVoxels();
+        }
     }
 
     if (enableAttach || EnableCollision) { // either attachment and collision need measurement for pairwise distances
@@ -639,6 +644,7 @@ __device__ void VX3_VoxelyzeKernel::regenerateSurfaceVoxels() {
         delete d_surface_voxels;
         d_surface_voxels = NULL;
     }
+    DEBUG_PRINT("%f) regenerate surface voxels %d in %d. \n", currentTime, num_d_surface_voxels, num_d_voxels);
     VX3_dVector<VX3_Voxel *> tmp;
     for (int i = 0; i < num_d_voxels; i++) {
         d_voxels[i].updateSurface();
@@ -789,34 +795,18 @@ __global__ void gpu_update_temperature(VX3_Voxel *voxels, int num, double TempAm
         // t->setTemperature(0.0f);
     }
 }
-__device__ bool is_neighbor(VX3_Voxel *voxel1, VX3_Voxel *voxel2, VX3_Link *incoming_link, int depth) {
-    // printf("Checking (%d,%d,%d) and (%d,%d,%d) in depth %d.\n",
-    //             voxel1->ix, voxel1->iy, voxel1->iz,
-    //             voxel2->ix, voxel2->iy, voxel2->iz, depth);
+__device__ bool is_neighbor(VX3_Voxel *voxel1, VX3_Voxel *voxel2, int depth) {
     if (voxel1 == voxel2) {
-        // printf("found.\n");
         return true;
     }
-    if (depth <= 0) { // cannot find in depth
-        // printf("not found.\n");
+    if (voxel1==NULL || depth <= 0) { // cannot find in depth
         return false;
     }
     for (int i = 0; i < 6; i++) {
-        if (voxel1->links[i]) {
-            if (voxel1->links[i] != incoming_link) {
-                if (voxel1->links[i]->pVNeg == voxel1) {
-                    if (is_neighbor(voxel1->links[i]->pVPos, voxel2, voxel1->links[i], depth - 1)) {
-                        return true;
-                    }
-                } else {
-                    if (is_neighbor(voxel1->links[i]->pVNeg, voxel2, voxel1->links[i], depth - 1)) {
-                        return true;
-                    }
-                }
-            }
+        if ( is_neighbor(voxel1->adjacentVoxel((linkDirection)i), voxel2, depth-1)) {
+            return true;
         }
     }
-    // printf("not found.\n");
     return false;
 }
 
@@ -825,28 +815,30 @@ __device__ void handle_collision_attachment(VX3_Voxel *voxel1, VX3_Voxel *voxel2
     if (voxel1->mat->fixed && voxel2->mat->fixed)
         return;
 
-    VX3_Vec3D<double> diff = voxel1->pos - voxel2->pos;
-    watchDistance = (voxel1->baseSizeAverage() + voxel2->baseSizeAverage()) * COLLISION_ENVELOPE_RADIUS * watchDistance;
-
-    if (diff.x > watchDistance || diff.x < -watchDistance)
-        return;
-    if (diff.y > watchDistance || diff.y < -watchDistance)
-        return;
-    if (diff.z > watchDistance || diff.z < -watchDistance)
-        return;
-
-    if (diff.Length() > watchDistance)
-        return;
-
     // to exclude voxels already have link between them. check in depth of
     // 1, direct neighbor ignore the collision
-    if (is_neighbor(voxel1, voxel2, NULL, 1)) {
+    if (is_neighbor(voxel1, voxel2, 1)) {
         return;
     }
-    // calculate and store contact force, apply and clean in
-    // VX3_Voxel::force()
-    // if (voxel1->mat !=
-    //     voxel2->mat) { // disable same material collision for now
+
+    // to check for distance: collision system provides a list of potentionly collided pairs, we need to check the distance here.
+    VX3_Vec3D<double> diff = voxel1->pos - voxel2->pos;
+
+    // Disable dynamical watch distance to save time
+    // watchDistance = (voxel1->baseSizeAverage() + voxel2->baseSizeAverage()) * COLLISION_ENVELOPE_RADIUS * watchDistance;
+
+    if (diff.x > k->staticWatchDistance || diff.x < -k->staticWatchDistance)
+        return;
+    if (diff.y > k->staticWatchDistance || diff.y < -k->staticWatchDistance)
+        return;
+    if (diff.z > k->staticWatchDistance || diff.z < -k->staticWatchDistance)
+        return;
+
+    if (diff.Length2() > k->staticWatchDistance_square)
+        return;
+
+
+    // calculate and store contact force, apply and clean in VX3_Voxel::force()
     VX3_Vec3D<> cache_contactForce1, cache_contactForce2;
     if (k->EnableCollision) {
         VX3_Collision collision(voxel1, voxel2);
