@@ -171,7 +171,7 @@ __device__ void VX3_VoxelyzeKernel::deviceInit() {
 
     d_attach_manager = new VX3_AttachManager(this);
 
-    staticWatchDistance = COLLISION_ENVELOPE_RADIUS * watchDistance * voxSize;
+    staticWatchDistance = 2 * COLLISION_ENVELOPE_RADIUS * watchDistance * voxSize;
     staticWatchDistance_square = staticWatchDistance * staticWatchDistance;
 }
 __device__ void VX3_VoxelyzeKernel::saveInitialPosition() {
