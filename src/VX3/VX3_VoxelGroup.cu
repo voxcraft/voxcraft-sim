@@ -114,7 +114,7 @@ __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
                     dim_z = max_z - min_z + 1;
                     if (buffer_size_group_map < dim_x * dim_y * dim_z) { // size of group map exceed the buffer size
                         if (buffer_size_group_map==0) {
-                            buffer_size_group_map = 32; // by default, allocate 10, so no need to go through 2,4,8,16,32
+                            buffer_size_group_map = (dim_x * dim_y * dim_z >= 16)?(dim_x * dim_y * dim_z *2):32; // by default, allocate 10, so no need to go through 2,4,8,16,32
                         } else {
                             buffer_size_group_map = dim_x * dim_y * dim_z * 2; //double the size
                         }
