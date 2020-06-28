@@ -5,6 +5,7 @@ cmake-build-debug
 release
 workspace
 a.history
+core
 
 # Prerequisites
 *.d
