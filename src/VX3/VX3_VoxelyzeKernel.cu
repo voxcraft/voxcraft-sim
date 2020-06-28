@@ -372,6 +372,8 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
             InitialPositionReinitialized = true;
             InitializeCenterOfMass();
             saveInitialPosition();
+
+            registerTargets();
         }
 
     }
@@ -681,6 +683,7 @@ __device__ void VX3_VoxelyzeKernel::computeFitness() {
 }
 
 __device__ void VX3_VoxelyzeKernel::registerTargets() {
+    d_targets.clear();
     for (int i = 0; i < num_d_voxels; i++) {
         auto v = &d_voxels[i];
         if (v->mat->isTarget) {
