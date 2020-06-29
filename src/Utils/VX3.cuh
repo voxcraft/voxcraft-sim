@@ -32,6 +32,16 @@ inline bool u_with_ext(fs::path file, std::string ext) {
 
 #include <curand.h>
 #include <curand_kernel.h>
+class RandomGenerator {
+    public: 
+    curandState_t state;
+    __device__ RandomGenerator(int random_seed=0) {
+        curand_init(random_seed, 0, 0, &state);
+    }
+    __device__ __inline__ int randint(int max) {
+        return curand(&state) % max;
+    }
+};
 __device__ __inline__ int random(int max, int random_seed=0) {
     curandState_t state;
     curand_init(random_seed, 0, 0, &state);
