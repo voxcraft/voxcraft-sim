@@ -383,6 +383,9 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
 
         h_d_tmp.EnableExpansion = pt_merged.get<int>("VXA.Simulator.EnableExpansion", 0);
 
+        h_d_tmp.EnableSurfaceGrowth = pt_merged.get<int>("VXA.Simulator.SurfaceGrowth.EnableGrowth", 0);
+        h_d_tmp.SurfaceGrowth_SecondPerVoxel = pt_merged.get<double>("VXA.Simulator.SurfaceGrowth.SecondPerVoxel", 1);
+
         HeapSize = pt_merged.get<double>("VXA.GPU.HeapSize", 0.5);
         if (HeapSize > 1.0) {
             HeapSize = 0.99;
@@ -457,11 +460,11 @@ void VX3_SimulationManager::collectResults(int num_simulation, int device_index)
                    cudaMemcpyDeviceToHost);
         tmp.SavePositionOfAllVoxels = result_voxelyze_kernel[i].SavePositionOfAllVoxels;
         VX3_Vec3D<>* tmp_init;
-        tmp_init = (VX3_Vec3D<>*)malloc(result_voxelyze_kernel[i].num_d_voxels * sizeof(VX3_Vec3D<>));
-        VcudaMemcpy(tmp_init, result_voxelyze_kernel[i].d_initialPosition, result_voxelyze_kernel[i].num_d_voxels * sizeof(VX3_Vec3D<>), cudaMemcpyDeviceToHost);
+        tmp_init = (VX3_Vec3D<>*)malloc(result_voxelyze_kernel[i].num_d_init_voxels * sizeof(VX3_Vec3D<>));
+        VcudaMemcpy(tmp_init, result_voxelyze_kernel[i].d_initialPosition, result_voxelyze_kernel[i].num_d_init_voxels * sizeof(VX3_Vec3D<>), cudaMemcpyDeviceToHost);
         tmp.num_measured_voxel = 0;
         tmp.total_distance_of_all_voxels = 0.0;
-        for (int j = 0; j < result_voxelyze_kernel[i].num_d_voxels; j++) {
+        for (int j = 0; j < result_voxelyze_kernel[i].num_d_init_voxels; j++) {
             tmp.voxel_init_pos.push_back(Vec3D<>(tmp_init[j].x, tmp_init[j].y, tmp_init[j].z));
             tmp.voxel_position.push_back(Vec3D<>(tmp_v[j].pos.x, tmp_v[j].pos.y, tmp_v[j].pos.z));
             tmp.voxel_mats.push_back(tmp_v[j].matid);
