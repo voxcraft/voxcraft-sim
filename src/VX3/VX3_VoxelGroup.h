@@ -13,6 +13,7 @@ public:
     int dim_x, dim_y, dim_z; // dimension of this group
 
     VX3_Voxel **d_group_map = NULL; // store 3-dimensional voxel pointers
+    int buffer_size_group_map = 0;
     VX3_dVector<VX3_Voxel *> d_surface_voxels; // all surface voxels in this group
     VX3_dVector<VX3_Voxel *> d_voxels; // all voxels in this group
 

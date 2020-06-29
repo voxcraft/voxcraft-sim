@@ -24,7 +24,6 @@ __global__ void gpu_insert_lookupgrid(VX3_Voxel **d_surface_voxels, int num, VX3
                                       VX3_Vec3D<> *gridLowerBound, VX3_Vec3D<> *gridDelta, int lookupGrid_n);
 __global__ void gpu_collision_attachment_lookupgrid(VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid, int num, double watchDistance,
                                                     VX3_VoxelyzeKernel *k);
-__global__ void gpu_update_detach(VX3_Link **links, int num, VX3_VoxelyzeKernel *k);
 /* Host methods */
 
 VX3_VoxelyzeKernel::VX3_VoxelyzeKernel(CVX_Sim *In) {
@@ -171,6 +170,9 @@ __device__ void VX3_VoxelyzeKernel::deviceInit() {
 
 
     d_attach_manager = new VX3_AttachManager(this);
+
+    staticWatchDistance = 2 * COLLISION_ENVELOPE_RADIUS * watchDistance * voxSize;
+    staticWatchDistance_square = staticWatchDistance * staticWatchDistance;
 }
 __device__ void VX3_VoxelyzeKernel::saveInitialPosition() {
     for (int i = 0; i < num_d_voxels; i++) {
@@ -301,9 +303,11 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
     }
 
     if (isSurfaceChanged) {
-        isSurfaceChanged = false;
-
-        regenerateSurfaceVoxels();
+        if (currentTime >= lastRegenerateSurfaceTime) {
+            lastRegenerateSurfaceTime = currentTime + 0.1; // regenerate at most once per 0.1 second simulation time.
+            isSurfaceChanged = false;
+            regenerateSurfaceVoxels();
+        }
     }
 
     if (enableAttach || EnableCollision) { // either attachment and collision need measurement for pairwise distances
@@ -314,9 +318,6 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
             // printf("ERROR!!\n N2 algorithm found a different number of collisions than the Tree algorithm did!\n N2: %d\nTree: %d\n", num_cols, tmpCollisionCount);
         // }
         // assert(tmpCollisionCount == num_cols);    
-    }
-    if (enableDetach) {
-        updateDetach();
     }
 
     if (EnableCilia) {
@@ -371,6 +372,8 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
             InitialPositionReinitialized = true;
             InitializeCenterOfMass();
             saveInitialPosition();
+
+            registerTargets();
         }
 
     }
@@ -619,22 +622,6 @@ __device__ void VX3_VoxelyzeKernel::updateAttach(int mode) {
     }
 }
 
-__device__ void VX3_VoxelyzeKernel::updateDetach() {
-    if (d_v_links.size()) {
-        int minGridSize, blockSize;
-        cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_detach, 0,
-                                           d_v_links.size()); // Dynamically calculate blockSize
-        int gridSize_links = (d_v_links.size() + blockSize - 1) / blockSize;
-        int blockSize_links = d_v_links.size() < blockSize ? d_v_links.size() : blockSize;
-        // if (CurStepCount % 1000 == 0 || currentTime>1.0) {
-        //     printf("&d_v_links[0] %p; d_v_links.size() %d. \n", &d_v_links[0], d_v_links.size());
-        // }
-        gpu_update_detach<<<gridSize_links, blockSize_links>>>(&d_v_links[0], d_v_links.size(), this);
-        CUDA_CHECK_AFTER_CALL();
-        VcudaDeviceSynchronize();
-    }
-}
-
 __device__ void VX3_VoxelyzeKernel::updateCurrentCenterOfMass() {
     double TotalMass = 0;
     VX3_Vec3D<> Sum(0, 0, 0);
@@ -659,6 +646,7 @@ __device__ void VX3_VoxelyzeKernel::regenerateSurfaceVoxels() {
         delete d_surface_voxels;
         d_surface_voxels = NULL;
     }
+    DEBUG_PRINT("%f) regenerate surface voxels %d in %d. \n", currentTime, num_d_surface_voxels, num_d_voxels);
     VX3_dVector<VX3_Voxel *> tmp;
     for (int i = 0; i < num_d_voxels; i++) {
         d_voxels[i].updateSurface();
@@ -695,6 +683,7 @@ __device__ void VX3_VoxelyzeKernel::computeFitness() {
 }
 
 __device__ void VX3_VoxelyzeKernel::registerTargets() {
+    d_targets.clear();
     for (int i = 0; i < num_d_voxels; i++) {
         auto v = &d_voxels[i];
         if (v->mat->isTarget) {
@@ -809,34 +798,18 @@ __global__ void gpu_update_temperature(VX3_Voxel *voxels, int num, double TempAm
         // t->setTemperature(0.0f);
     }
 }
-__device__ bool is_neighbor(VX3_Voxel *voxel1, VX3_Voxel *voxel2, VX3_Link *incoming_link, int depth) {
-    // printf("Checking (%d,%d,%d) and (%d,%d,%d) in depth %d.\n",
-    //             voxel1->ix, voxel1->iy, voxel1->iz,
-    //             voxel2->ix, voxel2->iy, voxel2->iz, depth);
+__device__ bool is_neighbor(VX3_Voxel *voxel1, VX3_Voxel *voxel2, int depth) {
     if (voxel1 == voxel2) {
-        // printf("found.\n");
         return true;
     }
-    if (depth <= 0) { // cannot find in depth
-        // printf("not found.\n");
+    if (voxel1==NULL || depth <= 0) { // cannot find in depth
         return false;
     }
     for (int i = 0; i < 6; i++) {
-        if (voxel1->links[i]) {
-            if (voxel1->links[i] != incoming_link) {
-                if (voxel1->links[i]->pVNeg == voxel1) {
-                    if (is_neighbor(voxel1->links[i]->pVPos, voxel2, voxel1->links[i], depth - 1)) {
-                        return true;
-                    }
-                } else {
-                    if (is_neighbor(voxel1->links[i]->pVNeg, voxel2, voxel1->links[i], depth - 1)) {
-                        return true;
-                    }
-                }
-            }
+        if ( is_neighbor(voxel1->adjacentVoxel((linkDirection)i), voxel2, depth-1)) {
+            return true;
         }
     }
-    // printf("not found.\n");
     return false;
 }
 
@@ -845,28 +818,30 @@ __device__ void handle_collision_attachment(VX3_Voxel *voxel1, VX3_Voxel *voxel2
     if (voxel1->mat->fixed && voxel2->mat->fixed)
         return;
 
-    VX3_Vec3D<double> diff = voxel1->pos - voxel2->pos;
-    watchDistance = (voxel1->baseSizeAverage() + voxel2->baseSizeAverage()) * COLLISION_ENVELOPE_RADIUS * watchDistance;
-
-    if (diff.x > watchDistance || diff.x < -watchDistance)
-        return;
-    if (diff.y > watchDistance || diff.y < -watchDistance)
-        return;
-    if (diff.z > watchDistance || diff.z < -watchDistance)
-        return;
-
-    if (diff.Length() > watchDistance)
-        return;
-
     // to exclude voxels already have link between them. check in depth of
     // 1, direct neighbor ignore the collision
-    if (is_neighbor(voxel1, voxel2, NULL, 1)) {
+    if (is_neighbor(voxel1, voxel2, 1)) {
         return;
     }
-    // calculate and store contact force, apply and clean in
-    // VX3_Voxel::force()
-    // if (voxel1->mat !=
-    //     voxel2->mat) { // disable same material collision for now
+
+    // to check for distance: collision system provides a list of potentionly collided pairs, we need to check the distance here.
+    VX3_Vec3D<double> diff = voxel1->pos - voxel2->pos;
+
+    // Disable dynamical watch distance to save time
+    // watchDistance = (voxel1->baseSizeAverage() + voxel2->baseSizeAverage()) * COLLISION_ENVELOPE_RADIUS * watchDistance;
+
+    if (diff.x > k->staticWatchDistance || diff.x < -k->staticWatchDistance)
+        return;
+    if (diff.y > k->staticWatchDistance || diff.y < -k->staticWatchDistance)
+        return;
+    if (diff.z > k->staticWatchDistance || diff.z < -k->staticWatchDistance)
+        return;
+
+    if (diff.Length2() > k->staticWatchDistance_square)
+        return;
+
+
+    // calculate and store contact force, apply and clean in VX3_Voxel::force()
     VX3_Vec3D<> cache_contactForce1, cache_contactForce2;
     if (k->EnableCollision) {
         VX3_Collision collision(voxel1, voxel2);
@@ -1062,29 +1037,5 @@ __global__ void gpu_collision_attachment_lookupgrid(VX3_dVector<VX3_Voxel *> *d_
             }
         }
         CUDA_CHECK_AFTER_CALL();
-    }
-}
-
-__global__ void gpu_update_detach(VX3_Link **links, int num, VX3_VoxelyzeKernel* k) {
-    int gindex = threadIdx.x + blockIdx.x * blockDim.x;
-    if (gindex < num) {
-        VX3_Link *t = links[gindex];
-        if (t->removed)
-            return;
-        if (t->isDetached)
-            return;
-        // clu: vxa: MatModel=1, Fail_Stress=1e+6 => Fail_Stress => failureStress => isFailed.
-        if (t->isFailed()) {
-            t->isDetached = true;
-            for (int i = 0; i < 6; i++) {
-                if (t->pVNeg->links[i] == t) {
-                    t->pVNeg->links[i] = NULL;
-                }
-                if (t->pVPos->links[i] == t) {
-                    t->pVPos->links[i] = NULL;
-                }
-            }
-            k->isSurfaceChanged = true;
-        }
     }
 }

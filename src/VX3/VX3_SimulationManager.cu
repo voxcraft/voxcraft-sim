@@ -143,6 +143,10 @@ VX3_SimulationManager::~VX3_SimulationManager() {
 }
 
 void VX3_SimulationManager::start() {
+    
+    using namespace std::chrono;
+    high_resolution_clock::time_point t1 = high_resolution_clock::now();
+
     for (int device_index = 0; device_index < num_of_devices; device_index++) { // multi GPUs
         auto files = sub_batches[device_index];
         if (files.size()) {
@@ -160,6 +164,11 @@ void VX3_SimulationManager::start() {
         collectResults(files.size(), device_index);
     }
     sortResults();
+
+    high_resolution_clock::time_point t2 = high_resolution_clock::now();
+
+    duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
+    printf("Simulation took %.4f seconds.\n", time_span.count());
 }
 
 void VX3_SimulationManager::ParseMathTree(VX3_MathTreeToken *field_ptr, size_t max_length, std::string node_address, pt::ptree &tree) {
@@ -417,18 +426,11 @@ void VX3_SimulationManager::startKernel(int num_simulation, int device_index) {
     //             num_simulation * sizeof(VX3_VoxelyzeKernel),
     //             cudaMemcpyDeviceToHost);
     enlargeGPUHeapSize();
-    using namespace std::chrono;
-    high_resolution_clock::time_point t1 = high_resolution_clock::now();
-
 
     CUDA_Simulation<<<numBlocks, threadsPerBlock>>>(d_voxelyze_3s[device_index], num_simulation, device_index);
     CUDA_CHECK_AFTER_CALL();
-    VcudaDeviceSynchronize();
-
-    high_resolution_clock::time_point t2 = high_resolution_clock::now();
-
-    duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
-    printf("Simulation took %.4f seconds.\n", time_span.count());
+    // VcudaDeviceSynchronize();
+    // NO!! We don't need to synchronize here! It will be super slow to process large number of simulations!
 }
 
 void VX3_SimulationManager::collectResults(int num_simulation, int device_index) {

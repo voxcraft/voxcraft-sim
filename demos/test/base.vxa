@@ -20,7 +20,7 @@
             <SafetyGuard>500</SafetyGuard>
         </AttachDetach>
         <RecordHistory>
-            <RecordStepSize>100</RecordStepSize>
+            <RecordStepSize>5000</RecordStepSize>
             <RecordVoxel>1</RecordVoxel>
             <RecordLink>1</RecordLink>
         </RecordHistory>
@@ -34,7 +34,7 @@
             <StopConditionFormula>
                 <mtSUB>
                     <mtVAR>t</mtVAR>
-                    <mtCONST>11</mtCONST>
+                    <mtCONST>0.5</mtCONST>
                 </mtSUB>
             </StopConditionFormula>
         </StopCondition>
@@ -63,7 +63,7 @@
                     <CTE>0</CTE>
                     <MaterialTempPhase>0</MaterialTempPhase>
                     <uStatic>1</uStatic>
-                    <uDynamic>0.3</uDynamic>
+                    <uDynamic>0.4</uDynamic>
                 </Mechanical>
             </Material>
         </Palette>

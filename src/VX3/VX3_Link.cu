@@ -197,6 +197,9 @@ __device__ void VX3_Link::updateForces() {
     _stress = updateStrain((float)(pos2.x / currentRestLength));
     if (isFailed()) {
         forceNeg = forcePos = momentNeg = momentPos = VX3_Vec3D<double>(0, 0, 0);
+        if (d_kernel->enableDetach) {
+            detach();
+        }
         return;
     }
     float b1 = mat->_b1, b2 = mat->_b2, b3 = mat->_b3,
@@ -328,3 +331,18 @@ __device__ float VX3_Link::a2() const { return mat->_a2; }
 __device__ float VX3_Link::b1() const { return mat->_b1; }
 __device__ float VX3_Link::b2() const { return mat->_b2; }
 __device__ float VX3_Link::b3() const { return mat->_b3; }
+
+__device__ void VX3_Link::detach() {
+    isDetached = true;
+    
+    pVNeg->links[linkdirNeg] = NULL;
+    pVPos->links[linkdirPos] = NULL;
+
+    pVNeg->d_group->needRebuild = true;
+    pVNeg->d_group->updateGroup(pVNeg);
+
+    pVPos->d_group = new VX3_VoxelGroup(d_kernel);
+    pVPos->d_group->updateGroup(pVPos);
+
+    d_kernel->isSurfaceChanged = true;
+}

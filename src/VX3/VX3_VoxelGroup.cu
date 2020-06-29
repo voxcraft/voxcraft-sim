@@ -39,9 +39,9 @@ __device__ VX3_Vec3D<int> VX3_VoxelGroup::moveGroupPosition(VX3_Vec3D<int> from,
 
 __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
     int min_x, min_y, min_z, max_x, max_y, max_z;
-    min_x = INT_MAX;
-    min_y = INT_MAX;
-    min_z = INT_MAX;
+    min_x = 0;
+    min_y = 0;
+    min_z = 0;
     max_x = 0;
     max_y = 0;
     max_z = 0;
@@ -50,7 +50,7 @@ __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
         bool leave = false;
         long retry = 0;
         while (!leave) {
-            if (retry ++ > 10000) {
+            if (retry++ > 10000) {
                 printf("Force break the waiting loop. checkMutex is %d.\n", checkMutex);
                 break; // if checkMutex never reduce to zero, the program might stuck here.
                 // To avoid lock. so it will fail to rebuild group map this time, but it will rebuild next time, otherwise no voxels will attach to this group.
@@ -112,16 +112,22 @@ __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
                     dim_x = max_x - min_x + 1;
                     dim_y = max_y - min_y + 1;
                     dim_z = max_z - min_z + 1;
-
-                    if (d_group_map) {
-                        free(d_group_map);
-                        d_group_map = NULL;
+                    if (buffer_size_group_map < dim_x * dim_y * dim_z) { // size of group map exceed the buffer size
+                        if (buffer_size_group_map==0) {
+                            buffer_size_group_map = (dim_x * dim_y * dim_z >= 16)?(dim_x * dim_y * dim_z *2):32; // by default, allocate 10, so no need to go through 2,4,8,16,32
+                        } else {
+                            buffer_size_group_map = dim_x * dim_y * dim_z * 2; //double the size
+                        }
+                        if (d_group_map) {
+                            free(d_group_map);
+                            d_group_map = NULL;
+                        }
+                        d_group_map = (VX3_Voxel **)malloc(buffer_size_group_map * sizeof(VX3_Voxel *));
+                        if (!d_group_map) {
+                            printf("Out of Memory: d_group_map.\n");
+                        }
                     }
-                    d_group_map = (VX3_Voxel **)malloc(dim_x * dim_y * dim_z * sizeof(VX3_Voxel *));
-                    if (!d_group_map) {
-                        printf("Out of Memory: d_group_map.\n");
-                    }
-                    memset(d_group_map, 0, dim_x * dim_y * dim_z * sizeof(VX3_Voxel *));
+                    memset(d_group_map, 0, dim_x * dim_y * dim_z * sizeof(VX3_Voxel *)); // only use this much of the buffer
                     d_voxels.clear();
                     d_surface_voxels.clear();
                     for (int i = 0; i < BFS_result.size(); i++) {
@@ -182,7 +188,37 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
     VX3_Vec3D<int> offset_of_link = VX3_Vec3D<int>(0, 0, 0);
     int potential_link_1, potential_link_2;
     VX3_Quat3D<double> relativeRotation = voxel_remote->orientation().Conjugate() * voxel_host->orientation();
-    if (relativeRotation.w > 0.96) // within 15 degree
+    bool hasSingleton = false;
+
+    if (true) { // Rotate singleton and small bar to align for attachment
+        bool voxel_remote_singleton, voxel_remote_smallbar;
+        int voxel_remote_direction;
+        voxel_remote->isSingletonOrSmallBar(&voxel_remote_singleton, &voxel_remote_smallbar, &voxel_remote_direction);
+        bool voxel_host_singleton, voxel_host_smallbar;
+        int voxel_host_direction;
+        voxel_host->isSingletonOrSmallBar(&voxel_host_singleton, &voxel_host_smallbar, &voxel_host_direction);
+        if (voxel_remote_singleton || voxel_remote_smallbar || voxel_host_singleton || voxel_host_smallbar) {
+            if (atomicCAS(&d_kernel->mutexRotateSingleton, 0, 1) == 0) {
+                if (voxel_remote_singleton) { // remote has no link. so rotate the remote
+                    voxel_remote->changeOrientationTo(voxel_host->orient);
+                } else if (voxel_host_singleton) { // voxel host has no link, so rotate the host
+                    voxel_host->changeOrientationTo(voxel_remote->orient);
+                } else if (voxel_remote_smallbar) { // remote is a small bar  // they all have links, detach the one with less link
+                    voxel_remote->adjacentVoxel((linkDirection)voxel_remote_direction)->changeOrientationTo(voxel_host->orient);
+                    voxel_remote->changeOrientationTo(voxel_host->orient);
+                    voxel_remote->links[voxel_remote_direction]->detach();
+                } else if (voxel_host_smallbar) { // host is a small bar
+                    voxel_host->adjacentVoxel((linkDirection)voxel_host_direction)->changeOrientationTo(voxel_remote->orient);
+                    voxel_host->changeOrientationTo(voxel_remote->orient);
+                    voxel_host->links[voxel_host_direction]->detach();
+                }
+                atomicExch(&d_kernel->mutexRotateSingleton, 0);
+                hasSingleton = true;
+            }
+        }
+    }
+
+    if (relativeRotation.w > 0.866 || hasSingleton) // within 30 degree
     {
         VX3_Vec3D<> raw_pos = voxel_remote->position() - voxel_host->position();
         VX3_Vec3D<> pos = voxel_host->orientation().RotateVec3DInv(raw_pos); // the position of remote voxel relative to host voxel.
@@ -200,6 +236,17 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
     } else {
         // Too large of an angle
         return false;
+    }
+
+    if (hasSingleton) { // no need to use group map to check for singletons
+        if (voxel_host->links[potential_link_1] == NULL and voxel_remote->links[potential_link_2] == NULL) {
+            *ret_linkdir_1 = potential_link_1;
+            *ret_linkdir_2 = potential_link_2;
+            return true;
+        } else {
+            DEBUG_PRINT("%f) BAD position for the rotated singleton. The singleton might in between two linked voxels. Skip.\n", d_kernel->currentTime);
+            return false;
+        }
     }
 
     // Start checking for compatibility.

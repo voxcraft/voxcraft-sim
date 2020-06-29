@@ -26,12 +26,12 @@ template <typename T> class VX3_hdVector {
         }
         VcudaMemcpy(main, temp, num_main * sizeof(T), VcudaMemcpyHostToDevice);
         // cudaFreeHost(temp);
-        delete temp;
+        free(temp);
     }
-    void free() {
-        // cannot use ~ method, becuase passing parameter to kernel triggers ~ method.
-        VcudaFree(main);
-    }
+    // void _free() {
+    //     // cannot use ~ method, becuase passing parameter to kernel triggers ~ method.
+    //     VcudaFree(main);
+    // }
     __device__ inline T &operator[](unsigned index) { return main[index]; }
     __device__ inline T get(unsigned index) { return main[index]; }
     __device__ inline unsigned size() { return num_main; }
@@ -51,7 +51,7 @@ template <typename T> class VX3_dVector {
     __device__ VX3_dVector<T>() { clear(); } // Never called, since we copy the mem to GPU.
     __device__ ~VX3_dVector<T>() {
         if (main)
-            delete main;
+            free(main);
     }
     __device__ bool inline push_back(T t) {
         // Critical area Start
@@ -75,7 +75,7 @@ template <typename T> class VX3_dVector {
                     }
                     if (main) {
                         memcpy(new_main, main, sizeof_chunk * sizeof(T));
-                        delete main;
+                        free(main);
                     } else {
                         memcpy(new_main, default_memory, sizeof_chunk * sizeof(T));
                     }
@@ -84,6 +84,9 @@ template <typename T> class VX3_dVector {
                     sizeof_chunk *= 2;
                 }
                 num_main += 1;
+                // if (num_main>10000) {
+                //     DEBUG_PRINT("Something wrong happened: num_main %d.\n", num_main);
+                // }
 
                 // Critical area Body End
                 leave = false;
@@ -135,7 +138,7 @@ template <typename T> class VX3_dVector {
         }
         num_main = 0;
         if (main) {
-            delete main;
+            free(main);
             main = NULL;
         }
         sizeof_chunk = DEFAULT_CHUNK_SIZE;
@@ -163,83 +166,5 @@ template <typename T> class VX3_dVector {
     unsigned num_main;
     int *mutex = NULL;
 };
-
-// // Just copy VX_dVector and make it larger
-// #define DEFAULT_CHUNK_SIZE_LARGER 2048
-// template <typename T> class VX3_dVector_Larger {
-//     /* It should be initialized in dev, and do push_back() and get(), and it should be freed after use.
-//        if size<Default, use GPU local memory memory[Default], otherwise use malloc and main and store things in GPU global memory.
-//        (malloc is slow in GPU)*/
-//   public:
-//     __device__ VX3_dVector_Larger<T>() { clear(); }
-//     __device__ ~VX3_dVector_Larger<T>() {
-//         if (main)
-//             delete main;
-//     }
-//     __device__ bool inline push_back(T t) {
-//         if (num_main < sizeof_chunk) {
-//             if (main) { // use main
-//                 main[num_main] = t;
-//             } else { // use memory
-//                 default_memory[num_main] = t;
-//             }
-//         } else { // need allocation
-//             T *new_main;
-//             new_main = (T *)malloc(sizeof_chunk * 2 * sizeof(T));
-//             if (new_main == NULL) {
-//                 printf("Out of memory when alloc %ld bytes.\n", sizeof_chunk * 2 * sizeof(T));
-//                 return false;
-//             }
-//             if (main) {
-//                 memcpy(new_main, main, sizeof_chunk * sizeof(T));
-//                 delete main;
-//             } else {
-//                 memcpy(new_main, default_memory, sizeof_chunk * sizeof(T));
-//             }
-//             main = new_main;
-//             main[num_main] = t;
-//             sizeof_chunk *= 2;
-//         }
-//         num_main += 1;
-//         return true;
-//     }
-//     __device__ inline unsigned size() { return num_main; };
-//     __device__ inline T &operator[](unsigned index) { return get(index); };
-//     __device__ inline T &get(unsigned index) {
-//         if (main)
-//             return main[index];
-//         else
-//             return default_memory[index];
-//     }
-//     __device__ void clear() {
-//         num_main = 0;
-//         if (main) {
-//             delete main;
-//             main = NULL;
-//         }
-//         sizeof_chunk = DEFAULT_CHUNK_SIZE_LARGER;
-//     }
-//     __device__ inline bool has(T value) {
-//         if (main) {
-//             for (unsigned i = 0; i < num_main; i++) {
-//                 if (main[i] == value) {
-//                     return true;
-//                 }
-//             }
-//             return false;
-//         } else {
-//             for (unsigned i = 0; i < num_main; i++) {
-//                 if (default_memory[i] == value) {
-//                     return true;
-//                 }
-//             }
-//             return false;
-//         }
-//     }
-//     T *main = NULL;
-//     T default_memory[DEFAULT_CHUNK_SIZE_LARGER];
-//     unsigned sizeof_chunk;
-//     unsigned num_main;
-// };
 
 #endif // VX3_VECTOR_H

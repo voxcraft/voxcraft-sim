@@ -168,6 +168,14 @@ class VX3_VoxelyzeKernel {
     int EnableExpansion=0;
 
     VX3_AttachManager* d_attach_manager;
+
+    int mutexRotateSingleton=0;
+
+    double lastRegenerateSurfaceTime = 0;
+    
+    // Using static watch distance and caching it improves performance.
+    double staticWatchDistance = 0;
+    double staticWatchDistance_square = 0;
 };
 
 #endif // VX3_VOXELYZE_KERNEL_H

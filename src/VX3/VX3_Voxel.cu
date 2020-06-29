@@ -582,3 +582,30 @@ __device__ void VX3_Voxel::switchGroupTo(VX3_VoxelGroup* group) {
         d_group = group;
     }
 }
+
+__device__ void VX3_Voxel::changeOrientationTo(VX3_Quat3D<> q) {
+    baseCiliaForce = q.RotateVec3DInv(orient.RotateVec3D(baseCiliaForce));
+    shiftCiliaForce = q.RotateVec3DInv(orient.RotateVec3D(shiftCiliaForce));
+    orient = q;
+}
+
+__device__ void VX3_Voxel::isSingletonOrSmallBar(bool *isSingleton, bool *isSmallBar, int *SmallBarDirection) {
+    int direction = -1;
+    for (int i=0;i<6;i++) {
+        if (links[i]) {
+            direction = i;
+            break;
+        }
+    }
+    if (direction==-1) {
+        *isSingleton = true;
+        *isSmallBar = false;
+    } else if (d_group->d_voxels.size() == 2) {
+        *isSingleton = false;
+        *isSmallBar = true;
+        *SmallBarDirection = direction;
+    } else {
+        *isSingleton = false;
+        *isSmallBar = false;
+    }
+}
