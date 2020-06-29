@@ -51,6 +51,9 @@ class VX3_VoxelyzeKernel {
     __device__ void removeVoxels();
     __device__ void InitializeCenterOfMass();
 
+    // for Surface Growth
+    __device__ void growOneNewVoxel();
+
     /* data */
     bool forceExit = false;
     char vxa_filename[256];
@@ -81,6 +84,7 @@ class VX3_VoxelyzeKernel {
     std::vector<CVX_Voxel *> h_voxels;
     VX3_Voxel *d_voxels;
     int num_d_voxels;
+    int num_d_init_voxels;
     VX3_Voxel **d_surface_voxels; // an array of pointer d_surface_voxels[i] -> d_voxels[j]
     int num_d_surface_voxels;
     std::map<CVX_Voxel *, VX3_Voxel *> h_lookup_voxels;
@@ -176,6 +180,11 @@ class VX3_VoxelyzeKernel {
     // Using static watch distance and caching it improves performance.
     double staticWatchDistance = 0;
     double staticWatchDistance_square = 0;
+
+    int EnableSurfaceGrowth = 0;
+    double SurfaceGrowth_SecondPerVoxel = 1;
+    double SurfaceGrowth_activeTime = 0;
+    RandomGenerator* randomGenerator;
 };
 
 #endif // VX3_VOXELYZE_KERNEL_H
