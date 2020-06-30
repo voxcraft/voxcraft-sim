@@ -1,3 +1,7 @@
+//
+// Created by Sida Liu
+//  This class implements the growth of a body.
+//
 #if !defined(GROWTH_MANAGER_H)
 #define GROWTH_MANAGER_H
 

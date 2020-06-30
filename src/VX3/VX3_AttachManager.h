@@ -1,3 +1,7 @@
+//
+// Created by Sida Liu
+//  This class manages the attachment.
+//
 #if !defined(VX3_ATTACHMANAGER_H)
 #define VX3_ATTACHMANAGER_H
 

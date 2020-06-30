@@ -1,4 +1,8 @@
-// Implementation of double hashing dictionary. Refer to https://en.wikipedia.org/wiki/Double_hashing and https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-006-introduction-to-algorithms-fall-2011/lecture-videos/lecture-10-open-addressing-cryptographic-hashing/
+//
+// Created by Sida Liu
+//  This class implements a double hashing dictionary, with set() and get().
+//  Refer to https://en.wikipedia.org/wiki/Double_hashing and https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-006-introduction-to-algorithms-fall-2011/lecture-videos/lecture-10-open-addressing-cryptographic-hashing/
+//
 #if !defined(VX3_DICTIONARY_H)
 #define VX3_DICTIONARY_H
 #include <stdio.h>

@@ -1,7 +1,9 @@
+//
+// Created by Sida Liu
+//  This class provides handy tools for CPU(C++) code.
+//
 #if !defined(CTOOL_H)
 #define CTOOL_H
-
-
 
 #include <unistd.h>
 #include <string>
@@ -17,7 +19,6 @@ namespace pt = boost::property_tree;
 #include <boost/foreach.hpp>
 
 namespace ctool {
-
 
     inline std::string u_format_now(std::string format) {
         auto now = std::chrono::system_clock::now();

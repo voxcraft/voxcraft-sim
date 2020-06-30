@@ -1,3 +1,7 @@
+//
+// Created by Sida Liu
+//  This class is the backbone of one simulation. At each time step, it starts multiple threads to handle calculation of all aspects.
+//
 #if !defined(VX3_VOXELYZE_KERNEL_H)
 #define VX3_VOXELYZE_KERNEL_H
 #include "VX3.cuh"

@@ -559,8 +559,13 @@ __device__ void VX3_VoxelyzeKernel::updateAttach(int mode) {
         } else if (CurStepCount%200 == 5 && CurStepCount > 100) {
             d_collision_system->build_tree();
         }
+        // if (d_collision_system->N>200) {
+        //     printf("BUG.\n"); // didn't catch anything
+        // }
         d_collision_system->update_bounding_boxes();
-
+        // if (d_collision_system->N>200) {
+        //     printf("BUG.\n");
+        // }
         num_cols = d_collision_system->find_collisions_device();
 
         if (num_cols == 0 ) { // no collisions were detected.

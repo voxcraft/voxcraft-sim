@@ -1,3 +1,7 @@
+//
+// Created by Sida Liu
+//  A structure for storing simulation results.
+//
 #include <iostream>
 #include "Vec3D.h"
 

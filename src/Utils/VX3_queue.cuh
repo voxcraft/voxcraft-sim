@@ -1,3 +1,7 @@
+//
+// Created by Sida Liu
+//  This class implements a queue, with push_back() and pop_front().
+//
 #if !defined(VX3_QUEUE)
 #define VX3_QUEUE
 

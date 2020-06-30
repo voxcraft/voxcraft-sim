@@ -1,3 +1,7 @@
+//
+// Created by Sida Liu
+//  This is a device version of CVX_Voxel class in VX2.
+//
 #if !defined(VX3_VOXEL_H)
 #define VX3_VOXEL_H
 #include "VX3.cuh"

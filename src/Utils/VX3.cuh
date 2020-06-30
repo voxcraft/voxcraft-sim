@@ -1,3 +1,7 @@
+//
+// Created by Sida Liu
+//  This class provides handy tools for GPU(CUDA Kernel) code.
+//
 #if !defined(VX3_H)
 #define VX3_H
 

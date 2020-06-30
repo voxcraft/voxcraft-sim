@@ -1,7 +1,9 @@
+//
+// Created by Sida Liu
+//  This is a device version of Vec3D class in VX2.
+//
 #if !defined(VX3_VEC3D_H)
 #define VX3_VEC3D_H
-
-//Possible Linux portability issues: min, max
 
 #include <math.h>
 #include <float.h>

@@ -41,12 +41,12 @@ __device__ bool VX3_GrowthManager::grow() {
         // need orientation
         new_voxel->pos = v->pos + v->orient.RotateVec3DInv(new_position);
         new_voxel->orient = v->orient;
-        printf("d_voxels[%d].pos: %e,%e,%e. === %e.\n", d_kernel->num_d_voxels, new_voxel->pos.x, new_voxel->pos.y, new_voxel->pos.z, d_kernel->voxSize / 2);
+        // printf("d_voxels[%d].pos: %e,%e,%e. === %e.\n", d_kernel->num_d_voxels, new_voxel->pos.x, new_voxel->pos.y, new_voxel->pos.z, d_kernel->voxSize / 2);
         if (new_voxel->pos.z < d_kernel->voxSize / 2) {
-            printf("no.\n");
+            // printf("no.\n");
             return false;
         }
-        printf("yes.\n");
+        // printf("yes.\n");
         // need check surrounding
         new_voxel->pos = new_position;
         new_voxel->mat = &d_kernel->d_voxelMats[0];
