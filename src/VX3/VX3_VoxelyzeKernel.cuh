@@ -14,6 +14,7 @@
 #include "VX3_Voxel.h"
 #include "VX_Enums.h"
 #include "VX3_AttachManager.h"
+#include "VX3_GrowthManager.h"
 
 #include "../Cu-Collision-Detection/include/CollisionSystem.cuh"
 
@@ -46,13 +47,9 @@ class VX3_VoxelyzeKernel {
     __device__ void computeTargetCloseness();
     __device__ void saveInitialPosition();
 
-
     // for Secondary Experiment
     __device__ void removeVoxels();
     __device__ void InitializeCenterOfMass();
-
-    // for Surface Growth
-    __device__ void growOneNewVoxel();
 
     /* data */
     bool forceExit = false;
@@ -181,9 +178,13 @@ class VX3_VoxelyzeKernel {
     double staticWatchDistance = 0;
     double staticWatchDistance_square = 0;
 
+    VX3_GrowthManager* d_growth_manager;
+
     int EnableSurfaceGrowth = 0;
-    double SurfaceGrowth_SecondPerVoxel = 1;
+    double SurfaceGrowth_Interval = 1;
     double SurfaceGrowth_activeTime = 0;
+    double SurfaceGrowth_Rate = 1;
+    int SurfaceGrowth_Growed = 0;
     RandomGenerator* randomGenerator;
 };
 

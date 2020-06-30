@@ -173,6 +173,8 @@ __device__ void VX3_VoxelyzeKernel::deviceInit() {
 
     d_attach_manager = new VX3_AttachManager(this);
 
+    d_growth_manager = new VX3_GrowthManager(this);
+
     staticWatchDistance = 2 * COLLISION_ENVELOPE_RADIUS * watchDistance * voxSize;
     staticWatchDistance_square = staticWatchDistance * staticWatchDistance;
 
@@ -378,8 +380,13 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
     if (EnableSurfaceGrowth) {
         if (currentTime>=SurfaceGrowth_activeTime) {
-            SurfaceGrowth_activeTime = currentTime + SurfaceGrowth_SecondPerVoxel;
-            growOneNewVoxel();
+            SurfaceGrowth_activeTime = currentTime + SurfaceGrowth_Interval;
+            SurfaceGrowth_Growed = 0;
+        }
+        if (SurfaceGrowth_Growed < ceil(num_d_surface_voxels * SurfaceGrowth_Rate)) {
+            if (d_growth_manager->grow()) {
+                SurfaceGrowth_Growed++;
+            };
         }
     }
 
@@ -725,61 +732,6 @@ __device__ void VX3_VoxelyzeKernel::computeTargetCloseness() {
     // printf("targetCloseness: %f\n", targetCloseness);
 }
 
-__device__ void VX3_VoxelyzeKernel::growOneNewVoxel() {
-    // randomly pick one surface voxel
-    // check its surround
-    // add a new voxel to proper position
-    if (num_d_voxels<1000) { // memory limitation, refer to pre-allocation.
-        if (num_d_voxels==5)
-            printf("DEBUG");
-        int r = randomGenerator->randint(num_d_surface_voxels);
-        DEBUG_PRINT("r: %d, surface_voxels: %d.\n", r, num_d_surface_voxels);
-        VX3_Voxel* v = d_surface_voxels[r];
-        int available_direction;
-        VX3_Link* n = (VX3_Link*)1;
-        while (n) {
-            available_direction = randomGenerator->randint(6);
-            n = v->links[available_direction];
-        }
-        VX3_Vec3D<> new_position = VX3_Vec3D<>();
-        switch ((linkDirection) available_direction) {
-        case X_POS:
-            new_position.x += voxSize;
-            break;
-        case X_NEG:
-            new_position.x -= voxSize;
-            break;
-        case Y_POS:
-            new_position.y += voxSize;
-            break;
-        case Y_NEG:
-            new_position.y -= voxSize;
-            break;
-        case Z_POS:
-            new_position.z += voxSize;
-            break;
-        case Z_NEG:
-            new_position.z -= voxSize;
-        }
-        // need orientation
-        d_voxels[num_d_voxels].pos = v->pos + v->orient.RotateVec3DInv(new_position);
-        d_voxels[num_d_voxels].orient = v->orient;
-        printf("d_voxels[%d].pos: %e,%e,%e. === %e.\n", num_d_voxels, d_voxels[num_d_voxels].pos.x, d_voxels[num_d_voxels].pos.y, d_voxels[num_d_voxels].pos.z, voxSize/2 );
-        if (d_voxels[num_d_voxels].pos.z<voxSize/2) {
-            printf("no.\n");
-            return;
-        }
-        printf("yes.\n");
-        // need check surrounding
-        d_voxels[num_d_voxels].pos = new_position;
-        d_voxels[num_d_voxels].mat = &d_voxelMats[0];
-        d_voxels[num_d_voxels].deviceInit(this);
-        d_voxels[num_d_voxels].enableFloor(true);
-        d_voxels[num_d_voxels].updateGroup();
-        num_d_voxels++;
-        isSurfaceChanged = true;
-    }
-}
 
 /* Sub GPU Threads */
 __global__ void gpu_update_links(VX3_Link **links, int num) {

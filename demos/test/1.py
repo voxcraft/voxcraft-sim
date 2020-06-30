@@ -56,7 +56,7 @@ def generate_vxd(body, cilia):
 
 world = np.zeros([30,30,200], dtype=int)
 world_cilia = np.zeros(shape=[3, world.shape[0], world.shape[1], world.shape[2]], dtype=float)
-Senario="voxels fall"
+Senario="trivial"
 # Senario="shoot"
 if Senario=="trivial":
     body = np.ones(shape=[1,1,3], dtype=int)
