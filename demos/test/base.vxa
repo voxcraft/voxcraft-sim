@@ -1,5 +1,11 @@
 <VXA Version="1.1">
     <Simulator>
+        <SurfaceGrowth>
+            <EnableGrowth>1</EnableGrowth>
+            <GrowInterval>0.5</GrowInterval>
+            <GrowRate>0.1</GrowRate>
+        </SurfaceGrowth>
+
         <SecondaryExperiment>1</SecondaryExperiment>
         <ReinitializeInitialPositionAfterThisManySeconds>5.1</ReinitializeInitialPositionAfterThisManySeconds>
         <MaxDistInVoxelLengthsToCountAsPair>3</MaxDistInVoxelLengthsToCountAsPair>
@@ -34,11 +40,18 @@
             <StopConditionFormula>
                 <mtSUB>
                     <mtVAR>t</mtVAR>
-                    <mtCONST>0.5</mtCONST>
+                    <mtCONST>200</mtCONST>
                 </mtSUB>
             </StopConditionFormula>
         </StopCondition>
     </Simulator>
+    <Environment>
+        <Gravity>
+            <GravEnabled>1</GravEnabled>
+            <GravAcc>-1</GravAcc>
+            <FloorEnabled>1</FloorEnabled>
+        </Gravity>
+    </Environment>
     <VXC Version="0.94">
         <Lattice>
             <Lattice_Dim>0.01</Lattice_Dim>
@@ -55,8 +68,8 @@
                 <Mechanical>
                     <Sticky>1</Sticky>
                     <Cilia>0.1</Cilia>
-                    <MatModel>0</MatModel>
-                    <Elastic_Mod>1e+04</Elastic_Mod>
+                    <MatModel>1</MatModel>
+                    <Elastic_Mod>1e+03</Elastic_Mod>
                     <Fail_Stress>1e+3</Fail_Stress>
                     <Density>1e+3</Density>
                     <Poissons_Ratio>0.35</Poissons_Ratio>
