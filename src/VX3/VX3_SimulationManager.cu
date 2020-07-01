@@ -74,13 +74,22 @@ __global__ void CUDA_Simulation(VX3_VoxelyzeKernel *d_voxelyze_3, int num_simula
                        d_v3->vxa_filename);
                 break;
             }
-           if (d_v3->RecordStepSize) { // output History file
+            if (d_v3->RecordStepSize) { // output History file
                if (j % real_stepsize == 0) {
                    if (d_v3->RecordVoxel) {
                        // Voxels
                        printf("<<<Step%d Time:%f>>>", j, d_v3->currentTime);
-                       for (int i = 0; i < d_v3->num_d_surface_voxels; i++) {
-                           auto v = d_v3->d_surface_voxels[i];
+                       int num = d_v3->num_d_voxels;
+                       if (d_v3->SurfaceVoxelsOnly) {
+                           num=d_v3->num_d_surface_voxels;
+                       }
+                       VX3_Voxel* v;
+                       for (int i = 0; i < num; i++) {
+                           if (d_v3->SurfaceVoxelsOnly) {
+                               v =d_v3->d_surface_voxels[i];
+                           } else {
+                               v = &d_v3->d_voxels[i];
+                           }
                            if (v->removed)
                                continue;
                            if (v->isSurface()) {
@@ -361,6 +370,7 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         h_d_tmp.RecordStepSize = pt_merged.get<int>("VXA.Simulator.RecordHistory.RecordStepSize", 0);
         h_d_tmp.RecordLink = pt_merged.get<int>("VXA.Simulator.RecordHistory.RecordLink", 0);
         h_d_tmp.RecordVoxel = pt_merged.get<int>("VXA.Simulator.RecordHistory.RecordVoxel", 1);
+        h_d_tmp.SurfaceVoxelsOnly = pt_merged.get<int>("VXA.Simulator.RecordHistory.SurfaceVoxelsOnly", 1);
 
         ParseMathTree(h_d_tmp.fitness_function, sizeof(h_d_tmp.fitness_function), "VXA.Simulator.FitnessFunction", pt_merged);
         ParseMathTree(h_d_tmp.force_field.token_x_forcefield, sizeof(h_d_tmp.force_field.token_x_forcefield),

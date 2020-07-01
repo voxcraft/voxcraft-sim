@@ -26,8 +26,9 @@
             <SafetyGuard>500</SafetyGuard>
         </AttachDetach>
         <RecordHistory>
-            <RecordStepSize>5000</RecordStepSize>
+            <RecordStepSize>100</RecordStepSize>
             <RecordVoxel>1</RecordVoxel>
+            <SurfaceVoxelsOnly>0</SurfaceVoxelsOnly>
             <RecordLink>1</RecordLink>
         </RecordHistory>
         <ForceField></ForceField>
