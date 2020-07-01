@@ -244,7 +244,7 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
             *ret_linkdir_2 = potential_link_2;
             return true;
         } else {
-            DEBUG_PRINT("%f) BAD position for the rotated singleton. The singleton might in between two linked voxels. Skip.\n", d_kernel->currentTime);
+            // DEBUG_PRINT("%f) BAD position for the rotated singleton. The singleton might in between two linked voxels. Skip.\n", d_kernel->currentTime);
             return false;
         }
     }
