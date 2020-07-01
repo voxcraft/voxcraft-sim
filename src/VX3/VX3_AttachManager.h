@@ -17,6 +17,8 @@ public:
     /* method */
     __device__ VX3_AttachManager(VX3_VoxelyzeKernel *k);
     __device__ bool tryAttach(VX3_Voxel *voxel1, VX3_Voxel *voxel2);
+    __device__ bool doAttach(VX3_Voxel *voxel1, int linkdir_1, VX3_Voxel *voxel2, int linkdir_2);
+
 
     int OnlyFormOneLink = false; // for debug use
     int totalLinksFormed = 0;
