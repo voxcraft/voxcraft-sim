@@ -116,6 +116,7 @@ class VX3_VoxelyzeKernel {
     int RecordStepSize = 0;
     int RecordLink = 0;
     int RecordVoxel = 0;
+    int SurfaceVoxelsOnly = 1;
 
     // Safety Guard during the creation of new link
     int SafetyGuard = 500;

@@ -65,7 +65,7 @@ VX3_VoxelyzeKernel::VX3_VoxelyzeKernel(CVX_Sim *In) {
     num_d_voxels = In->Vx.voxelsList.size();
     num_d_init_voxels = num_d_voxels;
 
-    VcudaMalloc((void **)&d_voxels, (num_d_voxels+1000) * sizeof(VX3_Voxel)); // pre-allocate memory for 1000 new Voxels
+    VcudaMalloc((void **)&d_voxels, (num_d_voxels+10000) * sizeof(VX3_Voxel)); // pre-allocate memory for 1000 new Voxels
     for (int i = 0; i < num_d_voxels; i++) {
         h_voxels.push_back(In->Vx.voxelsList[i]);
         h_lookup_voxels[In->Vx.voxelsList[i]] = d_voxels + i;
@@ -73,7 +73,7 @@ VX3_VoxelyzeKernel::VX3_VoxelyzeKernel(CVX_Sim *In) {
     VcudaMalloc((void **) &d_initialPosition, num_d_voxels * sizeof(Vec3D<>));
 
     // Create the collison system and copy it to the device.
-    h_collision_system = new CollisionSystem(num_d_voxels, 128, false);
+    h_collision_system = new CollisionSystem((num_d_voxels+10000), 128, false);
     VcudaMalloc((void **) &d_collision_system, sizeof(CollisionSystem));
     VcudaMemcpy(d_collision_system, h_collision_system, sizeof(CollisionSystem), cudaMemcpyHostToDevice);
 
@@ -559,13 +559,7 @@ __device__ void VX3_VoxelyzeKernel::updateAttach(int mode) {
         } else if (CurStepCount%200 == 5 && CurStepCount > 100) {
             d_collision_system->build_tree();
         }
-        if (d_collision_system->N>200) {
-            printf("BUG.\n"); // didn't catch anything
-        }
         d_collision_system->update_bounding_boxes();
-        if (d_collision_system->N>200) {
-            printf("BUG.\n");
-        }
         num_cols = d_collision_system->find_collisions_device();
 
         if (num_cols == 0 ) { // no collisions were detected.
