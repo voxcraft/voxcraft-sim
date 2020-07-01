@@ -114,4 +114,8 @@ template <class T> __device__ static inline void debug_array(T* array, int size)
 #include "Utils/VX3_dictionary.cuh"
 #include "VX3/VX3_SimulationResult.h"
 
+__device__ int to1D(VX3_Vec3D<int> pos, VX3_Vec3D<int>dim);
+__device__ VX3_Vec3D<int> to3D(int offset, VX3_Vec3D<int>dim);
+
+
 #endif // VX3_H
