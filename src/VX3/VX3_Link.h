@@ -1,3 +1,7 @@
+//
+// Created by Sida Liu
+//  This is a device version of CVX_Link class in VX2.
+//
 #if !defined(VX3_LINK_H)
 #define VX3_LINK_H
 #include "VX3.cuh"

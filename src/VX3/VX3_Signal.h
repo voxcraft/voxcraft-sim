@@ -1,3 +1,7 @@
+//
+// Created by Sida Liu
+//  This class implements the cell-cell signal interaction.
+//
 #if !defined(VX3_SIGNAL_H)
 #define VX3_SIGNAL_H
 

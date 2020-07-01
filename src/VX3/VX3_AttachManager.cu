@@ -42,6 +42,9 @@ __device__ bool VX3_AttachManager::tryAttach(VX3_Voxel *voxel1, VX3_Voxel *voxel
         if (totalLinksFormed >= 1)
             return false;
     }
+    return doAttach(voxel1, linkdir_1, voxel2, linkdir_2);
+}
+__device__ bool VX3_AttachManager::doAttach(VX3_Voxel *voxel1, int linkdir_1, VX3_Voxel *voxel2, int linkdir_2) {
 
     bool ret = false;
     // Start Attach!

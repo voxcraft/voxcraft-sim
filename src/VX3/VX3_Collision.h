@@ -1,3 +1,7 @@
+//
+// Created by Sida Liu
+//  This is a device version of CVX_Collision class in VX2.
+//
 #if !defined(VX3_COLLISION_H)
 #define VX3_COLLISION_H
 #include "VX3.cuh"

@@ -1,3 +1,7 @@
+//
+// Created by Sida Liu
+//  VoxelGroup is a group of connected voxels, you can also call it "body".
+//
 #if !defined(VX3_VOXELGROUP_H)
 #define VX3_VOXELGROUP_H
 

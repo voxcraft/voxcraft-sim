@@ -1,3 +1,7 @@
+//
+// Created by Sida Liu
+//  This is a wrapper for the simulation, and it provides a connection between VXA/VXD files and the simulation.
+//
 #if !defined(VX3_SIMULATION_MANAGER)
 #define VX3_SIMULATION_MANAGER
 #include <boost/filesystem.hpp>

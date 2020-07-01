@@ -74,13 +74,22 @@ __global__ void CUDA_Simulation(VX3_VoxelyzeKernel *d_voxelyze_3, int num_simula
                        d_v3->vxa_filename);
                 break;
             }
-           if (d_v3->RecordStepSize) { // output History file
+            if (d_v3->RecordStepSize) { // output History file
                if (j % real_stepsize == 0) {
                    if (d_v3->RecordVoxel) {
                        // Voxels
                        printf("<<<Step%d Time:%f>>>", j, d_v3->currentTime);
-                       for (int i = 0; i < d_v3->num_d_surface_voxels; i++) {
-                           auto v = d_v3->d_surface_voxels[i];
+                       int num = d_v3->num_d_voxels;
+                       if (d_v3->SurfaceVoxelsOnly) {
+                           num=d_v3->num_d_surface_voxels;
+                       }
+                       VX3_Voxel* v;
+                       for (int i = 0; i < num; i++) {
+                           if (d_v3->SurfaceVoxelsOnly) {
+                               v =d_v3->d_surface_voxels[i];
+                           } else {
+                               v = &d_v3->d_voxels[i];
+                           }
                            if (v->removed)
                                continue;
                            if (v->isSurface()) {
@@ -361,6 +370,7 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         h_d_tmp.RecordStepSize = pt_merged.get<int>("VXA.Simulator.RecordHistory.RecordStepSize", 0);
         h_d_tmp.RecordLink = pt_merged.get<int>("VXA.Simulator.RecordHistory.RecordLink", 0);
         h_d_tmp.RecordVoxel = pt_merged.get<int>("VXA.Simulator.RecordHistory.RecordVoxel", 1);
+        h_d_tmp.SurfaceVoxelsOnly = pt_merged.get<int>("VXA.Simulator.RecordHistory.SurfaceVoxelsOnly", 1);
 
         ParseMathTree(h_d_tmp.fitness_function, sizeof(h_d_tmp.fitness_function), "VXA.Simulator.FitnessFunction", pt_merged);
         ParseMathTree(h_d_tmp.force_field.token_x_forcefield, sizeof(h_d_tmp.force_field.token_x_forcefield),
@@ -382,6 +392,10 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         h_d_tmp.ReinitializeInitialPositionAfterThisManySeconds = pt_merged.get<double>("VXA.Simulator.ReinitializeInitialPositionAfterThisManySeconds", 0.0);
 
         h_d_tmp.EnableExpansion = pt_merged.get<int>("VXA.Simulator.EnableExpansion", 0);
+
+        h_d_tmp.EnableSurfaceGrowth = pt_merged.get<int>("VXA.Simulator.SurfaceGrowth.EnableGrowth", 0);
+        h_d_tmp.SurfaceGrowth_Interval = pt_merged.get<double>("VXA.Simulator.SurfaceGrowth.GrowInterval", 1);
+        h_d_tmp.SurfaceGrowth_Rate = pt_merged.get<double>("VXA.Simulator.SurfaceGrowth.GrowRate", 1);
 
         HeapSize = pt_merged.get<double>("VXA.GPU.HeapSize", 0.5);
         if (HeapSize > 1.0) {
@@ -457,11 +471,11 @@ void VX3_SimulationManager::collectResults(int num_simulation, int device_index)
                    cudaMemcpyDeviceToHost);
         tmp.SavePositionOfAllVoxels = result_voxelyze_kernel[i].SavePositionOfAllVoxels;
         VX3_Vec3D<>* tmp_init;
-        tmp_init = (VX3_Vec3D<>*)malloc(result_voxelyze_kernel[i].num_d_voxels * sizeof(VX3_Vec3D<>));
-        VcudaMemcpy(tmp_init, result_voxelyze_kernel[i].d_initialPosition, result_voxelyze_kernel[i].num_d_voxels * sizeof(VX3_Vec3D<>), cudaMemcpyDeviceToHost);
+        tmp_init = (VX3_Vec3D<>*)malloc(result_voxelyze_kernel[i].num_d_init_voxels * sizeof(VX3_Vec3D<>));
+        VcudaMemcpy(tmp_init, result_voxelyze_kernel[i].d_initialPosition, result_voxelyze_kernel[i].num_d_init_voxels * sizeof(VX3_Vec3D<>), cudaMemcpyDeviceToHost);
         tmp.num_measured_voxel = 0;
         tmp.total_distance_of_all_voxels = 0.0;
-        for (int j = 0; j < result_voxelyze_kernel[i].num_d_voxels; j++) {
+        for (int j = 0; j < result_voxelyze_kernel[i].num_d_init_voxels; j++) {
             tmp.voxel_init_pos.push_back(Vec3D<>(tmp_init[j].x, tmp_init[j].y, tmp_init[j].z));
             tmp.voxel_position.push_back(Vec3D<>(tmp_v[j].pos.x, tmp_v[j].pos.y, tmp_v[j].pos.z));
             tmp.voxel_mats.push_back(tmp_v[j].matid);

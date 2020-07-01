@@ -1,3 +1,7 @@
+//
+// Created by Sida Liu
+//  This class implements a vector, with push_back() and operator[].
+//
 #if !defined(VX3_VECTOR_H)
 #define VX3_VECTOR_H
 #include <cuda_runtime.h>

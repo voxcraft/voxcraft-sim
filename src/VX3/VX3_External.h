@@ -1,3 +1,7 @@
+//
+// Created by Sida Liu
+//  This is a device version of CVX_External class in VX2.
+//
 #if !defined(VX3_EXTERNAL_H)
 #define VX3_EXTERNAL_H
 

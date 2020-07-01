@@ -1,3 +1,7 @@
+//
+// Created by Sida Liu
+//  This class is the backbone of one simulation. At each time step, it starts multiple threads to handle calculation of all aspects.
+//
 #if !defined(VX3_VOXELYZE_KERNEL_H)
 #define VX3_VOXELYZE_KERNEL_H
 #include "VX3.cuh"
@@ -14,6 +18,7 @@
 #include "VX3_Voxel.h"
 #include "VX_Enums.h"
 #include "VX3_AttachManager.h"
+#include "VX3_GrowthManager.h"
 
 #include "../Cu-Collision-Detection/include/CollisionSystem.cuh"
 
@@ -45,7 +50,6 @@ class VX3_VoxelyzeKernel {
     __device__ void registerTargets();
     __device__ void computeTargetCloseness();
     __device__ void saveInitialPosition();
-
 
     // for Secondary Experiment
     __device__ void removeVoxels();
@@ -81,6 +85,7 @@ class VX3_VoxelyzeKernel {
     std::vector<CVX_Voxel *> h_voxels;
     VX3_Voxel *d_voxels;
     int num_d_voxels;
+    int num_d_init_voxels;
     VX3_Voxel **d_surface_voxels; // an array of pointer d_surface_voxels[i] -> d_voxels[j]
     int num_d_surface_voxels;
     std::map<CVX_Voxel *, VX3_Voxel *> h_lookup_voxels;
@@ -111,6 +116,7 @@ class VX3_VoxelyzeKernel {
     int RecordStepSize = 0;
     int RecordLink = 0;
     int RecordVoxel = 0;
+    int SurfaceVoxelsOnly = 1;
 
     // Safety Guard during the creation of new link
     int SafetyGuard = 500;
@@ -176,6 +182,15 @@ class VX3_VoxelyzeKernel {
     // Using static watch distance and caching it improves performance.
     double staticWatchDistance = 0;
     double staticWatchDistance_square = 0;
+
+    VX3_GrowthManager* d_growth_manager;
+
+    int EnableSurfaceGrowth = 0;
+    double SurfaceGrowth_Interval = 1;
+    double SurfaceGrowth_activeTime = 0;
+    double SurfaceGrowth_Rate = 1;
+    int SurfaceGrowth_Growed = 0;
+    RandomGenerator* randomGenerator;
 };
 
 #endif // VX3_VOXELYZE_KERNEL_H

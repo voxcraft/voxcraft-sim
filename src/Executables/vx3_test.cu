@@ -1,40 +1,38 @@
-#include "VX3_Quat3D.h"
-#include "math_constants.h"
+#include "VX3_SignalDiffusion.h"
+// GPU Heap is for in-kernel malloc(). Refer to
+// https://stackoverflow.com/a/34795830/7001199
+void enlargeGPUHeapSize() {
+    size_t HeapSizeInBytes;
+    size_t free, total;
+    VcudaMemGetInfo(&free, &total);
+    printf("Total GPU memory %ld bytes.\n", total);
+    HeapSizeInBytes = 0.5 * total; // add some additional size
+    printf("Set GPU heap size to be %ld bytes.\n", HeapSizeInBytes);
+    VcudaDeviceSetLimit(cudaLimitMallocHeapSize,
+                        HeapSizeInBytes); // Set Heap Memory to 1G, instead of merely 8M.
 
-__device__ VX3_Vec3D<double> linkDirectionVec3D(linkDirection linkdir) {
-    switch (linkdir) {
-    case X_POS:
-        return VX3_Vec3D<>(1, 0, 0);
-    case X_NEG:
-        return VX3_Vec3D<>(-1, 0, 0);
-    case Y_POS:
-        return VX3_Vec3D<>(0, 1, 0);
-    case Y_NEG:
-        return VX3_Vec3D<>(0, -1, 0);
-    case Z_POS:
-        return VX3_Vec3D<>(0, 0, 1);
-    case Z_NEG:
-        return VX3_Vec3D<>(0, 0, -1);
-    default:
-        printf("ERROR.\n");
-    }
-    return VX3_Vec3D<>();
+    // if "Lane User Stack Overflow" ocurs, maybe Stack Size too small, can try this:
+    // VcudaDeviceSetLimit(cudaLimitStackSize, 2048);
 }
 
 __global__ void kernel() {
-    VX3_Vec3D<> pos = VX3_Vec3D<>(0,0,-1);
-    VX3_Quat3D<> q;
-    q.FromAngleToPosX(pos);
-    q.debug();
-
-    VX3_Vec3D<> target = VX3_Vec3D<>(1,1,0);
-    target = q.RotateVec3D(target);
-    target.debug();
-
-    printf("\n");
+    VX3_SignalDiffusion d_solute;
+    d_solute.deviceInit(VX3_Vec3D<int>(10,1,1));
+    VX3_Vec3D<int> o = VX3_Vec3D<int>(3,0,0);
+    d_solute.addSolute(100.258, o);
+    for (int j=0;j<1000;j++) {
+        d_solute.doTimestep(0.001);
+        for (int i=0;i<10;i++) {
+            printf("%f, ", *(d_solute.map+i));
+        }
+        printf("\n");
+    }
+    double v = d_solute.quaryQuantityAtPosition(o);
+    printf("\nv: %f\n", v);
 }
 
 int main() {
+    enlargeGPUHeapSize();
     kernel<<<1, 1>>>();
     cudaDeviceSynchronize();
 }

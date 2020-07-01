@@ -63,7 +63,9 @@ VX3_VoxelyzeKernel::VX3_VoxelyzeKernel(CVX_Sim *In) {
     }
 
     num_d_voxels = In->Vx.voxelsList.size();
-    VcudaMalloc((void **)&d_voxels, num_d_voxels * sizeof(VX3_Voxel));
+    num_d_init_voxels = num_d_voxels;
+
+    VcudaMalloc((void **)&d_voxels, (num_d_voxels+10000) * sizeof(VX3_Voxel)); // pre-allocate memory for 1000 new Voxels
     for (int i = 0; i < num_d_voxels; i++) {
         h_voxels.push_back(In->Vx.voxelsList[i]);
         h_lookup_voxels[In->Vx.voxelsList[i]] = d_voxels + i;
@@ -71,7 +73,7 @@ VX3_VoxelyzeKernel::VX3_VoxelyzeKernel(CVX_Sim *In) {
     VcudaMalloc((void **) &d_initialPosition, num_d_voxels * sizeof(Vec3D<>));
 
     // Create the collison system and copy it to the device.
-    h_collision_system = new CollisionSystem(num_d_voxels, 128, false);
+    h_collision_system = new CollisionSystem((num_d_voxels+10000), 128, false);
     VcudaMalloc((void **) &d_collision_system, sizeof(CollisionSystem));
     VcudaMemcpy(d_collision_system, h_collision_system, sizeof(CollisionSystem), cudaMemcpyHostToDevice);
 
@@ -171,8 +173,14 @@ __device__ void VX3_VoxelyzeKernel::deviceInit() {
 
     d_attach_manager = new VX3_AttachManager(this);
 
+    d_growth_manager = new VX3_GrowthManager(this);
+
     staticWatchDistance = 2 * COLLISION_ENVELOPE_RADIUS * watchDistance * voxSize;
     staticWatchDistance_square = staticWatchDistance * staticWatchDistance;
+
+    randomGenerator = new RandomGenerator();
+
+    regenerateSurfaceVoxels();
 }
 __device__ void VX3_VoxelyzeKernel::saveInitialPosition() {
     for (int i = 0; i < num_d_voxels; i++) {
@@ -294,20 +302,12 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
         // sampling.
         int r = random(d_v_links.size(), clock());
         if (d_v_links[r]->axialStrain() > 100) {
-            CUDA_DEBUG_LINE("Diverged.");
+            printf("Diverged.");
             Diverged = true; // catch divergent condition! (if any thread sets
                              // true we will fail, so don't need mutex...
         }
         if (Diverged)
             return false;
-    }
-
-    if (isSurfaceChanged) {
-        if (currentTime >= lastRegenerateSurfaceTime) {
-            lastRegenerateSurfaceTime = currentTime + 0.1; // regenerate at most once per 0.1 second simulation time.
-            isSurfaceChanged = false;
-            regenerateSurfaceVoxels();
-        }
     }
 
     if (enableAttach || EnableCollision) { // either attachment and collision need measurement for pairwise distances
@@ -376,6 +376,26 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
             registerTargets();
         }
 
+    }
+
+    if (EnableSurfaceGrowth) {
+        if (currentTime>=SurfaceGrowth_activeTime) {
+            SurfaceGrowth_activeTime = currentTime + SurfaceGrowth_Interval;
+            SurfaceGrowth_Growed = 0;
+        }
+        if (SurfaceGrowth_Growed < ceil(num_d_surface_voxels * SurfaceGrowth_Rate)) {
+            if (d_growth_manager->grow()) {
+                SurfaceGrowth_Growed++;
+            };
+        }
+    }
+
+    if (isSurfaceChanged) {
+        if (currentTime >= lastRegenerateSurfaceTime) {
+            lastRegenerateSurfaceTime = currentTime + 0.05; // regenerate at most once per 0.1 second simulation time.
+            isSurfaceChanged = false;
+            regenerateSurfaceVoxels();
+        }
     }
 
     currentTime += dt;
@@ -540,7 +560,6 @@ __device__ void VX3_VoxelyzeKernel::updateAttach(int mode) {
             d_collision_system->build_tree();
         }
         d_collision_system->update_bounding_boxes();
-
         num_cols = d_collision_system->find_collisions_device();
 
         if (num_cols == 0 ) { // no collisions were detected.
@@ -711,6 +730,7 @@ __device__ void VX3_VoxelyzeKernel::computeTargetCloseness() {
     targetCloseness = ret;
     // printf("targetCloseness: %f\n", targetCloseness);
 }
+
 
 /* Sub GPU Threads */
 __global__ void gpu_update_links(VX3_Link **links, int num) {

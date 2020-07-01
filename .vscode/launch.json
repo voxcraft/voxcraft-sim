@@ -5,6 +5,48 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "----1.py----"
+        },
+        {
+            "name": "Python: test/1.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/demos/test/1.py",
+            "cwd": "${workspaceFolder}/demos/test/",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Debug test/1.py",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/vx3_node_worker",
+            "args": [
+                "-i",
+                "${workspaceFolder}/demos/test/workspace/locally/20200629112133.vxt",
+                "-o",
+                "${workspaceFolder}/demos/test/workspace/locally/20200629112133.vxr",
+                "-f"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/demos/test",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/local/cuda/bin/cuda-gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "cmake all",
+        },
+        {
+            "name": "-------------"
+        },
+
+        {
             "name": "unitTest",
             "type": "cppdbg",
             "request": "launch",
@@ -53,33 +95,6 @@
             "preLaunchTask": "cmake all",
         },
         {
-            "name": "Debug test/1.py",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/vx3_node_worker",
-            "args": [
-                "-i",
-                "${workspaceFolder}/demos/test/workspace/locally/20200625145409.vxt",
-                "-o",
-                "${workspaceFolder}/demos/test/workspace/locally/20200625145409.vxr",
-                "-f"
-            ],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/demos/test",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "miDebuggerPath": "/usr/local/cuda/bin/cuda-gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ],
-            "preLaunchTask": "cmake all",
-        },
-        {
             "name": "Debug test",
             "type": "cppdbg",
             "request": "launch",
@@ -100,14 +115,7 @@
             ],
             "preLaunchTask": "make test",
         },
-        {
-            "name": "Python: test/1.py",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/demos/test/1.py",
-            "cwd": "${workspaceFolder}/demos/test/",
-            "console": "integratedTerminal"
-        },
+
         {
             "name": "Python: salamander",
             "type": "python",

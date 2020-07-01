@@ -1,3 +1,7 @@
+//
+// Created by Sida Liu
+//  This class provides handy tools for GPU(CUDA Kernel) code.
+//
 #if !defined(VX3_H)
 #define VX3_H
 
@@ -32,6 +36,16 @@ inline bool u_with_ext(fs::path file, std::string ext) {
 
 #include <curand.h>
 #include <curand_kernel.h>
+class RandomGenerator {
+    public: 
+    curandState_t state;
+    __device__ RandomGenerator(int random_seed=0) {
+        curand_init(random_seed, 0, 0, &state);
+    }
+    __device__ __inline__ int randint(int max) {
+        return curand(&state) % max;
+    }
+};
 __device__ __inline__ int random(int max, int random_seed=0) {
     curandState_t state;
     curand_init(random_seed, 0, 0, &state);
@@ -99,5 +113,9 @@ template <class T> __device__ static inline void debug_array(T* array, int size)
 #include "Utils/VX3_vector.cuh"
 #include "Utils/VX3_dictionary.cuh"
 #include "VX3/VX3_SimulationResult.h"
+
+__device__ int to1D(VX3_Vec3D<int> pos, VX3_Vec3D<int>dim);
+__device__ VX3_Vec3D<int> to3D(int offset, VX3_Vec3D<int>dim);
+
 
 #endif // VX3_H
