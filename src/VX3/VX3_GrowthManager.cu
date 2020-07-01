@@ -7,7 +7,7 @@ __device__ bool VX3_GrowthManager::grow() {
     // randomly pick one surface voxel
     // check its surround
     // add a new voxel to proper position
-    if (d_kernel->num_d_voxels - d_kernel->num_d_init_voxels < 1000) { // memory limitation, refer to pre-allocation.
+    if (d_kernel->num_d_voxels - d_kernel->num_d_init_voxels < 10000) { // memory limitation, refer to pre-allocation.
         int r = d_kernel->randomGenerator->randint(d_kernel->num_d_surface_voxels);
         DEBUG_PRINT("r: %d, surface_voxels: %d.\n", r, d_kernel->num_d_surface_voxels);
         VX3_Voxel *v = d_kernel->d_surface_voxels[r];
@@ -52,7 +52,8 @@ __device__ bool VX3_GrowthManager::grow() {
         new_voxel->mat = &d_kernel->d_voxelMats[0];
         new_voxel->deviceInit(d_kernel);
         new_voxel->enableFloor(true);
-        new_voxel->updateGroup();
+        d_kernel->d_attach_manager->doAttach(v, available_direction, new_voxel, oppositeDirection(available_direction));
+        // new_voxel->updateGroup();
         d_kernel->num_d_voxels++;
         
         d_kernel->isSurfaceChanged = true;
