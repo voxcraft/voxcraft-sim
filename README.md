@@ -30,7 +30,7 @@ Then, run the script:
 
 print("Source code downloaded.")
 
-!cd voxcraft-sim; rm build -rf; mkdir build; cd build; cmake -DCMAKE_BUILD_TYPE=Release -DCUDA_DEBUG=OFF ..; make -j 10;
+!cd voxcraft-sim; rm build -rf; mkdir build; cd build; cmake -DCMAKE_BUILD_TYPE=Release ..; make -j 10;
 
 print("Executables built.")
 
