@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.12.0)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+# if we need -fPIC globally
+# set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Set build type to Release by default
 if (NOT DEFINED CMAKE_BUILD_TYPE)
