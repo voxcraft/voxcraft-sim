@@ -60,7 +60,7 @@ git clone https://github.com/voxcraft/voxcraft-sim.git
 cd voxcraft-sim
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DCUDA_DEBUG=OFF ..
+cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j 10
 ```
 
