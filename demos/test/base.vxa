@@ -1,23 +1,20 @@
 <VXA Version="1.1">
     <Simulator>
         <SurfaceGrowth>
-            <EnableGrowth>1</EnableGrowth>
+            <EnableGrowth>0</EnableGrowth>
             <GrowInterval>0.5</GrowInterval>
-            <GrowRate>0.1</GrowRate>
+            <GrowRate>0.01</GrowRate>
         </SurfaceGrowth>
 
-        <SecondaryExperiment>1</SecondaryExperiment>
-        <ReinitializeInitialPositionAfterThisManySeconds>5.1</ReinitializeInitialPositionAfterThisManySeconds>
-        <MaxDistInVoxelLengthsToCountAsPair>3</MaxDistInVoxelLengthsToCountAsPair>
-        <EnableCilia>1</EnableCilia>
+        <EnableCilia>0</EnableCilia>
         <Integration>
-            <DtFrac>1.0</DtFrac>
+            <DtFrac>0.5</DtFrac>
         </Integration>
         <AttachDetach>
-            <watchDistance>1</watchDistance>
             <EnableCollision>1</EnableCollision>
-            <EnableAttach>1</EnableAttach>
-            <EnableDetach>1</EnableDetach>
+            <EnableAttach>0</EnableAttach>
+            <EnableDetach>0</EnableDetach>
+            <watchDistance>1</watchDistance>
             <AttachCondition>
                 <Condition_0>
                     <mtCONST>1</mtCONST>
@@ -41,7 +38,7 @@
             <StopConditionFormula>
                 <mtSUB>
                     <mtVAR>t</mtVAR>
-                    <mtCONST>200</mtCONST>
+                    <mtCONST>1</mtCONST>
                 </mtSUB>
             </StopConditionFormula>
         </StopCondition>

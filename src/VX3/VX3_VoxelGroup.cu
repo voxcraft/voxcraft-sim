@@ -103,6 +103,11 @@ __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
                                     if (neighbor->groupPosition.z > max_z) {
                                         max_z = neighbor->groupPosition.z;
                                     }
+                                } else {
+                                    // check the group position to make sure the connection is right
+                                    if (neighbor->groupPosition != moveGroupPosition(v->groupPosition, (linkDirection)i)) {
+                                        v->links[i]->detach();
+                                    }
                                 }
                             }
                         }

@@ -415,6 +415,16 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
 void VX3_SimulationManager::enlargeGPUHeapSize() {
     size_t HeapSizeInBytes;
     size_t free, total;
+
+    // Query default limitations:
+    // size_t pValue;
+    // cudaDeviceGetLimit(&pValue, cudaLimitMallocHeapSize);
+    // printf("cudaDeviceGetLimit, cudaLimitMallocHeapSize, %ld.\n", pValue);
+    // cudaDeviceGetLimit(&pValue, cudaLimitStackSize);
+    // printf("cudaDeviceGetLimit, cudaLimitStackSize, %ld.\n", pValue);
+    // cudaDeviceGetLimit(&pValue, cudaLimitPrintfFifoSize);
+    // printf("cudaDeviceGetLimit, cudaLimitPrintfFifoSize, %ld.\n", pValue);
+    
     VcudaMemGetInfo(&free, &total);
     printf("Total GPU memory %ld bytes.\n", total);
     HeapSizeInBytes = HeapSize * total; // add some additional size
@@ -423,7 +433,9 @@ void VX3_SimulationManager::enlargeGPUHeapSize() {
                         HeapSizeInBytes); // Set Heap Memory to 1G, instead of merely 8M.
 
     // if "Lane User Stack Overflow" ocurs, maybe Stack Size too small, can try this:
-    // VcudaDeviceSetLimit(cudaLimitStackSize, 2048);
+    // VcudaDeviceSetLimit(cudaLimitStackSize, 1024*2);
+    // VcudaDeviceSetLimit(cudaLimitPrintfFifoSize, 2048);
+
 }
 
 void VX3_SimulationManager::startKernel(int num_simulation, int device_index) {
