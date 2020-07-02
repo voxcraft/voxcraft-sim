@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.12.0)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# Set build type to Release by default
+if (NOT DEFINED CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE RELEASE)
+endif()
+
 set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
 
 project(voxcraft-sim LANGUAGES CXX CUDA)
@@ -60,14 +65,16 @@ set_target_properties(vx3_test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
 if(uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
-  set(CUDA_DEBUG "-G or not" ON)
-  message("Set CUDA_DEBUG to ON.")
+  if (NOT DEFINED CUDA_DEBUG)
+    set(CUDA_DEBUG "-G or not" ON)
+  endif()
 endif(uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
 #-G means debug info in GPU, so you can step in GPU kernels
 if (CUDA_DEBUG)
-  message("Compile with debug information.")
+  message("Set CUDA_DEBUG to ON.")
   set(CUDA_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-G ${ARCH_FLAGS}>)
 else (CUDA_DEBUG)
+  message("Set CUDA_DEBUG to OFF.")
   set(CUDA_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>: ${ARCH_FLAGS}>)
 endif(CUDA_DEBUG)
 
