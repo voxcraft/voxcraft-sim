@@ -1,11 +1,17 @@
+# Custom
 build
+build_Release
+cmake-build-debug
 release
-.vscode
+workspace
+a.history
+core
 
 # Prerequisites
 *.d
 
 # Compiled Object files
+build/
 *.slo
 *.lo
 *.o
@@ -34,3 +40,6 @@ release
 *.exe
 *.out
 *.app
+
+# IDEs
+*.idea
