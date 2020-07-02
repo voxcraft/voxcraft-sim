@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.12.0)
 # set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+if (NOT DEFINED CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE RELEASE)
+endif()
 
 set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
 
@@ -63,15 +66,17 @@ set_target_properties(vx3_node_worker PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(vx3_test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
-if(NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE")
-  set(CUDA_DEBUG "-G or not" ON)
-  message("Set CUDA_DEBUG to ON.")
-endif(NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE")
+if(uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+  if (NOT DEFINED CUDA_DEBUG)
+    set(CUDA_DEBUG "-G or not" ON)
+  endif()
+endif(uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
 #-G means debug info in GPU, so you can step in GPU kernels
 if (CUDA_DEBUG)
-  message("Compile with debug information.")
+  message("Set CUDA_DEBUG to ON.")
   set(CUDA_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-G ${ARCH_FLAGS}>)
 else (CUDA_DEBUG)
+  message("Set CUDA_DEBUG to OFF.")
   set(CUDA_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>: ${ARCH_FLAGS}>)
 endif(CUDA_DEBUG)
 
