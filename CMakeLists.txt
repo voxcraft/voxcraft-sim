@@ -60,10 +60,11 @@ set_target_properties(voxelyze.3.0 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(vx3_node_worker PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(vx3_test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
-if(NOT DEFINED CUDA_DEBUG)
+string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
+if(uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
   set(CUDA_DEBUG "-G or not" ON)
   message("Set CUDA_DEBUG to ON.")
-endif(NOT DEFINED CUDA_DEBUG)
+endif(uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
 #-G means debug info in GPU, so you can step in GPU kernels
 if (CUDA_DEBUG)
   message("Compile with debug information.")
