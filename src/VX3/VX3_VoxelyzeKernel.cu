@@ -178,6 +178,10 @@ __device__ void VX3_VoxelyzeKernel::deviceInit() {
     randomGenerator = new RandomGenerator();
 
     regenerateSurfaceVoxels();
+
+    for (int i=0;i<d_voxelgroups.size();i++) {
+        d_voxelgroups[i]->updateGroup();
+    }
 }
 __device__ void VX3_VoxelyzeKernel::saveInitialPosition() {
     for (int i = 0; i < num_d_voxels; i++) {
@@ -921,7 +925,7 @@ __device__ void handle_collision_attachment(VX3_Voxel *voxel1, VX3_Voxel *voxel2
         }
     }
     if (k->enableAttach) {
-        if (k->d_attach_manager->tryAttach(voxel1, voxel2)) {
+        if (k->d_attach_manager->attachWhileCollide(voxel1, voxel2)) {
             voxel1->contactForce -= cache_contactForce1;
             voxel2->contactForce -= cache_contactForce2;
         }
