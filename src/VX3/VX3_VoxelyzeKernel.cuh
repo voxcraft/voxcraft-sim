@@ -66,6 +66,8 @@ class VX3_VoxelyzeKernel {
     double StopConditionValue;
     unsigned long CurStepCount = 0.0f;
 
+    bool enableFloor = true;
+
     // Temperature:
     bool TempEnabled;                           // overall flag for temperature calculations
     bool VaryTempEnabled;                       // is periodic variation of temperature on?
