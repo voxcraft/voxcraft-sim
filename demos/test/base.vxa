@@ -3,7 +3,7 @@
         <SurfaceGrowth>
             <EnableGrowth>1</EnableGrowth>
             <GrowInterval>0.5</GrowInterval>
-            <GrowRate>0.1</GrowRate>
+            <GrowRate>0.2</GrowRate>
         </SurfaceGrowth>
 
         <EnableCilia>0</EnableCilia>
@@ -23,10 +23,10 @@
             <SafetyGuard>500</SafetyGuard>
         </AttachDetach>
         <RecordHistory>
-            <RecordStepSize>100</RecordStepSize>
+            <RecordStepSize>600</RecordStepSize>
             <RecordVoxel>1</RecordVoxel>
-            <SurfaceVoxelsOnly>0</SurfaceVoxelsOnly>
-            <RecordLink>1</RecordLink>
+            <SurfaceVoxelsOnly>1</SurfaceVoxelsOnly>
+            <RecordLink>0</RecordLink>
         </RecordHistory>
         <ForceField></ForceField>
         <Damping>
@@ -38,7 +38,7 @@
             <StopConditionFormula>
                 <mtSUB>
                     <mtVAR>t</mtVAR>
-                    <mtCONST>5</mtCONST>
+                    <mtCONST>15</mtCONST>
                 </mtSUB>
             </StopConditionFormula>
         </StopCondition>

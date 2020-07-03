@@ -59,8 +59,8 @@ world_cilia = np.zeros(shape=[3, world.shape[0], world.shape[1], world.shape[2]]
 Senario="trivial"
 # Senario="shoot"
 if Senario=="trivial":
-    body = np.ones(shape=[1,1,3], dtype=int)
-    body[0,0,1] = 0
+    body = np.ones(shape=[1,1,1], dtype=int)
+    # body[0,0,1] = 0
     put_into(world, body)
 elif Senario=="two links together":
     # test ok
