@@ -5,7 +5,7 @@
 
 __device__ VX3_AttachManager::VX3_AttachManager(VX3_VoxelyzeKernel *k) { d_kernel = k; }
 
-__device__ bool VX3_AttachManager::tryAttach(VX3_Voxel *voxel1, VX3_Voxel *voxel2) {
+__device__ bool VX3_AttachManager::attachWhileCollide(VX3_Voxel *voxel1, VX3_Voxel *voxel2) {
     // Simple preliminary filter
     //// determined by formula
     if (!voxel1->enableAttach || !voxel2->enableAttach)
@@ -42,13 +42,24 @@ __device__ bool VX3_AttachManager::tryAttach(VX3_Voxel *voxel1, VX3_Voxel *voxel
         if (totalLinksFormed >= 1)
             return false;
     }
-    return doAttach(voxel1, linkdir_1, voxel2, linkdir_2);
+    return tryToAttach(voxel1, linkdir_1, voxel2, linkdir_2);
 }
-__device__ bool VX3_AttachManager::doAttach(VX3_Voxel *voxel1, int linkdir_1, VX3_Voxel *voxel2, int linkdir_2) {
+
+
+__device__ bool VX3_AttachManager::attachForNewVoxel(VX3_Voxel *voxel1, int linkdir_1, VX3_Voxel *voxel2, int linkdir_2) {
+    while(1) {
+        if (tryToAttach(voxel1, linkdir_1, voxel2, linkdir_2)) {
+            break;
+        }
+    }
+    return true;
+}
+
+__device__ bool VX3_AttachManager::tryToAttach(VX3_Voxel *voxel1, int linkdir_1, VX3_Voxel *voxel2, int linkdir_2) {
 
     bool ret = false;
     // Start Attach!
-    // Other potential attachments are ignored, no wait.
+    // Only once attchment at a time, other potential attachments should be ignored, no wait.
     if (atomicCAS(&attachmentMutex, 0, 1) == 0) {
         // Entering Critical Area
         if (voxel1->links[linkdir_1] == NULL && voxel2->links[linkdir_2] == NULL) {
@@ -60,8 +71,9 @@ __device__ bool VX3_AttachManager::doAttach(VX3_Voxel *voxel1, int linkdir_1, VX
                 // update voxel1's group, it will set all connected voxels' group to voxel1's
                 voxel1->d_group->hasNewLink++;
                 if (voxel1->d_group != voxel2->d_group) {
-                    voxel1->d_group->needRebuild = true;
-                    voxel1->d_group->updateGroup(voxel1);
+                    voxel2->d_group->switchAllVoxelsTo(voxel1->d_group);
+                    // voxel1->d_group->needRebuild = true;
+                    // voxel1->d_group->updateGroup(voxel1);
                 }
                 pL->isNewLink = d_kernel->SafetyGuard;
                 d_kernel->d_v_links.push_back(pL); // add to the list

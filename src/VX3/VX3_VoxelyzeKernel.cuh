@@ -66,6 +66,8 @@ class VX3_VoxelyzeKernel {
     double StopConditionValue;
     unsigned long CurStepCount = 0.0f;
 
+    bool enableFloor = true;
+
     // Temperature:
     bool TempEnabled;                           // overall flag for temperature calculations
     bool VaryTempEnabled;                       // is periodic variation of temperature on?
@@ -191,6 +193,9 @@ class VX3_VoxelyzeKernel {
     double SurfaceGrowth_Rate = 1;
     int SurfaceGrowth_Growed = 0;
     RandomGenerator* randomGenerator;
+
+    VX3_dVector<VX3_VoxelGroup *> d_voxelgroups;
+    __device__ void updateGroups();
 };
 
 #endif // VX3_VOXELYZE_KERNEL_H

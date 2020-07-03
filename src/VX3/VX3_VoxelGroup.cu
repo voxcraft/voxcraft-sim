@@ -6,7 +6,16 @@
 __device__ VX3_VoxelGroup::VX3_VoxelGroup(VX3_VoxelyzeKernel *k) { d_kernel = k; }
 __device__ void VX3_VoxelGroup::switchAllVoxelsTo(VX3_VoxelGroup *group) {
     for (int i = 0; i < d_voxels.size(); i++) {
-        d_voxels[i]->d_group = group;
+        if (d_voxels[i]->d_group == NULL) {
+            d_voxels[i]->d_group = group;
+            group->needRebuild = true;
+        } else if (d_voxels[i]->d_group != NULL && d_voxels[i]->d_group != group) {
+            d_voxels[i]->d_group->removed = true;
+            d_voxels[i]->d_group = group;
+            group->needRebuild = true;
+        } else {
+            // d_group is already group.
+        }
     }
 }
 
@@ -37,7 +46,8 @@ __device__ VX3_Vec3D<int> VX3_VoxelGroup::moveGroupPosition(VX3_Vec3D<int> from,
     return to;
 }
 
-__device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
+__device__ void VX3_VoxelGroup::updateGroup() {
+    VX3_Voxel *voxel = d_voxels[0];
     int min_x, min_y, min_z, max_x, max_y, max_z;
     min_x = 0;
     min_y = 0;
@@ -79,7 +89,7 @@ __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
                                 if (BFS_visited.get(neighbor) == -1) {
                                     neighbor->groupPosition = moveGroupPosition(v->groupPosition, (linkDirection)i);
                                     // Set all connected voxels' d_group to this
-                                    neighbor->switchGroupTo(this);
+                                    neighbor->d_group->switchAllVoxelsTo(this);
 
                                     BFS_result.push_back(neighbor);
                                     BFS_visited.set(neighbor, 1);
@@ -106,7 +116,8 @@ __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
                                 } else {
                                     // check the group position to make sure the connection is right
                                     if (neighbor->groupPosition != moveGroupPosition(v->groupPosition, (linkDirection)i)) {
-                                        v->links[i]->detach();
+                                        if (v->links[i])
+                                            v->links[i]->detach(); // TODO: there are potential racing conditions here.
                                     }
                                 }
                             }
@@ -118,10 +129,10 @@ __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
                     dim_y = max_y - min_y + 1;
                     dim_z = max_z - min_z + 1;
                     if (buffer_size_group_map < dim_x * dim_y * dim_z) { // size of group map exceed the buffer size
-                        if (buffer_size_group_map==0) {
-                            buffer_size_group_map = (dim_x * dim_y * dim_z >= 16)?(dim_x * dim_y * dim_z *2):32; // by default, allocate 10, so no need to go through 2,4,8,16,32
+                        if (buffer_size_group_map == 0) {
+                            buffer_size_group_map = (dim_x * dim_y * dim_z >= 16) ? (dim_x * dim_y * dim_z * 2) : 32; // by default, allocate 10, so no need to go through 2,4,8,16,32
                         } else {
-                            buffer_size_group_map = dim_x * dim_y * dim_z * 2; //double the size
+                            buffer_size_group_map = dim_x * dim_y * dim_z * 2; // double the size
                         }
                         if (d_group_map) {
                             free(d_group_map);
@@ -141,7 +152,7 @@ __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
                         v->groupPosition.y -= min_y;
                         v->groupPosition.z -= min_z;
 
-                        int offset = to1D(v->groupPosition);
+                        int offset = to1D(v->groupPosition, VX3_Vec3D<int>(dim_x, dim_y, dim_z));
                         d_group_map[offset] = v;
                         d_voxels.push_back(v);
                         // If any link is NULL => is surface voxel
@@ -156,25 +167,6 @@ __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
         }
         atomicExch(&buildMutex, 0);
     }
-}
-
-__device__ int VX3_VoxelGroup::to1D(VX3_Vec3D<int> groupPosition) {
-    int x = groupPosition.x;
-    int y = groupPosition.y;
-    int z = groupPosition.z;
-    if (x < 0 || y < 0 || z < 0 || x >= dim_x || y >= dim_y || z >= dim_z)
-        return -1; // Overflow
-    return dim_y * dim_z * x + dim_z * y + z;
-}
-__device__ VX3_Vec3D<int> VX3_VoxelGroup::to3D(int offset) {
-    int x, y, z;
-    z = offset % dim_z;
-    int residual;
-    residual = (int)((offset - z) / dim_z);
-    y = residual % dim_y;
-    residual = (int)((residual - y) / dim_y);
-    x = residual;
-    return VX3_Vec3D<int>(x, y, z);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -284,7 +276,7 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
         for (int i = 0; i < remote_group->d_surface_voxels.size(); i++) {
             VX3_Voxel *v = remote_group->d_surface_voxels[i];
             VX3_Vec3D<int> position_of_remote_voxel_in_host_group = v->groupPosition + remote_diff;
-            int offset = to1D(position_of_remote_voxel_in_host_group);
+            int offset = to1D(position_of_remote_voxel_in_host_group, VX3_Vec3D<int>(dim_x, dim_y, dim_z));
             if (offset == -1) {
                 // good, because out of range
             } else if (d_group_map[offset] == NULL) {

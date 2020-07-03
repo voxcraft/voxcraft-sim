@@ -71,6 +71,11 @@ __device__ void VX3_Voxel::deviceInit(VX3_VoxelyzeKernel* k) {
             }
         }
     }
+    d_group = new VX3_VoxelGroup(d_kernel);
+    d_group->d_voxels.push_back(this);
+    d_kernel->d_voxelgroups.push_back(d_group);
+
+    enableFloor(d_kernel->enableFloor);
 }
 __device__ VX3_Voxel *VX3_Voxel::adjacentVoxel(linkDirection direction) const {
     VX3_Link *pL = links[(int)direction];
@@ -560,28 +565,25 @@ __device__ void VX3_Voxel::generateNearby(int linkDepth, int gindex, bool surfac
     assert(false); // not used. near by has logic flaws.
 }
 
-__device__ void VX3_Voxel::updateGroup() {
-    if (d_group==NULL) {
-        d_group = new VX3_VoxelGroup(d_kernel);
-        d_group->updateGroup(this);
-    }
-}
+// __device__ void VX3_Voxel::updateGroup() {
 
-__device__ void VX3_Voxel::switchGroupTo(VX3_VoxelGroup* group) {
-    if (d_group==group)
-        return;
-    if (d_group) {
-        // TODO: check all memory in that group is freed if necessary.
-        // use delete because this is created by new. (new and delete, malloc and free)
-        // VX3_VoxelGroup* to_delete = d_group; // because d_group->switchAllVoxelsTo() will change the pointer d_group, so save it here for deletion.
-        d_group->switchAllVoxelsTo(group);
-        // delete to_delete;
-        // Free this memory seems will spend a lot of time checking conditions, just leave it there for now.
-        // d_group = group;
-    } else {
-        d_group = group;
-    }
-}
+// }
+
+// __device__ void VX3_Voxel::switchGroupTo(VX3_VoxelGroup* group) {
+//     if (d_group==group)
+//         return;
+//     if (d_group) {
+//         // TODO: check all memory in that group is freed if necessary.
+//         // use delete because this is created by new. (new and delete, malloc and free)
+//         // VX3_VoxelGroup* to_delete = d_group; // because d_group->switchAllVoxelsTo() will change the pointer d_group, so save it here for deletion.
+//         d_group->switchAllVoxelsTo(group);
+//         // delete to_delete;
+//         // Free this memory seems will spend a lot of time checking conditions, just leave it there for now.
+//         // d_group = group;
+//     } else {
+//         d_group = group;
+//     }
+// }
 
 __device__ void VX3_Voxel::changeOrientationTo(VX3_Quat3D<> q) {
     baseCiliaForce = q.RotateVec3DInv(orient.RotateVec3D(baseCiliaForce));

@@ -339,10 +339,13 @@ __device__ void VX3_Link::detach() {
     pVPos->links[linkdirPos] = NULL;
 
     pVNeg->d_group->needRebuild = true;
-    pVNeg->d_group->updateGroup(pVNeg);
+    // pVNeg->d_group->updateGroup(pVNeg);
 
     pVPos->d_group = new VX3_VoxelGroup(d_kernel);
-    pVPos->d_group->updateGroup(pVPos);
+    pVPos->d_group->d_voxels.push_back(pVPos);
+    d_kernel->d_voxelgroups.push_back(pVPos->d_group);
+    pVPos->d_group->needRebuild = true;
+    // pVPos->d_group->updateGroup(pVPos);
 
     d_kernel->isSurfaceChanged = true;
 }

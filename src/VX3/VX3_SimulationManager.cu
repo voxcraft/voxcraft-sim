@@ -92,7 +92,7 @@ __global__ void CUDA_Simulation(VX3_VoxelyzeKernel *d_voxelyze_3, int num_simula
                            }
                            if (v->removed)
                                continue;
-                           if (v->isSurface()) {
+                        //    if (v->isSurface()) {
                                printf("%.1f,%.1f,%.1f,", v->pos.x * vs, v->pos.y * vs, v->pos.z * vs);
                                printf("%.1f,%.2f,%.2f,%.2f,", v->orient.AngleDegrees(), v->orient.x, v->orient.y, v->orient.z);
                                VX3_Vec3D<double> ppp, nnn;
@@ -103,7 +103,7 @@ __global__ void CUDA_Simulation(VX3_VoxelyzeKernel *d_voxelyze_3, int num_simula
                                printf("%d,", v->mat->matid); // for coloring
                                printf("%.1f,", v->localSignal);  // for coloring as well.
                                printf(";");
-                           }
+                        //    }
                        }
                        printf("<<<>>>");
                    }
@@ -348,6 +348,8 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
 
         std::string RawPrint = pt_merged.get<std::string>("VXA.RawPrint", "");
         std::cout << RawPrint << "\n";
+
+        h_d_tmp.enableFloor = pt_merged.get<bool>("VXA.Environment.Gravity.FloorEnabled", true);
 
         ParseMathTree(h_d_tmp.StopConditionFormula, sizeof(h_d_tmp.StopConditionFormula),
                       "VXA.Simulator.StopCondition.StopConditionFormula", pt_merged);

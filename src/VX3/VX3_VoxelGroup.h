@@ -13,6 +13,7 @@ class VX3_Voxel;
 class VX3_VoxelGroup {
 public:
     /* data */
+    bool removed = false;
     VX3_VoxelyzeKernel *d_kernel; // saved pointer to the whole simulation
     int dim_x, dim_y, dim_z; // dimension of this group
 
@@ -26,11 +27,9 @@ public:
     __device__ VX3_VoxelGroup(VX3_VoxelyzeKernel *k);
     __device__ void switchAllVoxelsTo(VX3_VoxelGroup* group);
     __device__ VX3_Vec3D<int> moveGroupPosition(VX3_Vec3D<int> from, linkDirection dir, int step = 1); // return the step next position in the group
-    __device__ int to1D(VX3_Vec3D<int> groupPosition); // for generating an index(offset) for `d_group_map` from groupPosition
-    __device__ VX3_Vec3D<int> to3D(int offset); // get groupPosition back from an index(offset)
-
+    
     // These two methods need to consider the racing condition:
-    __device__ void updateGroup(VX3_Voxel *voxel); // Update all the group info that voxel is in. BFS.
+    __device__ void updateGroup(); // Update all the group info of voxels that is in this group, start from d_voxels[0]. BFS.
     __device__ bool isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *voxel_remote, int *ret_linkdir_1, int *ret_linkdir_2); // Check host and remote group are compatible for attachment.
     // These three vairables are used to handle the racing condition.
     bool needRebuild = true;

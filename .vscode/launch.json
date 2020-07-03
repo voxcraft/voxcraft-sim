@@ -22,9 +22,9 @@
             "program": "${workspaceFolder}/build/vx3_node_worker",
             "args": [
                 "-i",
-                "${workspaceFolder}/demos/test/workspace/locally/20200629112133.vxt",
+                "${workspaceFolder}/demos/test/workspace/locally/20200702225352.vxt",
                 "-o",
-                "${workspaceFolder}/demos/test/workspace/locally/20200629112133.vxr",
+                "${workspaceFolder}/demos/test/workspace/locally/20200702225352.vxr",
                 "-f"
             ],
             "stopAtEntry": false,

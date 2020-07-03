@@ -265,8 +265,8 @@ public:
 
     VX3_VoxelGroup *d_group = NULL;
     VX3_Vec3D<int> groupPosition;
-    __device__ void updateGroup();
-    __device__ void switchGroupTo(VX3_VoxelGroup *group);
+    // __device__ void updateGroup();
+    // __device__ void switchGroupTo(VX3_VoxelGroup *group);
 
     bool freezeAllVoxelsAfterAttach = false; // for debug use.
 
