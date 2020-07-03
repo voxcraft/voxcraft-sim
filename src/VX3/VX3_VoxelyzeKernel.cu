@@ -24,6 +24,7 @@ __global__ void gpu_insert_lookupgrid(VX3_Voxel **d_surface_voxels, int num, VX3
                                       VX3_Vec3D<> *gridLowerBound, VX3_Vec3D<> *gridDelta, int lookupGrid_n);
 __global__ void gpu_collision_attachment_lookupgrid(VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid, int num, double watchDistance,
                                                     VX3_VoxelyzeKernel *k);
+__global__ void gpu_update_groups(VX3_VoxelGroup ** groups, int num);
 /* Host methods */
 
 VX3_VoxelyzeKernel::VX3_VoxelyzeKernel(CVX_Sim *In) {
@@ -135,6 +136,7 @@ __device__ void VX3_VoxelyzeKernel::deviceInit() {
     d_v_linkMats.clear();
     d_v_collisions.clear();
     d_targets.clear();
+    d_voxelgroups.clear();
     // allocate memory for collision lookup table
     num_lookupGrids = lookupGrid_n * lookupGrid_n * lookupGrid_n;
     d_collisionLookupGrid = (VX3_dVector<VX3_Voxel *> *)malloc(num_lookupGrids * sizeof(VX3_dVector<VX3_Voxel *>));
@@ -165,11 +167,6 @@ __device__ void VX3_VoxelyzeKernel::deviceInit() {
     for (int i = 0; i < num_d_links; i++) {
         d_links[i].deviceInit(this);
     }
-
-    for (int i = 0; i < num_d_voxels; i++) {
-        d_voxels[i].updateGroup();
-    }
-
 
     d_attach_manager = new VX3_AttachManager(this);
 
@@ -396,6 +393,11 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
             isSurfaceChanged = false;
             regenerateSurfaceVoxels();
         }
+    }
+
+    {
+        // only update Groups after all operation is done at each step
+        updateGroups();
     }
 
     currentTime += dt;
@@ -731,8 +733,32 @@ __device__ void VX3_VoxelyzeKernel::computeTargetCloseness() {
     // printf("targetCloseness: %f\n", targetCloseness);
 }
 
+__device__ void VX3_VoxelyzeKernel::updateGroups() {
+    int minGridSize, blockSize, num_groups;
+    num_groups = d_voxelgroups.size();
+    if (num_groups>0) {
+        cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_groups, 0,
+                num_groups); // Dynamically calculate blockSize
+        int gridSize_voxels = (num_groups + blockSize - 1) / blockSize;
+        int blockSize_voxels = num_groups < blockSize ? num_groups : blockSize;
+        gpu_update_groups<<<gridSize_voxels, blockSize_voxels>>>(&d_voxelgroups[0], num_groups);
+        CUDA_CHECK_AFTER_CALL();
+        VcudaDeviceSynchronize();
+    }
+}
 
 /* Sub GPU Threads */
+__global__ void gpu_update_groups(VX3_VoxelGroup ** groups, int num) {
+    int gindex = threadIdx.x + blockIdx.x * blockDim.x;
+    if (gindex < num) {
+        VX3_VoxelGroup *g = groups[gindex];
+        if (g->removed)
+            return;
+        if (g->needRebuild)
+            g->updateGroup();
+    }
+}
+
 __global__ void gpu_update_links(VX3_Link **links, int num) {
     int gindex = threadIdx.x + blockIdx.x * blockDim.x;
     if (gindex < num) {

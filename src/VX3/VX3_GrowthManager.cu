@@ -39,20 +39,24 @@ __device__ bool VX3_GrowthManager::grow() {
         }
         VX3_Voxel *new_voxel = &d_kernel->d_voxels[d_kernel->num_d_voxels];
         // need orientation
-        new_voxel->pos = v->pos + v->orient.RotateVec3DInv(new_position);
+        new_voxel->pos = v->pos + v->orient.RotateVec3D(new_position);
         new_voxel->orient = v->orient;
         // printf("d_voxels[%d].pos: %e,%e,%e. === %e.\n", d_kernel->num_d_voxels, new_voxel->pos.x, new_voxel->pos.y, new_voxel->pos.z, d_kernel->voxSize / 2);
         if (new_voxel->pos.z < d_kernel->voxSize / 2) {
             // printf("no.\n");
             return false;
         }
+        printf("new_position %e, %e, %e.\n", new_position.x, new_position.y, new_position.z);
+        printf("v->orient.RotateVec3D(new_position) %e, %e, %e.\n", v->orient.RotateVec3D(new_position).x, v->orient.RotateVec3D(new_position).y, v->orient.RotateVec3D(new_position).z);
+        printf("v->pos %e, %e, %e.\n", v->pos.x, v->pos.y, v->pos.z);
+        printf("new_voxel->pos %e, %e, %e.\n", new_voxel->pos.x, new_voxel->pos.y, new_voxel->pos.z);
         // printf("yes.\n");
         // need check surrounding
         new_voxel->pos = new_position;
         new_voxel->mat = &d_kernel->d_voxelMats[0];
         new_voxel->deviceInit(d_kernel);
         new_voxel->enableFloor(true);
-        d_kernel->d_attach_manager->doAttach(v, available_direction, new_voxel, oppositeDirection(available_direction));
+        // d_kernel->d_attach_manager->doAttach(v, available_direction, new_voxel, oppositeDirection(available_direction));
         // new_voxel->updateGroup();
         d_kernel->num_d_voxels++;
         

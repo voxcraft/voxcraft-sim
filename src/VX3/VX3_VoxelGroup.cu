@@ -6,7 +6,16 @@
 __device__ VX3_VoxelGroup::VX3_VoxelGroup(VX3_VoxelyzeKernel *k) { d_kernel = k; }
 __device__ void VX3_VoxelGroup::switchAllVoxelsTo(VX3_VoxelGroup *group) {
     for (int i = 0; i < d_voxels.size(); i++) {
-        d_voxels[i]->d_group = group;
+        if (d_voxels[i]->d_group == NULL) {
+            d_voxels[i]->d_group = group;
+            needRebuild = true;
+        } else if (d_voxels[i]->d_group != NULL && d_voxels[i]->d_group != group) {
+            d_voxels[i]->d_group->removed = true;
+            d_voxels[i]->d_group = group;
+            needRebuild = true;
+        } else {
+            //d_group is already group.
+        }
     }
 }
 
@@ -37,7 +46,8 @@ __device__ VX3_Vec3D<int> VX3_VoxelGroup::moveGroupPosition(VX3_Vec3D<int> from,
     return to;
 }
 
-__device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
+__device__ void VX3_VoxelGroup::updateGroup() {
+    VX3_Voxel *voxel = d_voxels[0];
     int min_x, min_y, min_z, max_x, max_y, max_z;
     min_x = 0;
     min_y = 0;
@@ -79,7 +89,7 @@ __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *voxel) {
                                 if (BFS_visited.get(neighbor) == -1) {
                                     neighbor->groupPosition = moveGroupPosition(v->groupPosition, (linkDirection)i);
                                     // Set all connected voxels' d_group to this
-                                    neighbor->switchGroupTo(this);
+                                    neighbor->d_group->switchAllVoxelsTo(this);
 
                                     BFS_result.push_back(neighbor);
                                     BFS_visited.set(neighbor, 1);

@@ -1,9 +1,9 @@
 <VXA Version="1.1">
     <Simulator>
         <SurfaceGrowth>
-            <EnableGrowth>0</EnableGrowth>
+            <EnableGrowth>1</EnableGrowth>
             <GrowInterval>0.5</GrowInterval>
-            <GrowRate>0.01</GrowRate>
+            <GrowRate>0.1</GrowRate>
         </SurfaceGrowth>
 
         <EnableCilia>0</EnableCilia>
@@ -12,8 +12,8 @@
         </Integration>
         <AttachDetach>
             <EnableCollision>1</EnableCollision>
-            <EnableAttach>0</EnableAttach>
-            <EnableDetach>0</EnableDetach>
+            <EnableAttach>1</EnableAttach>
+            <EnableDetach>1</EnableDetach>
             <watchDistance>1</watchDistance>
             <AttachCondition>
                 <Condition_0>
@@ -38,7 +38,7 @@
             <StopConditionFormula>
                 <mtSUB>
                     <mtVAR>t</mtVAR>
-                    <mtCONST>1</mtCONST>
+                    <mtCONST>5</mtCONST>
                 </mtSUB>
             </StopConditionFormula>
         </StopCondition>
