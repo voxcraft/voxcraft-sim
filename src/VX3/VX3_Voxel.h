@@ -273,6 +273,10 @@ public:
     // Align singleton and small bar (2 voxels) for attachment
     __device__ void changeOrientationTo(VX3_Quat3D<> q);
     __device__ void isSingletonOrSmallBar(bool *isSingleton, bool *isSmallBar, int *SmallBarDirection);
+
+    // Growth
+    __device__ void grow();
+    __device__ VX3_Vec3D<> potentialNeighborPosition(int linkdir);
 };
 
 #endif // VX3_VOXEL_H

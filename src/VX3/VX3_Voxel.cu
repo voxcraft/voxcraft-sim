@@ -611,3 +611,56 @@ __device__ void VX3_Voxel::isSingletonOrSmallBar(bool *isSingleton, bool *isSmal
         *isSmallBar = false;
     }
 }
+
+__device__ void VX3_Voxel::grow() {
+    double p = (double) d_kernel->randomGenerator->randint(1000) * 0.001; //TODO: Oh, this generate the same "random" number for all threads!!
+    // Solution: change randomGenerator to preallocate a bunch of random numbers, and get them by atomic operation.
+    printf("p %f. d_kernel->SurfaceGrowth_Rate %f. \n", p, d_kernel->SurfaceGrowth_Rate);
+    if (p > d_kernel->SurfaceGrowth_Rate)
+        return;
+    
+    int num_directions = 0;
+    int available_directions[6];
+    VX3_Vec3D<> available_position[6];
+
+    for (int i=0;i<6;i++) {
+        if (links[i]==NULL) { // available link slot
+            available_position[num_directions] = potentialNeighborPosition(i);
+            if (available_position[num_directions].z > d_kernel->voxSize / 2 && d_kernel->enableFloor) { // and above ground
+                available_directions[num_directions] = i;
+                num_directions ++;
+            }
+        }
+    }
+    if (num_directions==0)
+        return;
+    int choice = d_kernel->randomGenerator->randint(num_directions);
+    printf("grow()\n");
+    d_kernel->d_growth_manager->grow(this, available_directions[choice], available_position[choice]);
+}
+
+__device__ VX3_Vec3D<> VX3_Voxel::potentialNeighborPosition(int linkdir) {
+    VX3_Vec3D<> pnPos = VX3_Vec3D<>();
+    switch ((linkDirection)linkdir) {
+    case X_POS:
+        pnPos.x += d_kernel->voxSize;
+        break;
+    case X_NEG:
+        pnPos.x -= d_kernel->voxSize;
+        break;
+    case Y_POS:
+        pnPos.y += d_kernel->voxSize;
+        break;
+    case Y_NEG:
+        pnPos.y -= d_kernel->voxSize;
+        break;
+    case Z_POS:
+        pnPos.z += d_kernel->voxSize;
+        break;
+    case Z_NEG:
+        pnPos.z -= d_kernel->voxSize;
+    }
+    // real coordinate
+    pnPos = pos + orient.RotateVec3D(pnPos);
+    return pnPos;
+}
