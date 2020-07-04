@@ -397,7 +397,7 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
 
         h_d_tmp.EnableSurfaceGrowth = pt_merged.get<int>("VXA.Simulator.SurfaceGrowth.EnableGrowth", 0);
         h_d_tmp.SurfaceGrowth_Interval = pt_merged.get<double>("VXA.Simulator.SurfaceGrowth.GrowInterval", 1);
-        h_d_tmp.SurfaceGrowth_Rate = pt_merged.get<double>("VXA.Simulator.SurfaceGrowth.GrowRate", 1);
+        h_d_tmp.SurfaceGrowth_Rate = pt_merged.get<double>("VXA.Simulator.SurfaceGrowth.GrowRate", 0.1);
 
         HeapSize = pt_merged.get<double>("VXA.GPU.HeapSize", 0.5);
         if (HeapSize > 1.0) {
