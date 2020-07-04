@@ -25,6 +25,7 @@ __global__ void gpu_insert_lookupgrid(VX3_Voxel **d_surface_voxels, int num, VX3
 __global__ void gpu_collision_attachment_lookupgrid(VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid, int num, double watchDistance,
                                                     VX3_VoxelyzeKernel *k);
 __global__ void gpu_update_groups(VX3_VoxelGroup ** groups, int num);
+__global__ void gpu_surface_grow(VX3_Voxel ** surface_voxels, int num);
 /* Host methods */
 
 VX3_VoxelyzeKernel::VX3_VoxelyzeKernel(CVX_Sim *In) {
@@ -382,13 +383,15 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
     if (EnableSurfaceGrowth) {
         if (currentTime>=SurfaceGrowth_activeTime) {
             SurfaceGrowth_activeTime = currentTime + SurfaceGrowth_Interval;
-            SurfaceGrowth_Growed = 0;
+            printf("call surfaceGrow at currentTime: %f. with SurfaceGrowth_Rate %f.\n", currentTime, SurfaceGrowth_Rate);
+            surfaceGrow();
+            // SurfaceGrowth_Growed = 0;
         }
-        if (SurfaceGrowth_Growed < ceil(num_d_surface_voxels * SurfaceGrowth_Rate)) {
-            if (d_growth_manager->grow()) {
-                SurfaceGrowth_Growed++;
-            };
-        }
+        // if (SurfaceGrowth_Growed < ceil(num_d_surface_voxels * SurfaceGrowth_Rate)) {
+        //     if (d_growth_manager->grow()) {
+        //         SurfaceGrowth_Growed++;
+        //     };
+        // }
     }
 
     if (isSurfaceChanged) {
@@ -751,7 +754,28 @@ __device__ void VX3_VoxelyzeKernel::updateGroups() {
     }
 }
 
+__device__ void VX3_VoxelyzeKernel::surfaceGrow() {
+    int minGridSize, blockSize;
+    if (num_d_surface_voxels>0) {
+        cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_surface_grow, 0,
+                num_d_surface_voxels); // Dynamically calculate blockSize
+        int gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
+        int blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
+        gpu_surface_grow<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels);
+        CUDA_CHECK_AFTER_CALL();
+        VcudaDeviceSynchronize();
+    }
+}
+
 /* Sub GPU Threads */
+__global__ void gpu_surface_grow(VX3_Voxel** surface_voxels, int num) {
+    int gindex = threadIdx.x + blockIdx.x * blockDim.x;
+    if (gindex < num) {
+        VX3_Voxel* v = surface_voxels[gindex];
+        v->grow();
+    }
+}
+
 __global__ void gpu_update_groups(VX3_VoxelGroup ** groups, int num) {
     int gindex = threadIdx.x + blockIdx.x * blockDim.x;
     if (gindex < num) {

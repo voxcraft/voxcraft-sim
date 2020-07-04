@@ -196,6 +196,8 @@ class VX3_VoxelyzeKernel {
 
     VX3_dVector<VX3_VoxelGroup *> d_voxelgroups;
     __device__ void updateGroups();
+
+    __device__ void surfaceGrow();
 };
 
 #endif // VX3_VOXELYZE_KERNEL_H
