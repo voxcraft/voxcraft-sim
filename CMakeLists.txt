@@ -1,9 +1,16 @@
 cmake_minimum_required(VERSION 3.12.0)
+# if we need -fPIC globally
+# set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+# Set build type to Release by default
+if (NOT DEFINED CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE RELEASE)
+endif()
+
+set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
+
 project(voxcraft-sim LANGUAGES CXX CUDA)
-
 set(CMAKE_CXX_STANDARD 17)
-
-include_directories(/usr/local/cuda/include) # for cuda intellisense
 
 include_directories(src)
 include_directories(src/VX3)
@@ -11,12 +18,13 @@ include_directories(src/Utils)
 include_directories(src/VXA)
 include_directories(src/old)
 
+file( GLOB UTILS_SRC_cu src/Utils/*.cu )
 file( GLOB VX3_SRC_cu src/VX3/*.cu )
 file( GLOB VX3_SRC_cpp src/VX3/*.cpp )
 file( GLOB VXA_SRC_cpp src/VXA/*.cpp )
 file( GLOB OLD_SRC src/old/*.c* )
 
-add_library(voxelyze.3.0 ${VX3_SRC_cu} ${VX3_SRC_cpp} ${VXA_SRC_cpp} ${OLD_SRC})
+add_library(voxelyze.3.0 ${UTILS_SRC_cu} ${VX3_SRC_cu} ${VX3_SRC_cpp} ${VXA_SRC_cpp} ${OLD_SRC})
 add_executable(voxcraft-sim src/Executables/voxcraft-sim.cpp)
 add_executable(vx3_node_worker src/Executables/vx3_node_worker.cu)
 add_executable(vx3_node_daemon src/Executables/vx3_node_daemon.cu)
@@ -34,26 +42,45 @@ target_link_libraries(vx3_node_daemon PUBLIC ${Boost_LIBRARIES})
 
 
 # CUDA options
-if(NOT DEFINED CUDA_DEBUG)
-  set(CUDA_DEBUG "-G or not" ON)
-  message("Set CUDA_DEBUG to ON.")
-endif(NOT DEFINED CUDA_DEBUG)
+find_package(CUDA) # for CUDA_SELECT_NVCC_ARCH_FLAGS function
+# if one want to force use certain Gpu Architecture, one can add `CUDA_ARCH` like `cmake -DCUDA_ARCH=arch=compute_61,code=sm_61 ..`
+if (NOT DEFINED CUDA_ARCH)
+  CUDA_SELECT_NVCC_ARCH_FLAGS(RET_ARCH_FLAGS)
+  message("CUDA_SELECT_NVCC_ARCH_FLAGS returns: " ${RET_ARCH_FLAGS})
+  list(LENGTH RET_ARCH_FLAGS FLAG_LENGTH)
+  message("Flag length: " ${FLAG_LENGTH})
+  if (FLAG_LENGTH GREATER 3)
+    # CUDA_SELECT_NVCC_ARCH_FLAGS resulted more than 3 items, which is probably GPU not found error.
+    message(FATAL_ERROR "Nvidia GPU not found. Abort.")
+  endif()
+  list(GET RET_ARCH_FLAGS -1 CUDA_ARCH) # use newest architecture
+endif()
+message("Using GPU Architecture: " ${CUDA_ARCH})
+set(ARCH_FLAGS "-gencode" ${CUDA_ARCH})
+list(APPEND CMAKE_CUDA_FLAGS -gencode=${CUDA_ARCH})
+
 set_target_properties(voxelyze.3.0 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(vx3_node_worker PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(vx3_test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-    #-G means debug info in GPU, so you can step in GPU kernels
-    if (CUDA_DEBUG)
-      message("Compile with debug information.")
-      target_compile_options(voxelyze.3.0     PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-G -arch=compute_60 -code=compute_60>)
-      target_compile_options(vx3_node_worker  PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-G -arch=compute_60 -code=compute_60>)
-      target_compile_options(vx3_test         PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-G -arch=compute_60 -code=compute_60>)
-    else (CUDA_DEBUG)
-      target_compile_options(voxelyze.3.0     PUBLIC $<$<COMPILE_LANGUAGE:CUDA>: -arch=compute_60 -code=compute_60>)
-      target_compile_options(vx3_node_worker  PUBLIC $<$<COMPILE_LANGUAGE:CUDA>: -arch=compute_60 -code=compute_60>)
-      target_compile_options(vx3_test         PUBLIC $<$<COMPILE_LANGUAGE:CUDA>: -arch=compute_60 -code=compute_60>)
-    endif(CUDA_DEBUG)
-list(APPEND CMAKE_CUDA_FLAGS "-gencode=arch=compute_60,code=sm_60")
 
+string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
+if(uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+  if (NOT DEFINED CUDA_DEBUG)
+    set(CUDA_DEBUG "-G or not" ON)
+  endif()
+endif(uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+#-G means debug info in GPU, so you can step in GPU kernels
+if (CUDA_DEBUG)
+  message("Set CUDA_DEBUG to ON.")
+  set(CUDA_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-G ${ARCH_FLAGS}>)
+else (CUDA_DEBUG)
+  message("Set CUDA_DEBUG to OFF.")
+  set(CUDA_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>: ${ARCH_FLAGS}>)
+endif(CUDA_DEBUG)
+
+target_compile_options(voxelyze.3.0     PUBLIC ${CUDA_OPTIONS})
+target_compile_options(vx3_node_worker  PUBLIC ${CUDA_OPTIONS})
+target_compile_options(vx3_test         PUBLIC ${CUDA_OPTIONS})
 
 #for gtest
 ################################
@@ -95,10 +122,10 @@ if (test)
   # You can also omit NAME and COMMAND. The second argument could be some other
   # test executable.
   add_test(that-other-test-I-made runUnitTests)
-  
+
   set_target_properties(runUnitTests PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
-  target_compile_options(runUnitTests         PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-G -arch=compute_60 -code=compute_60>)
+  target_compile_options(runUnitTests PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-G ${ARCH_FLAGS}>) # always with -G
 endif()
 
 set(CMAKE_VERBOSE_MAKEFILE OFF) #turn on if we want to debug in compilation.
