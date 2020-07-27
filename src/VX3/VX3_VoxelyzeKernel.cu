@@ -438,11 +438,12 @@ __device__ void VX3_VoxelyzeKernel::dropVoxelFrom(int x, int y, int z) { //
     bool voxAlreadyThere = d_collision_system->check_collisions_device(float(x)*r, float(y)*r, float(z)*r, r);
 
     if ( (!voxAlreadyThere) && (num_d_voxels - num_d_init_voxels < 10000) ) { // memory limitation, refer to pre-allocation.
+        d_voxels[num_d_voxels].deviceInit(this); // do this first
         d_voxels[num_d_voxels].pos = VX3_Vec3D<>(float(x)*r, float(y)*r, float(z)*r);;
         d_voxels[num_d_voxels].mat = &d_voxelMats[1];  // sticky
-        d_voxels[num_d_voxels].deviceInit(this);
-        d_voxels[num_d_voxels].enableFloor(true);  
-        num_d_voxels++;
+        // d_voxels[num_d_voxels].enableFloor(true);  no need
+        atomicAdd(&num_d_voxels, 1); // safer to use atomic add.
+        // num_d_voxels++;
         isSurfaceChanged = true;
         // registerTargets();
         

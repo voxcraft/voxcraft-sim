@@ -45,7 +45,47 @@
         {
             "name": "-------------"
         },
-
+        {
+            "name": "----demos attach----"
+        },
+        {
+            "name": "Python: demos/attach/_debug.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/demos/attach/_debug.py",
+            "cwd": "${workspaceFolder}/demos/attach/",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Debug demos/attach/_debug.py",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/vx3_node_worker",
+            "args": [
+                "-i",
+                "${workspaceFolder}/demos/attach/workspace/locally/20200727175250.vxt",
+                "-o",
+                "${workspaceFolder}/demos/attach/workspace/locally/20200727175250.vxr",
+                "-f"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/demos/attach",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/local/cuda/bin/cuda-gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "cmake all",
+        },
+        {
+            "name": "-------------"
+        },
         {
             "name": "unitTest",
             "type": "cppdbg",

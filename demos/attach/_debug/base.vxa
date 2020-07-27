@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <VXA Version="1.1">
     <GPU>
-        <HeapSize>1.0</HeapSize>
+        <HeapSize>0.5</HeapSize>
     </GPU>
     <Simulator>
         <SecondaryExperiment>1</SecondaryExperiment><!--repurposed as a tag for debug mode-->
@@ -106,9 +106,9 @@
             <Y_Voxels>3</Y_Voxels>
             <Z_Voxels>3</Z_Voxels>
             <Data>
-                <Layer><![CDATA[200010002]]></Layer>
+                <Layer><![CDATA[000000002]]></Layer>
                 <Layer><![CDATA[000000000]]></Layer>
-                <Layer><![CDATA[200010000]]></Layer>
+                <Layer><![CDATA[000000000]]></Layer>
             </Data>
         </Structure>
     </VXC>

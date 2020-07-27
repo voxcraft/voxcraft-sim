@@ -59,6 +59,8 @@ __device__ void VX3_Voxel::deviceInit(VX3_VoxelyzeKernel* k) {
 
     d_signals.clear();
 
+    orient = VX3_Quat3D<>(); // default orientation
+
     // init linkdir
     for (int i=0;i<6;i++) {
         if (links[i]) {
