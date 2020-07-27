@@ -369,16 +369,26 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
         // TurnOnThermalExpansionAfterThisManySeconds
         // TurnOnCiliaAfterThisManySeconds
 
-        removeVoxels();
-        if (InitialPositionReinitialized == false && ReinitializeInitialPositionAfterThisManySeconds < currentTime) {
-            InitialPositionReinitialized = true;
-            InitializeCenterOfMass();
-            saveInitialPosition();
+        // removeVoxels();
+        // if (InitialPositionReinitialized == false && ReinitializeInitialPositionAfterThisManySeconds < currentTime) {
+        //     InitialPositionReinitialized = true;
+        //     InitializeCenterOfMass();
+        //     saveInitialPosition();
 
-            registerTargets();
+        //     registerTargets();
+        // }
+        
+        // sam debug:
+        double nextReplenishDebrisTime = lastReplenishDebrisTime + ReinitializeInitialPositionAfterThisManySeconds;
+
+        if (currentTime >= nextReplenishDebrisTime) {
+            dropVoxelFrom(0, 0, 20);
+            dropVoxelFrom(2, 2, 20);
+            lastReplenishDebrisTime = currentTime;
         }
 
     }
+
 
     if (EnableSurfaceGrowth) {
         if (currentTime>=SurfaceGrowth_activeTime) {
@@ -418,6 +428,25 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
 __device__ void VX3_VoxelyzeKernel::InitializeCenterOfMass() {
     initialCenterOfMass = currentCenterOfMass;
+}
+
+// sam debug:
+__device__ void VX3_VoxelyzeKernel::dropVoxelFrom(int x, int y, int z) { //
+
+    float r = float(voxSize);
+
+    bool voxAlreadyThere = d_collision_system->check_collisions_device(float(x)*r, float(y)*r, float(z)*r, r);
+
+    if ( (!voxAlreadyThere) && (num_d_voxels - num_d_init_voxels < 10000) ) { // memory limitation, refer to pre-allocation.
+        d_voxels[num_d_voxels].pos = VX3_Vec3D<>(float(x)*r, float(y)*r, float(z)*r);;
+        d_voxels[num_d_voxels].mat = &d_voxelMats[1];  // sticky
+        d_voxels[num_d_voxels].deviceInit(this);
+        d_voxels[num_d_voxels].enableFloor(true);  
+        num_d_voxels++;
+        isSurfaceChanged = true;
+        // registerTargets();
+        
+    }
 }
 
 __device__ void VX3_VoxelyzeKernel::removeVoxels() {
@@ -519,6 +548,18 @@ __device__ void VX3_VoxelyzeKernel::updateAttach(int mode) {
         if (num_d_surface_voxels == 1) {
             return;
         }
+
+        // sam:
+        bool needFullRebuild = false;
+
+        if (d_collision_system->N != num_d_surface_voxels) {
+            needFullRebuild = true;
+            d_collision_system->set_num_objects_device(num_d_surface_voxels); // inform Collision System of new number of voxels. Allocate if needed.
+        } else if (CurStepCount <= 1) {
+            needFullRebuild = true;
+        }
+        // sam (end)
+
         // Tree based collision detection!
         int num_cols = 0;
 
@@ -545,18 +586,20 @@ __device__ void VX3_VoxelyzeKernel::updateAttach(int mode) {
         // Note that as voxels move, it makes sense to re-build the tree to improve the performance of tree traversal in the
         // find_collisions_device() method of the CollisionSystem, however rebuilding the tree is not necessary to have accurate collision detection.
 
-        if ( d_collision_system->N != num_d_surface_voxels || CurStepCount <= 1) {
-            d_collision_system->N = num_d_surface_voxels;
-            d_collision_system->end = d_collision_system->start + num_d_surface_voxels;
-            //printf("Step %lu Updated Collision System surface voxel counts\n", CurStepCount);
-            VcudaDeviceSynchronize();
+        // if ( d_collision_system->N != num_d_surface_voxels || CurStepCount <= 1) {
+        //     d_collision_system->N = num_d_surface_voxels;
+        //     // d_collision_system->end = d_collision_system->start + num_d_surface_voxels; // sam
+        //     //printf("Step %lu Updated Collision System surface voxel counts\n", CurStepCount);
+        //     VcudaDeviceSynchronize();
 
+        if ( needFullRebuild) { // sam
             d_collision_system->update_x_pos_ranks();
             d_collision_system->update_y_pos_ranks();
             d_collision_system->update_z_pos_ranks();
             d_collision_system->update_mortons();
             d_collision_system->build_tree();
         }
+
         if (CurStepCount%200 == 1 && CurStepCount > 100) {
             d_collision_system->update_x_pos_ranks();
         } else if (CurStepCount%200 == 2 && CurStepCount > 100) {

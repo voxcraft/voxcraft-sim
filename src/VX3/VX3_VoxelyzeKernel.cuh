@@ -55,6 +55,8 @@ class VX3_VoxelyzeKernel {
     __device__ void removeVoxels();
     __device__ void InitializeCenterOfMass();
 
+    __device__ void dropVoxelFrom(int x, int y, int z); // sam debug
+
     /* data */
     bool forceExit = false;
     char vxa_filename[256];
@@ -172,6 +174,8 @@ class VX3_VoxelyzeKernel {
     int SecondaryExperiment = 0;
     double ReinitializeInitialPositionAfterThisManySeconds = 0.0;
     bool InitialPositionReinitialized = false;
+
+    double lastReplenishDebrisTime = 0; // sam
 
     int EnableExpansion=0;
 
