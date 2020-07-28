@@ -54,8 +54,12 @@ class VX3_VoxelyzeKernel {
     // for Secondary Experiment
     __device__ void removeVoxels();
     __device__ void InitializeCenterOfMass();
+    __device__ bool EarlyStopIfNoBotsRemain(); // sam
+    __device__ void replenishMaterial(int mat); // sam
+    __device__ void convertMatIfSmallBody(int mat1, int mat2); // sam
+    __device__ void convertMatIfLargeBody(int mat1, int mat2); // sam
 
-    __device__ void dropVoxelFrom(int x, int y, int z); // sam debug
+    __device__ bool addVoxel(int x, int y, int z, int mat); // sam
 
     /* data */
     bool forceExit = false;
@@ -116,10 +120,12 @@ class VX3_VoxelyzeKernel {
 
     bool enableAttach;
     bool enableDetach;
+    bool keepJustOneIfManyHaveSameGroupPosition = false; // sam
     bool EnableCollision = true;
     int RecordStepSize = 0;
     int RecordLink = 0;
     int RecordVoxel = 0;
+    int RecordFixedVoxels = 1; // sam
     int SurfaceVoxelsOnly = 1;
 
     // Safety Guard during the creation of new link
@@ -149,6 +155,7 @@ class VX3_VoxelyzeKernel {
     int EnableTargetCloseness = 0;
     int SavePositionOfAllVoxels = 0;
     int EnableCilia = 0;
+    double RandomizeCiliaEvery = 0;  // sam
     int EnableSignals = 0;
     double  targetCloseness = 0;
     VX3_dVector<VX3_Voxel*> d_targets;
@@ -172,10 +179,12 @@ class VX3_VoxelyzeKernel {
 
     //for Secondary Experiment
     int SecondaryExperiment = 0;
+    int SelfReplication = 0;
     double ReinitializeInitialPositionAfterThisManySeconds = 0.0;
     bool InitialPositionReinitialized = false;
+    int MinimumBotSize = 2; // sam
 
-    double lastReplenishDebrisTime = 0; // sam
+    double lastReplenishDebrisTime = 0.0; // sam
 
     int EnableExpansion=0;
 

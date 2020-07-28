@@ -69,6 +69,12 @@ __global__ void CUDA_Simulation(VX3_VoxelyzeKernel *d_voxelyze_3, int num_simula
                 break;
             }
 
+            // sam: for secondary experiment
+            if (d_v3->EarlyStopIfNoBotsRemain()) {
+                printf("No bots left with minimal size %d. Stopping after %d timesteps\n", d_v3->MinimumBotSize, j);
+                break;
+            }
+
             if (!d_v3->doTimeStep()) {
                 printf(COLORCODE_BOLD_RED "\n%d) Simulation %d Diverged: %s.\n" COLORCODE_RESET, device_index, thread_index,
                        d_v3->vxa_filename);
@@ -92,6 +98,11 @@ __global__ void CUDA_Simulation(VX3_VoxelyzeKernel *d_voxelyze_3, int num_simula
                            }
                            if (v->removed)
                                continue;
+
+                            // sam:
+                            if ((!d_v3->RecordFixedVoxels) && (v->mat->fixed))
+                                continue;
+                            
                         //    if (v->isSurface()) {
                                printf("%.1f,%.1f,%.1f,", v->pos.x * vs, v->pos.y * vs, v->pos.z * vs);
                                printf("%.1f,%.2f,%.2f,%.2f,", v->orient.AngleDegrees(), v->orient.x, v->orient.y, v->orient.z);
@@ -356,6 +367,7 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         h_d_tmp.EnableCollision = pt_merged.get<bool>("VXA.Simulator.AttachDetach.EnableCollision", true);
         h_d_tmp.enableAttach = pt_merged.get<bool>("VXA.Simulator.AttachDetach.EnableAttach", false);
         h_d_tmp.enableDetach = pt_merged.get<bool>("VXA.Simulator.AttachDetach.EnableDetach", false);
+        h_d_tmp.keepJustOneIfManyHaveSameGroupPosition = pt_merged.get<bool>("VXA.Simulator.AttachDetach.KeepJustOneIfManyHaveSameGroupPosition", false); // sam
         h_d_tmp.watchDistance = pt_merged.get<double>("VXA.Simulator.AttachDetach.watchDistance", 1.0);
         h_d_tmp.boundingRadius = pt_merged.get<double>("VXA.Simulator.AttachDetach.boundingRadius", 0.75);
         h_d_tmp.SafetyGuard = pt_merged.get<int>("VXA.Simulator.AttachDetach.SafetyGuard", 500);
@@ -372,6 +384,7 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         h_d_tmp.RecordStepSize = pt_merged.get<int>("VXA.Simulator.RecordHistory.RecordStepSize", 0);
         h_d_tmp.RecordLink = pt_merged.get<int>("VXA.Simulator.RecordHistory.RecordLink", 0);
         h_d_tmp.RecordVoxel = pt_merged.get<int>("VXA.Simulator.RecordHistory.RecordVoxel", 1);
+        h_d_tmp.RecordFixedVoxels = pt_merged.get<int>("VXA.Simulator.RecordHistory.RecordFixedVoxels", 1); // sam
         h_d_tmp.SurfaceVoxelsOnly = pt_merged.get<int>("VXA.Simulator.RecordHistory.SurfaceVoxelsOnly", 1);
 
         ParseMathTree(h_d_tmp.fitness_function, sizeof(h_d_tmp.fitness_function), "VXA.Simulator.FitnessFunction", pt_merged);
@@ -391,7 +404,9 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         
         // for Secondary Experiment
         h_d_tmp.SecondaryExperiment = pt_merged.get<int>("VXA.Simulator.SecondaryExperiment", 0);
+        h_d_tmp.SelfReplication = pt_merged.get<int>("VXA.Simulator.SelfReplication", 0);  // sam
         h_d_tmp.ReinitializeInitialPositionAfterThisManySeconds = pt_merged.get<double>("VXA.Simulator.ReinitializeInitialPositionAfterThisManySeconds", 0.0);
+        h_d_tmp.MinimumBotSize = pt_merged.get<int>("VXA.Simulator.MinimumBotSize", 0); // sam
 
         h_d_tmp.EnableExpansion = pt_merged.get<int>("VXA.Simulator.EnableExpansion", 0);
 

@@ -19,6 +19,7 @@ __global__ void gpu_update_collision_system_pos_radius(VX3_Voxel **surface_voxel
 __global__ void gpu_update_sync_collisions(VX3_Voxel **surface_voxels, int num, double watchDistance, VX3_VoxelyzeKernel *k);
 __global__ void gpu_update_attach(VX3_Voxel **surface_voxels, int num, double watchDistance, VX3_VoxelyzeKernel *k);
 __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k);
+__global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k);  // sam
 __global__ void gpu_clear_lookupgrid(VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid, int num);
 __global__ void gpu_insert_lookupgrid(VX3_Voxel **d_surface_voxels, int num, VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid,
                                       VX3_Vec3D<> *gridLowerBound, VX3_Vec3D<> *gridDelta, int lookupGrid_n);
@@ -180,6 +181,8 @@ __device__ void VX3_VoxelyzeKernel::deviceInit() {
 
     regenerateSurfaceVoxels();
 
+    registerTargets();  // sam
+
     for (int i=0;i<d_voxelgroups.size();i++) {
         d_voxelgroups[i]->updateGroup();
     }
@@ -323,6 +326,20 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
     }
 
     if (EnableCilia) {
+
+        // sam:
+        if (RandomizeCiliaEvery > 0) {
+            int CiliaStep = int(RandomizeCiliaEvery / dt);
+            if (CurStepCount % CiliaStep == 0) {
+                cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_cilia_force, 0, num_d_surface_voxels);
+                int gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
+                int blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
+                gpu_update_brownian_motion<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, this);
+                CUDA_CHECK_AFTER_CALL();
+                VcudaDeviceSynchronize();
+            }
+        }
+
         cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_cilia_force, 0,
                                            num_d_surface_voxels); // Dynamically calculate blockSize
         int gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
@@ -362,6 +379,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
         computeTargetCloseness();
     }
 
+    // sam:
     if (SecondaryExperiment) {
         // SecondaryExperiment handle tags:
         // RemoveFromSimulationAfterThisManySeconds
@@ -376,15 +394,33 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
         //     saveInitialPosition();
 
         //     registerTargets();
-        // }
-        
-        // sam debug:
-        double nextReplenishDebrisTime = lastReplenishDebrisTime + ReinitializeInitialPositionAfterThisManySeconds;
+        // }     
 
-        if (currentTime >= nextReplenishDebrisTime) {
-            dropVoxelFrom(0, 0, 20);
-            dropVoxelFrom(2, 2, 20);
-            lastReplenishDebrisTime = currentTime;
+        double nextReplenishDebrisTime = lastReplenishDebrisTime + ReinitializeInitialPositionAfterThisManySeconds;
+        
+        if (!SelfReplication) { // debug attach mode
+            if (currentTime >= nextReplenishDebrisTime) {
+                addVoxel(0, 0, 20, 1);
+                addVoxel(2, 2, 20, 1);
+                lastReplenishDebrisTime = currentTime;
+            }
+        }
+
+        else{  // kinematic self replication experiments
+
+            if (currentTime >= nextReplenishDebrisTime) {
+                updateGroups();
+                computeTargetCloseness();
+                computeFitness();
+                convertMatIfSmallBody(1, 0);
+                removeVoxels(); 
+                convertMatIfLargeBody(1, 0);
+                replenishMaterial(1);  // sam todo: fix this, it's missing patches
+                InitializeCenterOfMass();
+                saveInitialPosition();
+                // InitialPositionReinitialized = true;  // no used
+                lastReplenishDebrisTime = currentTime;
+            }
         }
 
     }
@@ -430,8 +466,88 @@ __device__ void VX3_VoxelyzeKernel::InitializeCenterOfMass() {
     initialCenterOfMass = currentCenterOfMass;
 }
 
-// sam debug:
-__device__ void VX3_VoxelyzeKernel::dropVoxelFrom(int x, int y, int z) { //
+// sam:
+__device__ bool VX3_VoxelyzeKernel::EarlyStopIfNoBotsRemain() {
+
+    bool earlyStoppage = false;
+    for (int i = 0; i < num_d_voxelMats; i++) {
+        if(d_voxelMats[i].EndSimIfCompletelyRemoved) {
+            earlyStoppage = true;
+        }
+    }
+    if (!earlyStoppage) { 
+        return false;
+    }
+
+    for (int i=0;i<num_d_voxels;i++) {
+        if ( (d_voxels[i].mat->EndSimIfCompletelyRemoved) && (!d_voxels[i].removed) ) {
+            return false;
+        }
+    }
+    // ciliaRandomizeTimes++;  // todo
+    updateCurrentCenterOfMass();
+    computeTargetCloseness();
+    return true;
+}
+
+// sam:
+__device__ void VX3_VoxelyzeKernel::replenishMaterial(int mat) {
+    // TODO: make this a material attribute and replenish at initialized position
+    // For now, I am just replenishing a hardcoded grid on the ground
+    for (int x = 2; x < 146; x+=3) {
+        for (int y = 2; y < 146; y+=3) {
+            addVoxel(x, y, 0, mat);
+            // int max_tries = 2;
+            // for (int i=0;i<max_tries;i++) {
+            //     if (addVoxel(x, y, 0, mat))
+            //         break;
+            // }
+        }
+    }
+}
+
+// sam:  todo: generalize
+__device__ void VX3_VoxelyzeKernel::convertMatIfSmallBody(int mat1, int mat2) {
+
+    for (int i=0;i<num_d_voxels;i++) {
+
+        if (d_voxels[i].mat == &d_voxelMats[mat1]) {
+
+            bool singleton = true;  // not a body
+            for (int k=0;k<6;k++) { // check links in all direction
+
+                if (d_voxels[i].links[k]) { // if there is a link
+                    singleton = false;
+                    if (d_voxels[i].d_group->d_voxels.size() < MinimumBotSize) { // ...but the body is tiny  
+                        d_voxels[i].mat = &d_voxelMats[mat2];
+                        break;
+                    }
+                }
+
+            }
+
+            if ( (singleton) && (abs(d_initialPosition[i].x - d_voxels[i].pos.x) > 0.001) ) {
+                    d_voxels[i].mat = &d_voxelMats[mat2];  
+            } 
+               
+        }
+    }
+}
+
+
+// sam:  todo: generalize
+__device__ void VX3_VoxelyzeKernel::convertMatIfLargeBody(int mat1, int mat2) {
+
+    for (int i=0;i<num_d_voxels;i++) {
+        if ( (d_voxels[i].mat == &d_voxelMats[mat1]) && (d_voxels[i].d_group->d_voxels.size() >= MinimumBotSize) ) {
+            d_voxels[i].mat = &d_voxelMats[mat2];
+        }
+    }
+    d_voxelMats[mat2].removed = false;
+}
+
+// sam:
+__device__ bool VX3_VoxelyzeKernel::addVoxel(int x, int y, int z, int mat) {
 
     float r = float(voxSize);
 
@@ -440,14 +556,12 @@ __device__ void VX3_VoxelyzeKernel::dropVoxelFrom(int x, int y, int z) { //
     if ( (!voxAlreadyThere) && (num_d_voxels - num_d_init_voxels < 10000) ) { // memory limitation, refer to pre-allocation.
         d_voxels[num_d_voxels].deviceInit(this); // do this first
         d_voxels[num_d_voxels].pos = VX3_Vec3D<>(float(x)*r, float(y)*r, float(z)*r);;
-        d_voxels[num_d_voxels].mat = &d_voxelMats[1];  // sticky
-        // d_voxels[num_d_voxels].enableFloor(true);  no need
+        d_voxels[num_d_voxels].mat = &d_voxelMats[mat];
         atomicAdd(&num_d_voxels, 1); // safer to use atomic add.
-        // num_d_voxels++;
         isSurfaceChanged = true;
-        // registerTargets();
-        
+        return true;
     }
+    return false;
 }
 
 __device__ void VX3_VoxelyzeKernel::removeVoxels() {
@@ -1067,9 +1181,36 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
             return;
         if (surface_voxels[index]->mat->TurnOnCiliaAfterThisManySeconds > k->currentTime)
             return;
+
         // rotate base cilia force and update it into voxel.
+        // if (k->RandomizeCiliaEvery>0) { // sam
+        //     surface_voxels[index]->CiliaForce = surface_voxels[index]->orient.RotateVec3D(
+        //         surface_voxels[index]->baseCiliaForce * surface_voxels[index]->randCiliaCoef * -1);
+        // }
+        // else {
         surface_voxels[index]->CiliaForce = surface_voxels[index]->orient.RotateVec3D(
             surface_voxels[index]->baseCiliaForce + surface_voxels[index]->localSignal * surface_voxels[index]->shiftCiliaForce);
+        // }
+
+    }
+}
+
+// sam:
+__global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k) {
+    int index = threadIdx.x + blockIdx.x * blockDim.x;
+    if (index < num) {
+        if (surface_voxels[index]->removed)
+            return;
+        if (surface_voxels[index]->mat->Cilia == 0)
+            return;
+        if (surface_voxels[index]->mat->TurnOnCiliaAfterThisManySeconds > k->currentTime)
+            return;
+        
+        curandState state;
+        curand_init(clock(), index, 0, &state);
+        // surface_voxels[index]->randCiliaCoef = curand_uniform(&state);
+        surface_voxels[index]->baseCiliaForce.x = 2*curand_uniform(&state)-1;
+        surface_voxels[index]->baseCiliaForce.y = 2*curand_uniform(&state)-1;
     }
 }
 

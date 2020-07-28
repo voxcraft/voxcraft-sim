@@ -152,13 +152,51 @@ __device__ void VX3_VoxelGroup::updateGroup() {
                         v->groupPosition.y -= min_y;
                         v->groupPosition.z -= min_z;
 
-                        int offset = to1D(v->groupPosition, VX3_Vec3D<int>(dim_x, dim_y, dim_z));
-                        d_group_map[offset] = v;
-                        d_voxels.push_back(v);
-                        // If any link is NULL => is surface voxel
-                        if (!(v->links[0] && v->links[1] && v->links[2] && v->links[3] && v->links[4] && v->links[5])) {
-                            d_surface_voxels.push_back(v);
+                        // sam:  
+                        // TODO: Is there a better way? Should keep the more important voxel...
+                        // That is, find which one of the duplicate voxels, when removed, causes the body to retain the most mass.
+                        bool absorb = false;  
+                        if (d_kernel->keepJustOneIfManyHaveSameGroupPosition) {
+
+                            for (int j = 0; j < d_voxels.size(); j++) {
+                                if (v->groupPosition == d_voxels[j]->groupPosition) {
+                                    absorb = true;
+                                    v->removed = true;  // TODO: should remain and just break off?
+
+                                    VX3_Voxel* neighbor_voxel;
+                                    for (int k=0;k<6;k++) { // check links in all direction
+                                        if (v->links[k]) {
+                                            v->links[k]->removed = true; // mark the link as removed
+                                            if (v->links[k]->pVNeg == v) { // this voxel is pVNeg
+                                                neighbor_voxel = v->links[k]->pVPos;
+                                            } else {
+                                                neighbor_voxel = v->links[k]->pVNeg;
+                                            }
+                                            for (int m=0;m<6;m++) {
+                                                if (neighbor_voxel->links[m] == v->links[k]) {
+                                                    neighbor_voxel->links[m] = NULL; // delete the neighbor's link
+                                                    break;
+                                                }
+                                            }
+                                            v->links[k] = NULL; // delete this voxel's link
+                                            
+                                            // need to rebuild group, in case we chopped a body in two
+                                            neighbor_voxel->d_group->needRebuild = true;
+                                        }
+                                    }
+                                }
+                            }
                         }
+                        if (!absorb){ // sam
+                            int offset = to1D(v->groupPosition, VX3_Vec3D<int>(dim_x, dim_y, dim_z));
+                            d_group_map[offset] = v;
+                            d_voxels.push_back(v);
+                            // If any link is NULL => is surface voxel
+                            if (!(v->links[0] && v->links[1] && v->links[2] && v->links[3] && v->links[4] && v->links[5])) {
+                                d_surface_voxels.push_back(v);
+                            }
+                        } // sam
+
                     }
                     needRebuild = false;
                 }

@@ -482,6 +482,8 @@ public:
 	int Fixed=0;
 	int sticky=0;
 	double Cilia=0;
+	int LockZ = 0;  // sam
+	int EndSimIfCompletelyRemoved = 0; // sam
 	vfloat Density, Elastic_Mod, Yield_Stress, Plastic_Mod, Fail_Stress, Fail_Strain, Poissons_Ratio, CTE, CurMaterialTemp, MaterialTempPhase, uStatic, uDynamic;
 	std::vector<vfloat> DStress, DStrain; //arbitrary stress/strain values for material model (in tension only for now)
 

@@ -250,6 +250,8 @@ public:
     VX3_Vec3D<> shiftCiliaForce;
     VX3_Vec3D<> CiliaForce;
 
+    // double randCiliaCoef = 1.0; // sam
+
     bool enableAttach = true;
 
     VX3_dQueue<VX3_Signal *> d_signals;
