@@ -5,6 +5,7 @@
 
 __device__ VX3_VoxelGroup::VX3_VoxelGroup(VX3_VoxelyzeKernel *k) { d_kernel = k; }
 __device__ void VX3_VoxelGroup::switchAllVoxelsTo(VX3_VoxelGroup *group) {
+    if (group==this) return;
     for (int i = 0; i < d_voxels.size(); i++) {
         if (d_voxels[i]->d_group == NULL) {
             d_voxels[i]->d_group = group;
@@ -47,6 +48,7 @@ __device__ VX3_Vec3D<int> VX3_VoxelGroup::moveGroupPosition(VX3_Vec3D<int> from,
 }
 
 __device__ void VX3_VoxelGroup::updateGroup() {
+    if (removed) return;
     VX3_Voxel *voxel = d_voxels[0];
     int min_x, min_y, min_z, max_x, max_y, max_z;
     min_x = 0;
