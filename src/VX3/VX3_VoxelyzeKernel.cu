@@ -182,7 +182,7 @@ __device__ void VX3_VoxelyzeKernel::deviceInit() {
     regenerateSurfaceVoxels();
 
     registerTargets();  // sam
-
+    
     for (int i=0;i<d_voxelgroups.size();i++) {
         d_voxelgroups[i]->updateGroup();
     }
@@ -331,7 +331,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
         if (RandomizeCiliaEvery > 0) {
             int CiliaStep = int(RandomizeCiliaEvery / dt);
             if (CurStepCount % CiliaStep == 0) {
-                cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_cilia_force, 0, num_d_surface_voxels);
+                cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_brownian_motion, 0, num_d_surface_voxels);
                 int gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
                 int blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
                 gpu_update_brownian_motion<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, this);
@@ -396,35 +396,48 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
         //     registerTargets();
         // }     
 
-        double nextReplenishDebrisTime = lastReplenishDebrisTime + ReinitializeInitialPositionAfterThisManySeconds;
+        double nextReplicationTime = lastReplicationTime + ReinitializeInitialPositionAfterThisManySeconds;
         
-        if (!SelfReplication) { // debug attach mode
-            if (currentTime >= nextReplenishDebrisTime) {
+        if (false) {
+            if (currentTime >= nextReplicationTime) {
                 addVoxel(0, 0, 20, 1);
                 addVoxel(2, 2, 20, 1);
-                lastReplenishDebrisTime = currentTime;
+                lastReplicationTime = currentTime;  // reset timer
             }
         }
 
-        else{  // kinematic self replication experiments
+        if (SelfReplication) {  // kinematic self replication experiments
 
-            if (currentTime >= nextReplenishDebrisTime) {
-                updateGroups();
-                computeTargetCloseness();
-                computeFitness();
-                convertMatIfSmallBody(1, 0);
-                removeVoxels(); 
-                convertMatIfLargeBody(1, 0);
-                replenishMaterial(1);  // sam todo: fix this, it's missing patches
-                InitializeCenterOfMass();
+            if ( (InitialPositionReinitialized) && (currentTime >= nextReplicationTime) ) {
+                // InitialPositionReinitialized is true at t=0
+                computeTargetCloseness(); // in case no bots remain and sim ends
+                computeFitness(); // in case no bots remain
+                smallBodiesRemoved = false;
+                InitialPositionReinitialized = false; // false = transition period
+            }
+            // Step 1: Remove small bodies and allow self-attachment with momentum before tranisiton
+            // This transition period also lets the groups update...
+            // ...without it, replenishMaterial() misses patches due to erroneous collisions
+            if ( (!smallBodiesRemoved) && (currentTime >= nextReplicationTime + 0.5*SettleTimeBeforeNextRoundOfReplication) ) {
+                convertMatIfSmallBody(1, 0);   // convert small mat1 bodies>1 to mat0; flags material as not yet removed
+                removeVoxels();  // remove mat 0 voxels that are flagged: removed=true
+                smallBodiesRemoved = true;
+            }
+
+            // ***Bug: Small bodies <MinimumBotSize are still surviving!***
+            // This could be due to attachment breaking bodies apart and then not updating groups correctly
+
+            // Step 2: Transform piles into organisms (mat1->mat0)
+            if (currentTime >= nextReplicationTime + SettleTimeBeforeNextRoundOfReplication) {
+                replenishMaterial(2, 146, 3, 1);  // replenish sticky building material along the surface plane
+                convertMatIfLargeBody(1, 0); // finally, convert large mat1 bodies>MinimumBotSize to mat0 [new organisms]
+                InitializeCenterOfMass();  // in case fitness is a function of x,y,z
                 saveInitialPosition();
-                // InitialPositionReinitialized = true;  // no used
-                lastReplenishDebrisTime = currentTime;
+                InitialPositionReinitialized = true;  // switch that allows settle time between removing voxels and next round
+                lastReplicationTime = currentTime;  // reset timer
             }
         }
-
     }
-
 
     if (EnableSurfaceGrowth) {
         if (currentTime>=SurfaceGrowth_activeTime) {
@@ -469,6 +482,10 @@ __device__ void VX3_VoxelyzeKernel::InitializeCenterOfMass() {
 // sam:
 __device__ bool VX3_VoxelyzeKernel::EarlyStopIfNoBotsRemain() {
 
+    if (!InitialPositionReinitialized){
+        return false; // provides some time in between voxel removal and next round
+    }
+    
     bool earlyStoppage = false;
     for (int i = 0; i < num_d_voxelMats; i++) {
         if(d_voxelMats[i].EndSimIfCompletelyRemoved) {
@@ -484,40 +501,45 @@ __device__ bool VX3_VoxelyzeKernel::EarlyStopIfNoBotsRemain() {
             return false;
         }
     }
-    // ciliaRandomizeTimes++;  // todo
-    updateCurrentCenterOfMass();
-    computeTargetCloseness();
     return true;
 }
 
 // sam:
-__device__ void VX3_VoxelyzeKernel::replenishMaterial(int mat) {
-    // TODO: make this a material attribute and replenish at initialized position
-    // For now, I am just replenishing a hardcoded grid on the ground
-    for (int x = 2; x < 146; x+=3) {
-        for (int y = 2; y < 146; y+=3) {
+__device__ void VX3_VoxelyzeKernel::replenishMaterial(int start, int end, int step, int mat) {
+    // TODO: make this a material attribute, replenish at initialized position.
+    for (int x = start; x < end; x+=step) {
+        for (int y = start; y < end; y+=step) {
             addVoxel(x, y, 0, mat);
-            // int max_tries = 2;
-            // for (int i=0;i<max_tries;i++) {
-            //     if (addVoxel(x, y, 0, mat))
-            //         break;
-            // }
         }
     }
 }
 
-// sam:  todo: generalize
+// // sam:
+// __device__ void VX3_VoxelyzeKernel::forceGroupUpdateForThisMat(int mat) {
+
+//     for (int i=0;i<num_d_voxels;i++) {
+
+//         if (d_voxels[i].mat == &d_voxelMats[mat]) {
+//             d_voxels[i].d_group->needRebuild = true;
+//         }
+//     }
+//     updateGroups();
+// }
+
+// sam:
 __device__ void VX3_VoxelyzeKernel::convertMatIfSmallBody(int mat1, int mat2) {
+
+    d_voxelMats[mat2].removed = false;  // this material will be removed next removeVoxels() call
 
     for (int i=0;i<num_d_voxels;i++) {
 
         if (d_voxels[i].mat == &d_voxelMats[mat1]) {
 
-            bool singleton = true;  // not a body
+            // bool singleton = true;  // not a body
             for (int k=0;k<6;k++) { // check links in all direction
 
                 if (d_voxels[i].links[k]) { // if there is a link
-                    singleton = false;
+                    // singleton = false;
                     if (d_voxels[i].d_group->d_voxels.size() < MinimumBotSize) { // ...but the body is tiny  
                         d_voxels[i].mat = &d_voxelMats[mat2];
                         break;
@@ -525,17 +547,18 @@ __device__ void VX3_VoxelyzeKernel::convertMatIfSmallBody(int mat1, int mat2) {
                 }
 
             }
-
-            if ( (singleton) && (abs(d_initialPosition[i].x - d_voxels[i].pos.x) > 0.001) ) {
-                    d_voxels[i].mat = &d_voxelMats[mat2];  
-            } 
-               
+            // the following block (which resets voxels that moved but didn't attach) has a bug.
+            // Bug: new voxels were being removed at next tranisiton
+            // TODO: debug initial position of newly added voxels
+            // if ( (singleton) && (abs(d_initialPosition[i].x - d_voxels[i].pos.x) > voxSize*0.1) ) {
+            //         d_voxels[i].mat = &d_voxelMats[mat2]; // moved out of position: convert it 
+            // } 
         }
     }
 }
 
 
-// sam:  todo: generalize
+// sam:
 __device__ void VX3_VoxelyzeKernel::convertMatIfLargeBody(int mat1, int mat2) {
 
     for (int i=0;i<num_d_voxels;i++) {
@@ -551,11 +574,11 @@ __device__ bool VX3_VoxelyzeKernel::addVoxel(int x, int y, int z, int mat) {
 
     float r = float(voxSize);
 
-    bool voxAlreadyThere = d_collision_system->check_collisions_device(float(x)*r, float(y)*r, float(z)*r, r);
+    bool voxAlreadyThere = d_collision_system->check_collisions_device(float(x)*r, float(y)*r, float(z)*r, staticWatchDistance);
 
     if ( (!voxAlreadyThere) && (num_d_voxels - num_d_init_voxels < 10000) ) { // memory limitation, refer to pre-allocation.
         d_voxels[num_d_voxels].deviceInit(this); // do this first
-        d_voxels[num_d_voxels].pos = VX3_Vec3D<>(float(x)*r, float(y)*r, float(z)*r);;
+        d_voxels[num_d_voxels].pos = VX3_Vec3D<>(float(x)*r, float(y)*r, float(z)*r);
         d_voxels[num_d_voxels].mat = &d_voxelMats[mat];
         atomicAdd(&num_d_voxels, 1); // safer to use atomic add.
         isSurfaceChanged = true;
@@ -572,10 +595,13 @@ __device__ void VX3_VoxelyzeKernel::removeVoxels() {
             VX3_Voxel* neighbor_voxel;
 
             for (int j=0;j<num_d_voxels;j++) {
+
                 if (d_voxels[j].mat == &d_voxelMats[i] && d_voxels[j].removed == false) {
                     d_voxels[j].removed = true; // mark this voxel as removed
+
                     for (int k=0;k<6;k++) { // check links in all direction
                         if (d_voxels[j].links[k]) {
+
                             d_voxels[j].links[k]->removed = true; // mark the link as removed
                             if (d_voxels[j].links[k]->pVNeg == &d_voxels[j]) { // this voxel is pVNeg
                                 neighbor_voxel = d_voxels[j].links[k]->pVPos;
@@ -597,9 +623,9 @@ __device__ void VX3_VoxelyzeKernel::removeVoxels() {
             isSurfaceChanged = true;
         }
     }
-
 }
-__device__ void VX3_VoxelyzeKernel::updateAttach(int mode) {
+
+__device__ void VX3_VoxelyzeKernel::updateAttach(int mode, bool needFullRebuild) {
     // for each surface voxel pair, check distance < watchDistance, make a new
     // link between these two voxels, updateSurface().
     int blockSize;
@@ -665,7 +691,7 @@ __device__ void VX3_VoxelyzeKernel::updateAttach(int mode) {
         }
 
         // sam:
-        bool needFullRebuild = false;
+        // bool needFullRebuild = false;  // is an input now
 
         if (d_collision_system->N != num_d_surface_voxels) {
             needFullRebuild = true;

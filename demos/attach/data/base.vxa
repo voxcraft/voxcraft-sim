@@ -4,10 +4,11 @@
         <HeapSize>0.5</HeapSize>
     </GPU>
     <Simulator>
-        <SecondaryExperiment>1</SecondaryExperiment><!--repurposed as a tag for debug mode-->
-        <ReinitializeInitialPositionAfterThisManySeconds>0.05</ReinitializeInitialPositionAfterThisManySeconds> <!--time b/w add new voxel-->
+        <SecondaryExperiment>1</SecondaryExperiment>
+        <SelfReplication>0</SelfReplication><!-- 2nd exp w/o self rep = debug attach-->
+        <EnableCilia>1</EnableCilia>
         <RecordHistory>
-            <RecordStepSize>50</RecordStepSize>
+            <RecordStepSize>30</RecordStepSize>
             <RecordVoxel>1</RecordVoxel>
             <RecordLink>1</RecordLink>
         </RecordHistory>
@@ -15,8 +16,9 @@
             <EnableCollision>1</EnableCollision>
             <EnableDetach>1</EnableDetach>
             <EnableAttach>1</EnableAttach>
-            <watchDistance>1.0</watchDistance>
-            <boundingRadius>0.75</boundingRadius>
+            <KeepJustOneIfManyHaveSameGroupPosition>1</KeepJustOneIfManyHaveSameGroupPosition>
+            <watchDistance>1.3</watchDistance>
+            <boundingRadius>1.2</boundingRadius>
             <SafetyGuard>0</SafetyGuard>
             <AttachCondition>
                 <Condition_0>
@@ -25,13 +27,13 @@
             </AttachCondition>
         </AttachDetach>
         <Integration>
-            <DtFrac>0.9</DtFrac>
+            <DtFrac>0.95</DtFrac>
         </Integration>
         <StopCondition>
             <StopConditionFormula>
                 <mtSUB>
                     <mtVAR>t</mtVAR>
-                    <mtCONST>6</mtCONST>
+                    <mtCONST>0.5</mtCONST>
                 </mtSUB>
             </StopConditionFormula>
         </StopCondition>
@@ -43,11 +45,11 @@
     </Simulator>
     <Environment>
         <Thermal>
-            <TempPeriod>1</TempPeriod>
+            <TempPeriod>0</TempPeriod>
         </Thermal>
         <Gravity>
             <GravEnabled>1</GravEnabled>
-            <GravAcc>-9.81</GravAcc>
+            <GravAcc>-0.25</GravAcc>
             <FloorEnabled>1</FloorEnabled>
         </Gravity>
     </Environment>
@@ -57,42 +59,20 @@
         </Lattice>
         <Palette>
             <Material ID="1">
-                <Name>Cilia</Name>
+                <Name>Sticky</Name>
                 <Display>
-                    <Red>0.44</Red>
-                    <Green>0.93</Green>
-                    <Blue>0.72</Blue>
-                    <Alpha>0.5</Alpha>
+                    <Red>0</Red>
+                    <Green>0.5</Green>
+                    <Blue>0.1</Blue>
+                    <Alpha>0.1</Alpha>
                 </Display>
                 <Mechanical>
-                    <MatModel>0</MatModel><!--0 = no failing-->
-                    <Elastic_Mod>5e+04</Elastic_Mod>
-                    <Fail_Stress>0</Fail_Stress>
-                    <Density>1e+03</Density>
-                    <Poissons_Ratio>0.35</Poissons_Ratio>
-                    <CTE>0</CTE>
-                    <MaterialTempPhase>0</MaterialTempPhase>
-                    <uStatic>0</uStatic>
-                    <uDynamic>0</uDynamic>
-                </Mechanical>
-            </Material>
-            <Material ID="2">
-                <Name>TargetSticky</Name>
-                <Display>
-                    <Red>1</Red>
-                    <Green>0.435</Green>
-                    <Blue>0.38</Blue>
-                    <Alpha>0.5</Alpha>
-                </Display>
-                <Mechanical>
-                    <isMeasured>1</isMeasured>
-                    <isTarget>1</isTarget>
+                    <Cilia>0.0004</Cilia>
                     <Sticky>1</Sticky>
-                    <Cilia>0</Cilia>
                     <MatModel>0</MatModel><!--1=MDL_LINEAR_FAIL-->
-                    <Elastic_Mod>5e+04</Elastic_Mod>
+                    <Elastic_Mod>800</Elastic_Mod>
                     <Fail_Stress>0</Fail_Stress>
-                    <Density>1e+03</Density>
+                    <Density>50</Density>
                     <Poissons_Ratio>0.35</Poissons_Ratio>
                     <CTE>0</CTE>
                     <MaterialTempPhase>0</MaterialTempPhase>
@@ -102,14 +82,23 @@
             </Material>
         </Palette>
         <Structure Compression="ASCII_READABLE">
-            <X_Voxels>3</X_Voxels>
-            <Y_Voxels>3</Y_Voxels>
-            <Z_Voxels>3</Z_Voxels>
+            <X_Voxels>8</X_Voxels>
+            <Y_Voxels>1</Y_Voxels>
+            <Z_Voxels>5</Z_Voxels>
             <Data>
-                <Layer><![CDATA[000000002]]></Layer>
-                <Layer><![CDATA[000000000]]></Layer>
-                <Layer><![CDATA[000000000]]></Layer>
+                <Layer><![CDATA[11111111]]></Layer>
+                <Layer><![CDATA[00001111]]></Layer>
+                <Layer><![CDATA[00000000]]></Layer>
+                <Layer><![CDATA[10001000]]></Layer>
+                <Layer><![CDATA[11111000]]></Layer>
             </Data>
+            <BaseCiliaForce>
+                <Layer><![CDATA[1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, -1.0, 1.0, 0.0, -1.0]]></Layer>
+                <Layer><![CDATA[0.0, 0.0, 0.0]]></Layer>
+                <Layer><![CDATA[0.0, 0.0, 0.0]]></Layer>
+                <Layer><![CDATA[0.0, 0.0, -1.0]]></Layer>
+                <Layer><![CDATA[1.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]></Layer>
+            </BaseCiliaForce>
         </Structure>
     </VXC>
 </VXA>

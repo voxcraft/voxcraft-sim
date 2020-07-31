@@ -69,6 +69,9 @@ __device__ void VX3_VoxelGroup::updateGroup() {
             }
             if (checkMutex == 0) {
                 if (needRebuild) {
+
+                    needRebuild = false; // sam (moved this up so it can be reset to true under conditions)
+
                     // First set *voxel as origin, and negative number is allowed.
                     // After everything is mapped, change origin to (min_x, min_y, min_z).
                     voxel->groupPosition = VX3_Vec3D<int>(0, 0, 0);
@@ -163,27 +166,26 @@ __device__ void VX3_VoxelGroup::updateGroup() {
                             for (int j = 0; j < d_voxels.size(); j++) {
                                 if (v->groupPosition == d_voxels[j]->groupPosition) {
                                     absorb = true;
-                                    v->removed = true;  // TODO: should remain and just break off?
 
-                                    VX3_Voxel* neighbor_voxel;
+                                    // attach incoming links to v to d_voxels[j] instead??
+                                    
+                                    // Option 1: delete it
+                                    // v->removed = true; 
+                                    
+                                    // Option 2: just break off
+                                    v->d_group = new VX3_VoxelGroup(d_kernel);
+                                    v->d_group->d_voxels.push_back(v);
+                                    d_kernel->d_voxelgroups.push_back(v->d_group);
+                                    needRebuild = true;  // rebuild this group again, next time
+                                    v->d_group->needRebuild = true;
+
+                                    VX3_Link* this_link;
                                     for (int k=0;k<6;k++) { // check links in all direction
                                         if (v->links[k]) {
-                                            v->links[k]->removed = true; // mark the link as removed
-                                            if (v->links[k]->pVNeg == v) { // this voxel is pVNeg
-                                                neighbor_voxel = v->links[k]->pVPos;
-                                            } else {
-                                                neighbor_voxel = v->links[k]->pVNeg;
-                                            }
-                                            for (int m=0;m<6;m++) {
-                                                if (neighbor_voxel->links[m] == v->links[k]) {
-                                                    neighbor_voxel->links[m] = NULL; // delete the neighbor's link
-                                                    break;
-                                                }
-                                            }
-                                            v->links[k] = NULL; // delete this voxel's link
-                                            
-                                            // need to rebuild group, in case we chopped a body in two
-                                            neighbor_voxel->d_group->needRebuild = true;
+                                            this_link = v->links[k];
+                                            this_link->removed = true;
+                                            this_link->pVNeg->links[this_link->linkdirNeg] = NULL;
+                                            this_link->pVPos->links[this_link->linkdirPos] = NULL;
                                         }
                                     }
                                 }
@@ -200,7 +202,7 @@ __device__ void VX3_VoxelGroup::updateGroup() {
                         } // sam
 
                     }
-                    needRebuild = false;
+                    // needRebuild = false; // sam (moved up in case there is a bad attach)
                 }
                 leave = true;
             }

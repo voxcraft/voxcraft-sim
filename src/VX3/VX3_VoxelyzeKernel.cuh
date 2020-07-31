@@ -42,7 +42,7 @@ class VX3_VoxelyzeKernel {
     __device__ void updateCurrentCenterOfMass();
     __device__ bool StopConditionMet();
     __device__ void updateTemperature();
-    __device__ void updateAttach(int mode);
+    __device__ void updateAttach(int mode, bool needFullRebuild = false);  // sam
     __device__ void updateDetach();
     __device__ void regenerateSurfaceVoxels();
     __device__ VX3_MaterialLink *combinedMaterial(VX3_MaterialVoxel *mat1, VX3_MaterialVoxel *mat2);
@@ -55,9 +55,10 @@ class VX3_VoxelyzeKernel {
     __device__ void removeVoxels();
     __device__ void InitializeCenterOfMass();
     __device__ bool EarlyStopIfNoBotsRemain(); // sam
-    __device__ void replenishMaterial(int mat); // sam
+    __device__ void replenishMaterial(int start, int end, int step, int mat); // sam
     __device__ void convertMatIfSmallBody(int mat1, int mat2); // sam
     __device__ void convertMatIfLargeBody(int mat1, int mat2); // sam
+    // __device__ void forceGroupUpdateForThisMat(int mat); // sam
 
     __device__ bool addVoxel(int x, int y, int z, int mat); // sam
 
@@ -181,10 +182,12 @@ class VX3_VoxelyzeKernel {
     int SecondaryExperiment = 0;
     int SelfReplication = 0;
     double ReinitializeInitialPositionAfterThisManySeconds = 0.0;
-    bool InitialPositionReinitialized = false;
+    double SettleTimeBeforeNextRoundOfReplication = 0.0;  // sam
+    bool InitialPositionReinitialized = true;  // sam
+    bool smallBodiesRemoved = false;  // sam
     int MinimumBotSize = 2; // sam
 
-    double lastReplenishDebrisTime = 0.0; // sam
+    double lastReplicationTime = 0.0; // sam
 
     int EnableExpansion=0;
 

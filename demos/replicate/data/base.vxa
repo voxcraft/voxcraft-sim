@@ -6,11 +6,12 @@
     <Simulator>
         <SecondaryExperiment>1</SecondaryExperiment>
         <SelfReplication>1</SelfReplication>
-        <ReinitializeInitialPositionAfterThisManySeconds>0.5</ReinitializeInitialPositionAfterThisManySeconds>
-        <MinimumBotSize>3</MinimumBotSize>
+        <ReinitializeInitialPositionAfterThisManySeconds>0.25</ReinitializeInitialPositionAfterThisManySeconds>
+        <SettleTimeBeforeNextRoundOfReplication>0.1</SettleTimeBeforeNextRoundOfReplication>
+        <MinimumBotSize>10</MinimumBotSize>
         <MaxDistInVoxelLengthsToCountAsPair>1.5</MaxDistInVoxelLengthsToCountAsPair>
         <EnableCilia>1</EnableCilia>
-        <RandomizeCiliaEvery>0.25</RandomizeCiliaEvery>
+        <RandomizeCiliaEvery>0.1</RandomizeCiliaEvery>
         <RecordHistory>
             <RecordStepSize>50</RecordStepSize>
             <RecordVoxel>1</RecordVoxel>
@@ -41,7 +42,7 @@
             <StopConditionFormula>
                 <mtSUB>
                     <mtVAR>t</mtVAR>
-                    <mtCONST>10</mtCONST>
+                    <mtCONST>4.5</mtCONST>
                 </mtSUB>
             </StopConditionFormula>
         </StopCondition>

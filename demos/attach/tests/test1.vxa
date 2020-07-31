@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<VXA Version="1.1">
+    <GPU>
+        <HeapSize>0.5</HeapSize>
+    </GPU>
+    <Simulator>
+        <SecondaryExperiment>1</SecondaryExperiment>
+        <SelfReplication>0</SelfReplication><!-- 2nd exp w/o self rep = debug attach-->
+        <EnableCilia>1</EnableCilia>
+        <RecordHistory>
+            <RecordStepSize>30</RecordStepSize>
+            <RecordVoxel>1</RecordVoxel>
+            <RecordLink>1</RecordLink>
+        </RecordHistory>
+        <AttachDetach>
+            <EnableCollision>1</EnableCollision>
+            <EnableDetach>1</EnableDetach>
+            <EnableAttach>1</EnableAttach>
+            <KeepJustOneIfManyHaveSameGroupPosition>1</KeepJustOneIfManyHaveSameGroupPosition>
+            <watchDistance>1.3</watchDistance>
+            <boundingRadius>1.2</boundingRadius>
+            <SafetyGuard>0</SafetyGuard>
+            <AttachCondition>
+                <Condition_0>
+                    <mtCONST>1</mtCONST>
+                </Condition_0>
+            </AttachCondition>
+        </AttachDetach>
+        <Integration>
+            <DtFrac>0.95</DtFrac>
+        </Integration>
+        <StopCondition>
+            <StopConditionFormula>
+                <mtSUB>
+                    <mtVAR>t</mtVAR>
+                    <mtCONST>0.5</mtCONST>
+                </mtSUB>
+            </StopConditionFormula>
+        </StopCondition>
+        <Damping>
+            <BondDampingZ>1</BondDampingZ>
+            <ColDampingZ>0.8</ColDampingZ>
+            <SlowDampingZ>0.01</SlowDampingZ>
+        </Damping>
+    </Simulator>
+    <Environment>
+        <Thermal>
+            <TempPeriod>0</TempPeriod>
+        </Thermal>
+        <Gravity>
+            <GravEnabled>1</GravEnabled>
+            <GravAcc>-0.2</GravAcc>
+            <FloorEnabled>1</FloorEnabled>
+        </Gravity>
+    </Environment>
+    <VXC Version="0.94">
+        <Lattice>
+            <Lattice_Dim>0.01</Lattice_Dim>
+        </Lattice>
+        <Palette>
+            <Material ID="1">
+                <Name>Sticky</Name>
+                <Display>
+                    <Red>0</Red>
+                    <Green>0.5</Green>
+                    <Blue>0.1</Blue>
+                    <Alpha>0.1</Alpha>
+                </Display>
+                <Mechanical>
+                    <Cilia>0.0005</Cilia>
+                    <Sticky>1</Sticky>
+                    <MatModel>0</MatModel><!--1=MDL_LINEAR_FAIL-->
+                    <Elastic_Mod>1e+03</Elastic_Mod>
+                    <Fail_Stress>0</Fail_Stress>
+                    <Density>50</Density>
+                    <Poissons_Ratio>0.35</Poissons_Ratio>
+                    <CTE>0</CTE>
+                    <MaterialTempPhase>0</MaterialTempPhase>
+                    <uStatic>1</uStatic>
+                    <uDynamic>1.5</uDynamic>
+                </Mechanical>
+            </Material>
+        </Palette>
+        <Structure Compression="ASCII_READABLE">
+            <X_Voxels>6</X_Voxels>
+            <Y_Voxels>1</Y_Voxels>
+            <Z_Voxels>5</Z_Voxels>
+            <Data>
+                <Layer><![CDATA[111111]]></Layer>
+                <Layer><![CDATA[000000]]></Layer>
+                <Layer><![CDATA[000000]]></Layer>
+                <Layer><![CDATA[100010]]></Layer>
+                <Layer><![CDATA[111110]]></Layer>
+            </Data>
+            <BaseCiliaForce>
+                <Layer><![CDATA[0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0]]></Layer>
+                <Layer><![CDATA[0.0, 0.0, 0.0]]></Layer>
+                <Layer><![CDATA[0.0, 0.0, 0.0]]></Layer>
+                <Layer><![CDATA[0.0, 0.0, -1.0]]></Layer>
+                <Layer><![CDATA[1.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]></Layer>
+            </BaseCiliaForce>
+        </Structure>
+    </VXC>
+</VXA>
