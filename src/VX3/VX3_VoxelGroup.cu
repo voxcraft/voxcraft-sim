@@ -324,8 +324,19 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
             } else if (d_group_map[offset] == NULL) {
                 // good, because empty position
             } else {
-                // printf("Not Compatible. Offset %d\n", offset);
-                ret = false;
+                // printf("Not Compatible. Offset %d\n", offset); // Instead of return false, absorb the voxel!
+                VX3_Voxel *voxel_to_absorb = d_group_map[offset];
+                voxel_to_absorb->removed = true;
+                // delete all the links as well
+                for (int i=0;i<6;i++) {
+                    if (voxel_to_absorb->links[i]) {
+                        voxel_to_absorb->links[i]->removed = true;
+                        voxel_to_absorb->adjacentVoxel((linkDirection)i)->links[oppositeDirection(i)] = NULL;
+                        voxel_to_absorb->links[i] = NULL;
+                    }
+                }
+
+                // ret = false; // no need to return false, because we absorb the conflicting voxel.
             }
         }
     }
