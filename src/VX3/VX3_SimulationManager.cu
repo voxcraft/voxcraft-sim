@@ -372,6 +372,7 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         ParseMathTree(h_d_tmp.StopConditionFormula, sizeof(h_d_tmp.StopConditionFormula),
                       "VXA.Simulator.StopCondition.StopConditionFormula", pt_merged);
         h_d_tmp.EnableCollision = pt_merged.get<bool>("VXA.Simulator.AttachDetach.EnableCollision", true);
+        h_d_tmp.CollisionMode = pt_merged.get<bool>("VXA.Simulator.AttachDetach.CollisionMode", true);
         h_d_tmp.enableAttach = pt_merged.get<bool>("VXA.Simulator.AttachDetach.EnableAttach", false);
         h_d_tmp.enableDetach = pt_merged.get<bool>("VXA.Simulator.AttachDetach.EnableDetach", false);
         h_d_tmp.keepJustOneIfManyHaveSameGroupPosition = pt_merged.get<bool>("VXA.Simulator.AttachDetach.KeepJustOneIfManyHaveSameGroupPosition", false); // sam

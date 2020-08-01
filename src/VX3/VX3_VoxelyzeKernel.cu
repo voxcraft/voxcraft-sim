@@ -318,7 +318,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
     if (enableAttach || EnableCollision) { // either attachment and collision need measurement for pairwise distances
         // updateAttach(0);
         // int num_cols = tmpCollisionCount;
-        updateAttach(1);
+        updateAttach(CollisionMode);
         // if(num_cols != tmpCollisionCount) {
             // printf("ERROR!!\n N2 algorithm found a different number of collisions than the Tree algorithm did!\n N2: %d\nTree: %d\n", num_cols, tmpCollisionCount);
         // }
@@ -418,8 +418,10 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
                 // InitialPositionReinitialized is true at t=0
                 computeTargetCloseness(); // in case no bots remain and sim ends
                 computeFitness(); // in case no bots remain
-                removeVoxels();  // remove mat 0 voxels that are flagged: removed=true
-                reInitAllGroups();  // EXTREME
+
+                // removeVoxels();  // remove mat 0 voxels that are flagged: removed=true
+                // reInitAllGroups();  // EXTREME
+                
                 convertMatIfSmallBody(1, 0, false);   // convert small mat1 bodies>1 to mat0; flags material as not yet removed
                 removeVoxels();  // remove newly converted small mat 0 bodies
                 InitialPositionReinitialized = false; // false = transition period

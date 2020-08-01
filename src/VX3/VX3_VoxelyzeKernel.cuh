@@ -125,6 +125,7 @@ class VX3_VoxelyzeKernel {
     bool enableDetach;
     bool keepJustOneIfManyHaveSameGroupPosition = false; // sam
     bool EnableCollision = true;
+    int CollisionMode = 1;
     int RecordStepSize = 0;
     int RecordLink = 0;
     int RecordVoxel = 0;

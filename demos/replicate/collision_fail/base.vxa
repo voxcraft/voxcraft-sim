@@ -6,24 +6,25 @@
     <Simulator>
         <SecondaryExperiment>1</SecondaryExperiment>
         <SelfReplication>1</SelfReplication>
-        <ReinitializeInitialPositionAfterThisManySeconds>0.75</ReinitializeInitialPositionAfterThisManySeconds>
+        <ReinitializeInitialPositionAfterThisManySeconds>0.25</ReinitializeInitialPositionAfterThisManySeconds>
         <SettleTimeBeforeNextRoundOfReplication>0.05</SettleTimeBeforeNextRoundOfReplication> <!--add this to stop condition-->
         <MaxNewVoxelsAddedMidSim>20000</MaxNewVoxelsAddedMidSim>
         <MinimumBotSize>10</MinimumBotSize>
         <MaxDistInVoxelLengthsToCountAsPair>1.5</MaxDistInVoxelLengthsToCountAsPair>
         <EnableCilia>1</EnableCilia>
         <RandomizeCiliaEvery>0.1</RandomizeCiliaEvery>
-        <!-- <RecordHistory>
+        <RecordHistory>
             <RecordStepSize>50</RecordStepSize>
             <RecordVoxel>1</RecordVoxel>
             <RecordLink>1</RecordLink>
             <RecordFixedVoxels>0</RecordFixedVoxels>
-        </RecordHistory> -->
+        </RecordHistory>
         <FitnessFunction>
             <mtVAR>t</mtVAR>
         </FitnessFunction>
         <AttachDetach>
             <EnableCollision>1</EnableCollision>
+            <CollisionMode>1</CollisionMode>
             <EnableDetach>1</EnableDetach>
             <EnableAttach>1</EnableAttach>
             <KeepJustOneIfManyHaveSameGroupPosition>1</KeepJustOneIfManyHaveSameGroupPosition>
@@ -43,7 +44,7 @@
             <StopConditionFormula>
                 <mtSUB>
                     <mtVAR>t</mtVAR>
-                    <mtCONST>4</mtCONST>
+                    <mtCONST>2.2</mtCONST>
                 </mtSUB>
             </StopConditionFormula>
         </StopCondition>
