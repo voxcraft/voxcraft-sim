@@ -158,16 +158,13 @@ __device__ void VX3_VoxelGroup::updateGroup() {
                         v->groupPosition.z -= min_z;
 
                         // sam:  
-                        // TODO: Is there a better way? Should keep the more important voxel...
-                        // That is, find which one of the duplicate voxels, when removed, causes the body to retain the most mass.
                         bool absorb = false;  
                         if (d_kernel->keepJustOneIfManyHaveSameGroupPosition) {
 
                             for (int j = 0; j < d_voxels.size(); j++) {
                                 if (v->groupPosition == d_voxels[j]->groupPosition) {
                                     absorb = true;
-
-                                    // attach incoming links to v to d_voxels[j] instead??
+                                    needRebuild = true;  // rebuild this group again, next time
                                     
                                     // Option 1: delete it
                                     // v->removed = true; 
@@ -176,16 +173,13 @@ __device__ void VX3_VoxelGroup::updateGroup() {
                                     v->d_group = new VX3_VoxelGroup(d_kernel);
                                     v->d_group->d_voxels.push_back(v);
                                     d_kernel->d_voxelgroups.push_back(v->d_group);
-                                    needRebuild = true;  // rebuild this group again, next time
-                                    v->d_group->needRebuild = true;
 
-                                    VX3_Link* this_link;
+                                    // either way, delete all the links
                                     for (int k=0;k<6;k++) { // check links in all direction
                                         if (v->links[k]) {
-                                            this_link = v->links[k];
-                                            this_link->removed = true;
-                                            this_link->pVNeg->links[this_link->linkdirNeg] = NULL;
-                                            this_link->pVPos->links[this_link->linkdirPos] = NULL;
+                                            v->links[k]->removed = true;
+                                            v->adjacentVoxel((linkDirection)k)->links[oppositeDirection(k)] = NULL;
+                                            v->links[k] = NULL;
                                         }
                                     }
                                 }

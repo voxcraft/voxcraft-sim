@@ -416,6 +416,8 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         h_d_tmp.SettleTimeBeforeNextRoundOfReplication = pt_merged.get<double>("VXA.Simulator.SettleTimeBeforeNextRoundOfReplication", 0.0); // sam
         h_d_tmp.MinimumBotSize = pt_merged.get<int>("VXA.Simulator.MinimumBotSize", 0); // sam
 
+        h_d_tmp.MaxNewVoxelsAddedMidSim = pt_merged.get<int>("VXA.Simulator.MaxNewVoxelsAddedMidSim", 0); // sam
+
         h_d_tmp.EnableExpansion = pt_merged.get<int>("VXA.Simulator.EnableExpansion", 0);
 
         h_d_tmp.EnableSurfaceGrowth = pt_merged.get<int>("VXA.Simulator.SurfaceGrowth.EnableGrowth", 0);

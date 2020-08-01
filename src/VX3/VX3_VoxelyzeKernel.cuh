@@ -56,9 +56,10 @@ class VX3_VoxelyzeKernel {
     __device__ void InitializeCenterOfMass();
     __device__ bool EarlyStopIfNoBotsRemain(); // sam
     __device__ void replenishMaterial(int start, int end, int step, int mat); // sam
-    __device__ void convertMatIfSmallBody(int mat1, int mat2); // sam
+    __device__ void convertMatIfSmallBody(int mat1, int mat2, bool convertSingletons); // sam
     __device__ void convertMatIfLargeBody(int mat1, int mat2); // sam
-    // __device__ void forceGroupUpdateForThisMat(int mat); // sam
+    
+    __device__ void reInitAllGroups(); // sam
 
     __device__ bool addVoxel(int x, int y, int z, int mat); // sam
 
@@ -95,6 +96,7 @@ class VX3_VoxelyzeKernel {
     VX3_Voxel *d_voxels;
     int num_d_voxels;
     int num_d_init_voxels;
+    int MaxNewVoxelsAddedMidSim = 10000; // sam: pre-allocate memory for this many new voxels added mid sim
     VX3_Voxel **d_surface_voxels; // an array of pointer d_surface_voxels[i] -> d_voxels[j]
     int num_d_surface_voxels;
     std::map<CVX_Voxel *, VX3_Voxel *> h_lookup_voxels;
@@ -184,7 +186,6 @@ class VX3_VoxelyzeKernel {
     double ReinitializeInitialPositionAfterThisManySeconds = 0.0;
     double SettleTimeBeforeNextRoundOfReplication = 0.0;  // sam
     bool InitialPositionReinitialized = true;  // sam
-    bool smallBodiesRemoved = false;  // sam
     int MinimumBotSize = 2; // sam
 
     double lastReplicationTime = 0.0; // sam
