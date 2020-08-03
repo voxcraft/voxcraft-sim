@@ -216,6 +216,9 @@ class VX3_VoxelyzeKernel {
     __device__ void updateGroups();
 
     __device__ void surfaceGrow();
+
+    // To remember what voxels their groups should be update. and at the end of the timestep, update them one-by-one, sequentially, not in parallel.
+    VX3_dVector<VX3_Voxel *> d_voxel_to_update_group;
 };
 
 #endif // VX3_VOXELYZE_KERNEL_H

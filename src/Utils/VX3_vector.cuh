@@ -137,7 +137,7 @@ template <typename T> class VX3_dVector {
     }
     __device__ void clear() {
         if (!mutex) {
-            mutex = (int *)malloc(sizeof(int));
+            mutex = (int *)malloc(sizeof(int)); //TODO: Sida: slow things down. need refactory. But atomicCAS only works for shared and global memory.
             *mutex = 0;
         }
         num_main = 0;

@@ -31,10 +31,9 @@ public:
     // These two methods need to consider the racing condition:
     __device__ void updateGroup(); // Update all the group info of voxels that is in this group, start from d_voxels[0]. BFS.
     __device__ bool isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *voxel_remote, int *ret_linkdir_1, int *ret_linkdir_2); // Check host and remote group are compatible for attachment.
-    // These three vairables are used to handle the racing condition.
-    bool needRebuild = true;
-    int buildMutex = 0; // only allow one call to update(build) this group
-    int checkMutex = 0; // checking compatibility and updating group info conflict with each other.
+
+    // No need to rebuild in the same timestep.
+    double lastBuildTime = -1; // time of the simulation in seconds
 
 };
 

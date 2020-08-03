@@ -70,11 +70,12 @@ __device__ bool VX3_AttachManager::tryToAttach(VX3_Voxel *voxel1, int linkdir_1,
             } else {
                 // update voxel1's group, it will set all connected voxels' group to voxel1's
                 voxel1->d_group->hasNewLink++;
-                if (voxel1->d_group != voxel2->d_group) {
-                    voxel2->d_group->switchAllVoxelsTo(voxel1->d_group);
-                    // voxel1->d_group->needRebuild = true;
-                    // voxel1->d_group->updateGroup(voxel1);
-                }
+                d_kernel->d_voxel_to_update_group.push_back(voxel1);
+
+                // if (voxel1->d_group != voxel2->d_group) {
+                //     voxel2->d_group->switchAllVoxelsTo(voxel1->d_group);
+                //     // voxel1->d_group->updateGroup(voxel1);
+                // }
                 pL->isNewLink = d_kernel->SafetyGuard;
                 d_kernel->d_v_links.push_back(pL); // add to the list
 

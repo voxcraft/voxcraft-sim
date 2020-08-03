@@ -74,6 +74,7 @@ __device__ void VX3_Voxel::deviceInit(VX3_VoxelyzeKernel* k) {
         }
     }
     d_group = new VX3_VoxelGroup(d_kernel);
+    d_kernel->d_voxel_to_update_group.push_back(this);
     d_group->d_voxels.push_back(this);
     d_kernel->d_voxelgroups.push_back(d_group);
 
