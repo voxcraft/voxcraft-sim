@@ -6,6 +6,7 @@
 #define VX3_QUEUE
 
 #include <cuda_runtime.h>
+#include "halloc.h"
 
 #include "Utils/VX3.cuh"
 #include <vector>
@@ -27,7 +28,10 @@ template <typename T> class VX3_dQueue {
 
     __device__ void clear() {
         if (!mutex) {
-            mutex = (int *)malloc(sizeof(int));
+            mutex = (int *)hamalloc(sizeof(int));
+            if (mutex==NULL) {
+                printf("halloc: Out of memory. Please increate the size of memory that halloc manages.\n");
+            }
             *mutex = 0;
         }
         cursor_front = 0;

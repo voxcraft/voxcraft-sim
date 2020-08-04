@@ -139,6 +139,9 @@ template <typename T> class VX3_dVector {
     __device__ void clear() {
         if (!mutex) {
             mutex = (int *)hamalloc(sizeof(int)); //TODO: Sida: slow things down. need refactory. But atomicCAS only works for shared and global memory.
+            if (mutex==NULL) {
+                printf("halloc: Out of memory. Please increate the size of memory that halloc manages.\n");
+            }
             *mutex = 0;
         }
         num_main = 0;

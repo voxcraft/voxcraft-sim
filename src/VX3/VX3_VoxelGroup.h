@@ -25,6 +25,7 @@ public:
     int hasNewLink = 0; // how many new links in this group.
 
     __device__ VX3_VoxelGroup(VX3_VoxelyzeKernel *k);
+    __device__ void deviceInit();
     __device__ void switchAllVoxelsTo(VX3_VoxelGroup* group);
     __device__ VX3_Vec3D<int> moveGroupPosition(VX3_Vec3D<int> from, linkDirection dir, int step = 1); // return the step next position in the group
     

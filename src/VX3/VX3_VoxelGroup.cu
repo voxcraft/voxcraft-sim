@@ -4,8 +4,15 @@
 #include "VX3_VoxelyzeKernel.cuh"
 
 __device__ VX3_VoxelGroup::VX3_VoxelGroup(VX3_VoxelyzeKernel *k) { d_kernel = k; }
+
+__device__ void VX3_VoxelGroup::deviceInit() {
+    d_surface_voxels.clear();
+    d_voxels.clear();
+}
+
 __device__ void VX3_VoxelGroup::switchAllVoxelsTo(VX3_VoxelGroup *group) {
-    if (group==this) return;
+    if (group == this)
+        return;
     for (int i = 0; i < d_voxels.size(); i++) {
         if (d_voxels[i]->d_group == NULL) {
             d_voxels[i]->d_group = group;
@@ -46,8 +53,10 @@ __device__ VX3_Vec3D<int> VX3_VoxelGroup::moveGroupPosition(VX3_Vec3D<int> from,
 }
 
 __device__ void VX3_VoxelGroup::updateGroup() {
-    if (removed) return;
-    if (lastBuildTime==d_kernel->currentTime) return;
+    if (removed)
+        return;
+    if (lastBuildTime == d_kernel->currentTime)
+        return;
     lastBuildTime = d_kernel->currentTime;
 
     VX3_Voxel *voxel = d_voxels[0];
@@ -144,17 +153,17 @@ __device__ void VX3_VoxelGroup::updateGroup() {
         v->groupPosition.y -= min_y;
         v->groupPosition.z -= min_z;
 
-        // sam:  
-        bool absorb = false;  
+        // sam:
+        bool absorb = false;
         if (d_kernel->keepJustOneIfManyHaveSameGroupPosition) {
 
             for (int j = 0; j < d_voxels.size(); j++) {
                 if (v->groupPosition == d_voxels[j]->groupPosition) {
                     absorb = true;
-                    
+
                     // Option 1: delete it
-                    // v->removed = true; 
-                    
+                    // v->removed = true;
+
                     // Option 2: just break off
                     v->d_group = new VX3_VoxelGroup(d_kernel);
                     d_kernel->d_voxel_to_update_group.push_back(v);
@@ -162,7 +171,7 @@ __device__ void VX3_VoxelGroup::updateGroup() {
                     d_kernel->d_voxelgroups.push_back(v->d_group);
 
                     // either way, delete all the links
-                    for (int k=0;k<6;k++) { // check links in all direction
+                    for (int k = 0; k < 6; k++) { // check links in all direction
                         if (v->links[k]) {
                             v->links[k]->removed = true;
                             v->adjacentVoxel((linkDirection)k)->links[oppositeDirection(k)] = NULL;
@@ -172,7 +181,7 @@ __device__ void VX3_VoxelGroup::updateGroup() {
                 }
             }
         }
-        if (!absorb){ // sam
+        if (!absorb) { // sam
             int offset = to1D(v->groupPosition, VX3_Vec3D<int>(dim_x, dim_y, dim_z));
             d_group_map[offset] = v;
             d_voxels.push_back(v);
@@ -290,7 +299,7 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
             VX3_Voxel *voxel_to_absorb = d_group_map[offset];
             voxel_to_absorb->removed = true;
             // delete all the links as well
-            for (int i=0;i<6;i++) {
+            for (int i = 0; i < 6; i++) {
                 if (voxel_to_absorb->links[i]) {
                     voxel_to_absorb->links[i]->removed = true;
                     voxel_to_absorb->adjacentVoxel((linkDirection)i)->links[oppositeDirection(i)] = NULL;
