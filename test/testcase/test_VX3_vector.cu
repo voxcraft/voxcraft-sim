@@ -2,7 +2,7 @@
 
 #include "Utils/VX3_vector.cuh"
 #include <cuda_runtime.h>
-
+#include "halloc.h"
 
 //Basic_Usage: create in host, pass to device, copy to another memory in device, return to host
 __global__ void kernel_copy_to_output(VX3_hdVector<double> d_vec, int length, double *output) {
@@ -11,6 +11,7 @@ __global__ void kernel_copy_to_output(VX3_hdVector<double> d_vec, int length, do
     }
 }
 TEST(VX3_hdVector_Test, Basic_Usage) {
+    ha_init(halloc_opts_t()); // Only need to initialize once.
     std::vector<double> h_vec;
     h_vec.push_back(3.0f);
     double *d_output;

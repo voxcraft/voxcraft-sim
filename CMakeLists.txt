@@ -91,7 +91,7 @@ target_compile_options(vx3_test         PUBLIC ${CUDA_OPTIONS})
 ################################
 # Testing
 ################################
-option(test "Build all tests." ON) # Makes boolean 'test' available.
+option(test "Build all tests." OFF) # Makes boolean 'test' available.
 if (test)
   if (APPLE)
     add_definitions(-DGTEST_USE_OWN_TR1_TUPLE)
@@ -116,6 +116,8 @@ if (test)
 
   # Standard linking to gtest stuff.
   target_link_libraries(runUnitTests gtest gtest_main)
+
+  target_link_libraries(runUnitTests halloc)
 
   # Extra linking for the project.
   target_link_libraries(runUnitTests voxelyze.3.0)

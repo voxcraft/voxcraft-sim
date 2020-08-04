@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "halloc.h"
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 #include <boost/filesystem.hpp>
@@ -60,6 +61,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    ha_init(halloc_opts_t());
 
     //Read vxt file
     pt::ptree tree;
