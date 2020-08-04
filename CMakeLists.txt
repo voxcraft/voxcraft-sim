@@ -22,6 +22,9 @@ file( GLOB VXA_SRC_cpp src/VXA/*.cpp )
 file( GLOB OLD_SRC src/old/*.c* )
 file(GLOB_RECURSE COLLISION_DETECT_SRC src/Cu-Collision-Detection/src/* src/Cu-Collision-Detection/include/*)
 
+add_subdirectory(3rdparty/halloc)
+include_directories(3rdparty/halloc/src/)
+
 set(Thrust_DIR 3rdparty/thrust/thrust/cmake)
 find_package(Thrust REQUIRED CONFIG)
 thrust_create_target(Thrust)
@@ -32,8 +35,8 @@ add_executable(vx3_node_worker src/Executables/vx3_node_worker.cu)
 add_executable(vx3_node_daemon src/Executables/vx3_node_daemon.cu)
 add_executable(vx3_test src/Executables/vx3_test.cu)
 
-target_link_libraries(vx3_node_worker PUBLIC voxelyze.3.0)
-target_link_libraries(vx3_test PUBLIC voxelyze.3.0)
+target_link_libraries(vx3_node_worker PUBLIC voxelyze.3.0 halloc)
+target_link_libraries(vx3_test PUBLIC voxelyze.3.0 halloc)
 # for Boost
 set(Boost_USE_STATIC_LIBS   ON)
 find_package(Boost REQUIRED COMPONENTS filesystem thread chrono program_options)
@@ -88,7 +91,7 @@ target_compile_options(vx3_test         PUBLIC ${CUDA_OPTIONS})
 ################################
 # Testing
 ################################
-option(test "Build all tests." OFF) # Makes boolean 'test' available.
+option(test "Build all tests." ON) # Makes boolean 'test' available.
 if (test)
   if (APPLE)
     add_definitions(-DGTEST_USE_OWN_TR1_TUPLE)

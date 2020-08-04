@@ -4,3 +4,6 @@
 [submodule "3rdparty/thrust"]
 	path = 3rdparty/thrust
 	url = https://github.com/thrust/thrust.git
+[submodule "3rdparty/halloc"]
+	path = 3rdparty/halloc
+	url = https://github.com/liusida/halloc.git

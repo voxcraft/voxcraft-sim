@@ -1,4 +1,6 @@
+#include "halloc.h"
 #include "VX3_SignalDiffusion.h"
+
 // GPU Heap is for in-kernel malloc(). Refer to
 // https://stackoverflow.com/a/34795830/7001199
 void enlargeGPUHeapSize() {
@@ -29,9 +31,14 @@ __global__ void kernel() {
     }
     double v = d_solute.quaryQuantityAtPosition(o);
     printf("\nv: %f\n", v);
+    int *m = (int *)hamalloc(sizeof(int));
+    printf("*m: %d\n", *m);
+    hafree(m);
+
 }
 
 int main() {
+    ha_init(halloc_opts_t());
     enlargeGPUHeapSize();
     kernel<<<1, 1>>>();
     cudaDeviceSynchronize();
