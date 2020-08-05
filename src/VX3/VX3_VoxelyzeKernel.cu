@@ -274,8 +274,8 @@ __device__ void VX3_VoxelyzeKernel::updateTemperature() {
 __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
     // clock_t time_measures[10];
     // time_measures[0] = clock();
-    updateTemperature();
     CurStepCount++;
+    updateTemperature();
     if (dt == 0)
         return true;
     else if (dt < 0) {
@@ -472,7 +472,9 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
         // only update Groups after all operation is done at each step
         updateGroups();
     }
-
+    if (d_voxels[438].removed) {
+        printf("removed.\n");
+    }
     currentTime += dt;
     // time_measures[1] = clock();
     // printf("running time for each step: \n");
@@ -1071,6 +1073,9 @@ __device__ bool is_neighbor(VX3_Voxel *voxel1, VX3_Voxel *voxel2, int depth) {
 }
 
 __device__ void handle_collision_attachment(VX3_Voxel *voxel1, VX3_Voxel *voxel2, double watchDistance, VX3_VoxelyzeKernel *k) {
+    // if ((voxel1->ix==47 && voxel1->iy==101) || (voxel2->ix==47 && voxel2->iy==101)) {
+    //     printf("break.\n");
+    // }
     // if both of the voxels are fixed, no need to compute.
     if (voxel1->mat->fixed && voxel2->mat->fixed)
         return;

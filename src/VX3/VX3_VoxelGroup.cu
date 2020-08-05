@@ -281,7 +281,7 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
     // position_of_remote_voxel_in_host_group = Voxel(in remote group).groupPosition + remote_diff;
     // remote_diff = Host.groupPosition + offset_of_link - Remote.groupPosition
     // so (0,0) in Remote group becomes (1,-2).
-
+    bool ret = true;
     VX3_VoxelGroup *remote_group = voxel_remote->d_group;
     VX3_Vec3D<int> remote_diff = VX3_Vec3D<int>(0, 0, 0);
     remote_diff = voxel_host->groupPosition + offset_of_link - voxel_remote->groupPosition;
@@ -297,18 +297,22 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
             // printf("Not Compatible. Offset %d\n", offset); // Instead of return false, absorb the voxel!
             // TODO: Sida: Is this still in-place modifications?
             VX3_Voxel *voxel_to_absorb = d_group_map[offset];
-            voxel_to_absorb->removed = true;
-            // delete all the links as well
-            for (int i = 0; i < 6; i++) {
-                if (voxel_to_absorb->links[i]) {
-                    voxel_to_absorb->links[i]->removed = true;
-                    voxel_to_absorb->adjacentVoxel((linkDirection)i)->links[oppositeDirection(i)] = NULL;
-                    voxel_to_absorb->links[i] = NULL;
+            if (voxel_to_absorb == voxel_host) {
+                ret = false; // Sida: this is a weird situation, the collision happened, but before this check, another voxel has been attached to this exact position. so this collision should not cause attachment.
+            } else {
+                voxel_to_absorb->removed = true;
+                // delete all the links as well
+                for (int i = 0; i < 6; i++) {
+                    if (voxel_to_absorb->links[i]) {
+                        voxel_to_absorb->links[i]->removed = true;
+                        voxel_to_absorb->adjacentVoxel((linkDirection)i)->links[oppositeDirection(i)] = NULL;
+                        voxel_to_absorb->links[i] = NULL;
+                    }
                 }
             }
         }
     }
     *ret_linkdir_1 = potential_link_1;
     *ret_linkdir_2 = potential_link_2;
-    return true; // no need to return false, because we absorb the conflicting voxel.
+    return ret;
 }
