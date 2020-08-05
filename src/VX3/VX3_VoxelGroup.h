@@ -34,7 +34,8 @@ public:
     __device__ bool isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *voxel_remote, int *ret_linkdir_1, int *ret_linkdir_2); // Check host and remote group are compatible for attachment.
 
     // No need to rebuild in the same timestep.
-    double lastBuildTime = -1; // time of the simulation in seconds
+    double lastBuildTime; // time of the simulation in seconds
+
 
 };
 

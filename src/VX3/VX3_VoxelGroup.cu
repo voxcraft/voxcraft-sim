@@ -6,6 +6,7 @@
 __device__ VX3_VoxelGroup::VX3_VoxelGroup(VX3_VoxelyzeKernel *k) { d_kernel = k; }
 
 __device__ void VX3_VoxelGroup::deviceInit() {
+    lastBuildTime = -1;
     d_surface_voxels.clear();
     d_voxels.clear();
 }
@@ -159,6 +160,7 @@ __device__ void VX3_VoxelGroup::updateGroup() {
 
             for (int j = 0; j < d_voxels.size(); j++) {
                 if (v->groupPosition == d_voxels[j]->groupPosition) {
+                    assert(false); // Sida: Should never be in here. Why are there two voxels with the same group position?
                     absorb = true;
 
                     // Option 1: delete it
@@ -220,6 +222,10 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
         voxel_host->isSingletonOrSmallBar(&voxel_host_singleton, &voxel_host_smallbar, &voxel_host_direction);
         if (voxel_remote_singleton || voxel_remote_smallbar || voxel_host_singleton || voxel_host_smallbar) {
             if (atomicCAS(&d_kernel->mutexRotateSingleton, 0, 1) == 0) {
+                //check again inside Criticle Area
+                voxel_remote->isSingletonOrSmallBar(&voxel_remote_singleton, &voxel_remote_smallbar, &voxel_remote_direction);
+                voxel_host->isSingletonOrSmallBar(&voxel_host_singleton, &voxel_host_smallbar, &voxel_host_direction);
+
                 if (voxel_remote_singleton) { // remote has no link. so rotate the remote
                     voxel_remote->changeOrientationTo(voxel_host->orient);
                 } else if (voxel_host_singleton) { // voxel host has no link, so rotate the host

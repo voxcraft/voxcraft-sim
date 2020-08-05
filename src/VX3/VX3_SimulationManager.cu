@@ -82,6 +82,21 @@ __global__ void CUDA_Simulation(VX3_VoxelyzeKernel *d_voxelyze_3, int num_simula
             }
             if (d_v3->RecordStepSize) { // output History file
                if (j % real_stepsize == 0) {
+                    // { // debug, print all the voxels and groups.
+                    //     printf("=========== Step %d ===========\n", j);
+                    //     for (int k=0;k<d_v3->d_voxelgroups.size();k++) {
+                    //         VX3_VoxelGroup* tmp = d_v3->d_voxelgroups[k];
+                    //         if (!tmp->removed) {
+                    //             printf("Group: %d (%p). \n\tremoved: %d, dim: (%d, %d, %d).\n", k, tmp, (int)tmp->removed, tmp->dim_x, tmp->dim_y, tmp->dim_z);
+                    //         }
+                    //     }
+                    //     continue;
+                    //     for (int k=0;k<d_v3->num_d_voxels;k++) {
+                    //         VX3_Voxel* tmp = &d_v3->d_voxels[k];
+                    //         printf("Voxel: %d (%p). \n\t removed: %d, ix: %d, iy: %d, iz: %d.\n", k, tmp, (int)tmp->removed, tmp->ix, tmp->iy, tmp->iz);
+                    //     }
+                    // }
+
                    if (d_v3->RecordVoxel) {
                        // Voxels
                        printf("<<<Step%d Time:%f>>>", j, d_v3->currentTime);

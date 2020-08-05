@@ -381,6 +381,34 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
         computeTargetCloseness();
     }
 
+    if (EnableSurfaceGrowth) {
+        if (currentTime>=SurfaceGrowth_activeTime) {
+            SurfaceGrowth_activeTime = currentTime + SurfaceGrowth_Interval;
+            printf("call surfaceGrow at currentTime: %f. with SurfaceGrowth_Rate %f.\n", currentTime, SurfaceGrowth_Rate);
+            surfaceGrow();
+            // SurfaceGrowth_Growed = 0;
+        }
+        // if (SurfaceGrowth_Growed < ceil(num_d_surface_voxels * SurfaceGrowth_Rate)) {
+        //     if (d_growth_manager->grow()) {
+        //         SurfaceGrowth_Growed++;
+        //     };
+        // }
+    }
+
+    if (isSurfaceChanged) {
+        if (currentTime >= lastRegenerateSurfaceTime) {
+            lastRegenerateSurfaceTime = currentTime + 0.05; // regenerate at most once per 0.1 second simulation time.
+            isSurfaceChanged = false;
+            regenerateSurfaceVoxels();
+        }
+    }
+
+    {
+        // only update Groups after all operation is done at each step
+        updateGroups();
+    }
+
+    // Sida: after update Groups, information will be good to determine who's going to be removed.
     // sam:
     if (SecondaryExperiment) {
         // SecondaryExperiment handle tags:
@@ -446,35 +474,6 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
         }
     }
 
-    if (EnableSurfaceGrowth) {
-        if (currentTime>=SurfaceGrowth_activeTime) {
-            SurfaceGrowth_activeTime = currentTime + SurfaceGrowth_Interval;
-            printf("call surfaceGrow at currentTime: %f. with SurfaceGrowth_Rate %f.\n", currentTime, SurfaceGrowth_Rate);
-            surfaceGrow();
-            // SurfaceGrowth_Growed = 0;
-        }
-        // if (SurfaceGrowth_Growed < ceil(num_d_surface_voxels * SurfaceGrowth_Rate)) {
-        //     if (d_growth_manager->grow()) {
-        //         SurfaceGrowth_Growed++;
-        //     };
-        // }
-    }
-
-    if (isSurfaceChanged) {
-        if (currentTime >= lastRegenerateSurfaceTime) {
-            lastRegenerateSurfaceTime = currentTime + 0.05; // regenerate at most once per 0.1 second simulation time.
-            isSurfaceChanged = false;
-            regenerateSurfaceVoxels();
-        }
-    }
-
-    {
-        // only update Groups after all operation is done at each step
-        updateGroups();
-    }
-    if (d_voxels[438].removed) {
-        printf("removed.\n");
-    }
     currentTime += dt;
     // time_measures[1] = clock();
     // printf("running time for each step: \n");
@@ -543,7 +542,7 @@ __device__ void VX3_VoxelyzeKernel::convertMatIfSmallBody(int mat1, int mat2, bo
     d_voxelMats[mat2].removed = false;  // this material will be removed next removeVoxels() call
 
     for (int i=0;i<num_d_voxels;i++) {
-
+        if (d_voxels[i].removed) continue;
         if (d_voxels[i].mat == &d_voxelMats[mat1]) {
 
             if (d_voxels[i].d_group->d_voxels.size() < MinimumBotSize) {
