@@ -16,7 +16,7 @@ __device__ void _CUDA_Simulation(VX3_VoxelyzeKernel *k, int thread_index, int de
 
 __global__ void sequantial_CUDA_Simulation(VX3_VoxelyzeKernel *d_voxelyze_3, int num_simulation, int device_index) {
     for (int i=0;i<num_simulation;i++) {
-        printf("Sequantially starting Simulation %d on GPU %d.\n", i, device_index);
+        printf("Sequantially starting Simulation %d on GPU %d with kernel (%p).\n", i, device_index, &d_voxelyze_3[i]);
         _CUDA_Simulation(&d_voxelyze_3[i], i, device_index);
     }
 }
