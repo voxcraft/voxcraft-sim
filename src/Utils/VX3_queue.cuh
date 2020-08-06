@@ -6,7 +6,6 @@
 #define VX3_QUEUE
 
 #include <cuda_runtime.h>
-#include "halloc.h"
 
 #include "Utils/VX3.cuh"
 #include <vector>

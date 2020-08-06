@@ -5,7 +5,6 @@
 #if !defined(VX3_VECTOR_H)
 #define VX3_VECTOR_H
 #include <cuda_runtime.h>
-#include "halloc.h"
 
 #include "Utils/VX3.cuh"
 #include <vector>
@@ -138,7 +137,7 @@ template <typename T> class VX3_dVector {
     }
     __device__ void clear() {
         if (!mutex) {
-            mutex = (int *)hamalloc(sizeof(int)); //TODO: Sida: slow things down. need refactory. But atomicCAS only works for shared and global memory.
+            mutex = (int *)hamalloc(sizeof(int));
             if (mutex==NULL) {
                 printf("halloc: Out of memory. Please increate the size of memory that halloc manages.\n");
             }
