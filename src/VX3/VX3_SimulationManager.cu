@@ -12,10 +12,23 @@
 #include "VX3_VoxelyzeKernel.cuh"
 #include "VX_Sim.h" //readVXA
 
+__device__ void _CUDA_Simulation(VX3_VoxelyzeKernel *k, int thread_index, int device_index);
+
+__global__ void sequantial_CUDA_Simulation(VX3_VoxelyzeKernel *d_voxelyze_3, int num_simulation, int device_index) {
+    for (int i=0;i<num_simulation;i++) {
+        printf("Sequantially starting Simulation %d on GPU %d.\n", i, device_index);
+        _CUDA_Simulation(&d_voxelyze_3[i], i, device_index);
+    }
+}
 __global__ void CUDA_Simulation(VX3_VoxelyzeKernel *d_voxelyze_3, int num_simulation, int device_index) {
     int thread_index = blockIdx.x * blockDim.x + threadIdx.x;
     if (thread_index < num_simulation) {
-        VX3_VoxelyzeKernel *d_v3 = &d_voxelyze_3[thread_index];
+        _CUDA_Simulation(&d_voxelyze_3[thread_index], thread_index, device_index);
+    }
+}
+__device__ void _CUDA_Simulation(VX3_VoxelyzeKernel *k, int thread_index, int device_index) {
+    {
+        VX3_VoxelyzeKernel *d_v3 = k;
         if (d_v3->num_d_links == 0 and d_v3->num_d_voxels == 0) {
             printf(COLORCODE_BOLD_RED "No links and no voxels. Simulation %d (%s) abort.\n" COLORCODE_RESET, thread_index,
                    d_v3->vxa_filename);
@@ -346,6 +359,7 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         // Read VXD file, clone base VXA, replace parts specified in VXD, send
         // to MainSim.ReadVXA to process. printf("reading %s\n",
         // (input_dir/file).c_str());
+        std::cout << "Reading " << file << "\n";
         pt::ptree pt_VXD;
         pt::read_xml((input_dir / file).string(), pt_VXD);
         pt::ptree pt_merged = pt_baseVXA;
@@ -380,8 +394,9 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         strcpy(h_d_tmp.vxa_filename, file.filename().c_str());
 
         std::string RawPrint = pt_merged.get<std::string>("VXA.RawPrint", "");
-        std::cout << RawPrint << "\n";
-
+        if (RawPrint.length()>0) {
+            std::cout << RawPrint << "\n";
+        }
         h_d_tmp.enableFloor = pt_merged.get<bool>("VXA.Environment.Gravity.FloorEnabled", true);
 
         ParseMathTree(h_d_tmp.StopConditionFormula, sizeof(h_d_tmp.StopConditionFormula),
@@ -500,8 +515,9 @@ void VX3_SimulationManager::startKernel(int num_simulation, int device_index) {
     //             num_simulation * sizeof(VX3_VoxelyzeKernel),
     //             cudaMemcpyDeviceToHost);
     enlargeGPUHeapSize();
-
-    CUDA_Simulation<<<numBlocks, threadsPerBlock>>>(d_voxelyze_3s[device_index], num_simulation, device_index);
+    printf("Start %d Simulations.\n", num_simulation);
+    // CUDA_Simulation<<<numBlocks, threadsPerBlock>>>(d_voxelyze_3s[device_index], num_simulation, device_index);
+    sequantial_CUDA_Simulation<<<1, 1>>>(d_voxelyze_3s[device_index], num_simulation, device_index);
     CUDA_CHECK_AFTER_CALL();
     // VcudaDeviceSynchronize();
     // NO!! We don't need to synchronize here! It will be super slow to process large number of simulations!
