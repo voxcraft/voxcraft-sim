@@ -7,7 +7,7 @@ __device__ bool VX3_OnlineTest::ThoroughTest(VX3_VoxelyzeKernel *k) {
         // skip most of the steps.
         return true;
     }
-    printf("Online Testing at step %d ...\n", k->CurStepCount);
+    printf("GPU (%d) Online Testing at step %d ...\n", k->GPU_id, k->CurStepCount);
     bool ret = true;
 
     // Testing all voxels.
