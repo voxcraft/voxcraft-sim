@@ -87,7 +87,7 @@ template <class T> __device__ static inline void debug_array(T* array, int size)
 #endif
 
 // #define PRINT(kernel, fmt, ...) { if (kernel->VerboseMode) {printf("Step %d) " fmt, kernel->CurStepCount, __VA_ARGS__);} }
-#define PRINT(kernel, fmt, ...) { if (kernel->VerboseMode) { printf("Step %d\n", kernel->CurStepCount); printf(fmt, __VA_ARGS__);} }
+#define PRINT(kernel, fmt, ...) { if (kernel->VerboseMode) { printf("GPU %d, Step %d\n", kernel->GPU_id, kernel->CurStepCount); printf(fmt, __VA_ARGS__);} }
 
 #ifndef CUDA_ERROR_CHECK
     __device__ __host__ inline void CUDA_ERROR_CHECK_OUTPUT(cudaError_t code, const char *file, int line, bool abort=false) {

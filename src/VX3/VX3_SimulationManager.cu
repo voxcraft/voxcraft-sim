@@ -390,6 +390,7 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         //     }
         // }
         VX3_VoxelyzeKernel h_d_tmp(&MainSim);
+        h_d_tmp.GPU_id = device_index;
         // More VXA settings which is new in VX3
         strcpy(h_d_tmp.vxa_filename, file.filename().c_str());
 

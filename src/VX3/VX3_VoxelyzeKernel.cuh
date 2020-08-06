@@ -230,6 +230,8 @@ class VX3_VoxelyzeKernel {
     bool SkipThoroughTest;
     unsigned int ThoroughTestStepSize;
     unsigned int ThoroughTestStartAt;
+
+    int GPU_id;
 };
 
 #endif // VX3_VOXELYZE_KERNEL_H
