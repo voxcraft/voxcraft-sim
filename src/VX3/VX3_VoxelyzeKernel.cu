@@ -67,17 +67,20 @@ VX3_VoxelyzeKernel::VX3_VoxelyzeKernel(CVX_Sim *In) {
 
     num_d_voxels = In->Vx.voxelsList.size();
     num_d_init_voxels = num_d_voxels;
-
     VcudaMalloc((void **)&d_voxels, (num_d_voxels + MaxNewVoxelsAddedMidSim) * sizeof(VX3_Voxel)); // pre-allocate memory for new Voxels
+    CUDA_CHECK_AFTER_CALL();
+
     for (int i = 0; i < num_d_voxels; i++) {
         h_voxels.push_back(In->Vx.voxelsList[i]);
         h_lookup_voxels[In->Vx.voxelsList[i]] = d_voxels + i;
     }
-    VcudaMalloc((void **) &d_initialPosition, num_d_voxels * sizeof(Vec3D<>));
+    VcudaMalloc((void **) &d_initialPosition, (num_d_voxels + MaxNewVoxelsAddedMidSim) * sizeof(Vec3D<>));
+    CUDA_CHECK_AFTER_CALL();
 
     // Create the collison system and copy it to the device.
     h_collision_system = new CollisionSystem((num_d_voxels + MaxNewVoxelsAddedMidSim), 128, false);
     VcudaMalloc((void **) &d_collision_system, sizeof(CollisionSystem));
+    CUDA_CHECK_AFTER_CALL();
     VcudaMemcpy(d_collision_system, h_collision_system, sizeof(CollisionSystem), cudaMemcpyHostToDevice);
 
     num_d_links = In->Vx.linksList.size();
@@ -140,6 +143,7 @@ __device__ void VX3_VoxelyzeKernel::deviceInit() {
     d_targets.clear();
     d_voxelgroups.clear();
     d_voxel_to_update_group.clear();
+    d_voxel_to_absorb.clear();
 
     // allocate memory for collision lookup table
     num_lookupGrids = lookupGrid_n * lookupGrid_n * lookupGrid_n;
@@ -191,6 +195,7 @@ __device__ void VX3_VoxelyzeKernel::deviceInit() {
     
 }
 __device__ void VX3_VoxelyzeKernel::saveInitialPosition() {
+    PRINT(this, "d_initialPosition (%p).\n", d_initialPosition);
     for (int i = 0; i < num_d_voxels; i++) {
         d_initialPosition[i] = d_voxels[i].pos;
         // Save this value to voxel, so it can be read out when collecting results in cpu.
@@ -390,7 +395,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
     if (EnableSurfaceGrowth) {
         if (currentTime>=SurfaceGrowth_activeTime) {
             SurfaceGrowth_activeTime = currentTime + SurfaceGrowth_Interval;
-            printf("call surfaceGrow at currentTime: %f. with SurfaceGrowth_Rate %f.\n", currentTime, SurfaceGrowth_Rate);
+            PRINT(this, "call surfaceGrow at currentTime: %f. with SurfaceGrowth_Rate %f.\n", currentTime, SurfaceGrowth_Rate);
             surfaceGrow();
             // SurfaceGrowth_Growed = 0;
         }
@@ -625,29 +630,22 @@ __device__ void VX3_VoxelyzeKernel::removeVoxels() {
                 if (d_voxels[j].mat == &d_voxelMats[i] && d_voxels[j].removed == false) {
                     d_voxels[j].removed = true; // mark this voxel as removed
                     d_voxels[j].d_group->removed = true;
-                    PRINT(this, "Remove voxel (%p) explicitly.\n", &d_voxels[j]);
+                    PRINT(this, "Remove voxel (%p) and group (%p) explicitly.\n", &d_voxels[j], d_voxels[j].d_group);
 
                     for (int k=0;k<6;k++) { // check links in all direction
                         if (d_voxels[j].links[k]) {
 
+                            neighbor_voxel = d_voxels[j].adjacentVoxel((linkDirection)k);
                             d_voxels[j].links[k]->removed = true; // mark the link as removed
-                            if (d_voxels[j].links[k]->pVNeg == &d_voxels[j]) { // this voxel is pVNeg
-                                neighbor_voxel = d_voxels[j].links[k]->pVPos;
-                            } else {
-                                neighbor_voxel = d_voxels[j].links[k]->pVNeg;
-                            }
-                            for (int m=0;m<6;m++) {
-                                if (neighbor_voxel->links[m] == d_voxels[j].links[k]) {
-                                    neighbor_voxel->links[m] = NULL; // delete the neighbor's link
-                                    break;
-                                }
-                            }
+                            neighbor_voxel->links[oppositeDirection(k)] = NULL; // delete the neighbor's link
                             d_voxels[j].links[k] = NULL; // delete this voxel's link
+                            PRINT(this, "Remove link (%p).\n", d_voxels[j].links[k])
                         }
                     }
                 }
             }
             d_voxelMats[i].removed = true;
+            PRINT(this, "Remove voxel material (%p).\n", &d_voxelMats[i]);
             isSurfaceChanged = true;
         }
     }
@@ -953,22 +951,53 @@ __device__ void VX3_VoxelyzeKernel::computeTargetCloseness() {
 }
 
 __device__ void VX3_VoxelyzeKernel::updateGroups() {
-    // Sida: Dont update groups parallelly, instead, only update those pertain to collision (recorded in d_voxel_to_update_group)
-    if (d_voxel_to_update_group.size()==0)
-        return;
-    PRINT(this, "d_voxel_to_update_group.size = %d.\n", d_voxel_to_update_group.size());
-    for (int i=0;i<(int)d_voxel_to_update_group.size();i++) {
-        if (d_voxel_to_update_group[i]->removed)
-            continue; // removed voxel doesn't deserve a update.
-        VX3_Voxel* v = d_voxel_to_update_group[i];
+    // Sida: Dont update groups parallelly, instead, only update those pertain to collision (recorded in d_voxel_to_update_group and d_voxel_to_absorb)
+    if (d_voxel_to_absorb.size()>0) {
+        PRINT(this, "d_voxel_to_absorb.size = %d.\n", d_voxel_to_absorb.size());
+        for (int i=0;i<d_voxel_to_absorb.size();i++) {
+            if (d_voxel_to_absorb[i]->removed)
+                continue;
+            VX3_Voxel* voxel_to_absorb = d_voxel_to_absorb[i];
+            voxel_to_absorb->removed = true;
+            voxel_to_absorb->d_group->removed = true;
+            PRINT(this, "Absorb voxel (%p) and remove group (%p (needUpdate %d)) with %d voxels in it.\n", voxel_to_absorb, voxel_to_absorb->d_group, voxel_to_absorb->d_group->needUpdate, voxel_to_absorb->d_group->d_voxels.size());
+            // delete all the links as well
+            for (int i = 0; i < 6; i++) {
+                if (voxel_to_absorb->links[i]) {
+                    VX3_Voxel* neighbor = voxel_to_absorb->adjacentVoxel((linkDirection)i);
+                    VX3_VoxelGroup *g = (VX3_VoxelGroup*)hamalloc(sizeof(VX3_VoxelGroup));
+                    g->deviceInit(this);
+                    g->d_voxels.push_back(neighbor);
+                    g->needUpdate = true;
+                    neighbor->d_group = g;
+                    d_voxel_to_update_group.push_back(neighbor);
+                    PRINT(this, "add to update waiting list: voxel (%p) group (%p) (from %p).\n", neighbor, g, this);
 
-        PRINT(this, "i=%d, d_voxel_to_update_group.size()=%d.\n", i, d_voxel_to_update_group.size());
-        PRINT(this, "(%p) to be update. %d voxels were in it's group (%p) (removed %d).\n", d_voxel_to_update_group[i], d_voxel_to_update_group[i]->d_group->d_voxels.size(), d_voxel_to_update_group[i]->d_group, d_voxel_to_update_group[i]->d_group->removed);
-        
-        d_voxel_to_update_group[i]->d_group->updateGroup(d_voxel_to_update_group[i]);
-        PRINT(this, "after update, %d voxels are in the group (%p) (removed %d).\n", d_voxel_to_update_group[i]->d_group->d_voxels.size(), d_voxel_to_update_group[i]->d_group, d_voxel_to_update_group[i]->d_group->removed);
+                    voxel_to_absorb->links[i]->removed = true;
+                    PRINT(this, "Remove link (%p) of absorbed voxel (%p).\n", voxel_to_absorb->links[i], voxel_to_absorb);
+                    neighbor->links[oppositeDirection(i)] = NULL;
+                    voxel_to_absorb->links[i] = NULL;
+                }
+            }
+        }
+        d_voxel_to_absorb.clear();
     }
-    d_voxel_to_update_group.clear();
+
+    if (d_voxel_to_update_group.size()>0) {
+        PRINT(this, "d_voxel_to_update_group.size = %d.\n", d_voxel_to_update_group.size());
+        for (int i=0;i<d_voxel_to_update_group.size();i++) {
+            if (d_voxel_to_update_group[i]->removed)
+                continue; // removed voxel doesn't deserve a update.
+            VX3_Voxel* v = d_voxel_to_update_group[i];
+
+            PRINT(this, "i=%d, d_voxel_to_update_group.size()=%d.\n", i, d_voxel_to_update_group.size());
+            PRINT(this, "(%p) to be update. %d voxels were in it's group (%p) (removed %d).\n", d_voxel_to_update_group[i], d_voxel_to_update_group[i]->d_group->d_voxels.size(), d_voxel_to_update_group[i]->d_group, d_voxel_to_update_group[i]->d_group->removed);
+            
+            d_voxel_to_update_group[i]->d_group->updateGroup(d_voxel_to_update_group[i]);
+            PRINT(this, "after update, %d voxels are in the group (%p) (removed %d).\n", d_voxel_to_update_group[i]->d_group->d_voxels.size(), d_voxel_to_update_group[i]->d_group, d_voxel_to_update_group[i]->d_group->removed);
+        }
+        d_voxel_to_update_group.clear();
+    }
 }
 
 __device__ void VX3_VoxelyzeKernel::surfaceGrow() {

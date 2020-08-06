@@ -38,6 +38,7 @@ __device__ void VX3_VoxelGroup::switchAllVoxelsTo(VX3_VoxelGroup *group) {
         }
     }
     removed = true;
+    PRINT(d_kernel, "Remove a voxel group (%p).\n", this);
 }
 
 __device__ VX3_Vec3D<int> VX3_VoxelGroup::moveGroupPosition(VX3_Vec3D<int> from, linkDirection dir, int step) {
@@ -208,6 +209,7 @@ __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *start_voxel) {
                     for (int k = 0; k < 6; k++) { // check links in all direction
                         if (v->links[k]) {
                             v->links[k]->removed = true;
+                            PRINT(d_kernel, "Remove a link (%p).\n", v->links[k]);
                             v->adjacentVoxel((linkDirection)k)->links[oppositeDirection(k)] = NULL;
                             v->links[k] = NULL;
                         }
@@ -346,26 +348,9 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
             if (voxel_to_absorb == voxel_host) {
                 ret = false; // Sida: this is a weird situation, the collision happened, but before this check, another voxel has been attached to this exact position. so this collision should not cause attachment.
             } else {
-                voxel_to_absorb->removed = true;
-                removed = true;
-                PRINT(d_kernel, "Absorb voxel (%p) from group (%p (needUpdate %d)) with %d voxels in it.\n", voxel_to_absorb, voxel_to_absorb->d_group, needUpdate, d_voxels.size());
-                // delete all the links as well
-                for (int i = 0; i < 6; i++) {
-                    if (voxel_to_absorb->links[i]) {
-                        VX3_Voxel* neighbor = voxel_to_absorb->adjacentVoxel((linkDirection)i);
-                        VX3_VoxelGroup *g = (VX3_VoxelGroup*)hamalloc(sizeof(VX3_VoxelGroup));
-                        g->deviceInit(d_kernel);
-                        g->d_voxels.push_back(neighbor);
-                        g->needUpdate = true;
-                        neighbor->d_group = g;
-                        d_kernel->d_voxel_to_update_group.push_back(neighbor);
-                        PRINT(d_kernel, "add to update waiting list: voxel (%p) group (%p) (from %p).\n", neighbor, g, this);
-
-                        voxel_to_absorb->links[i]->removed = true;
-                        neighbor->links[oppositeDirection(i)] = NULL;
-                        voxel_to_absorb->links[i] = NULL;
-                    }
-                }
+                needUpdate = true;
+                PRINT(d_kernel, "While checking compatibility of (%p) group (%p) v.s. (%p) group (%p).\n", voxel_host, voxel_host->d_group, voxel_remote, voxel_remote->d_group );
+                d_kernel->d_voxel_to_absorb.push_back(voxel_to_absorb);
             }
         }
     }

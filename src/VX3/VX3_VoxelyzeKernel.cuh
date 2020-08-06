@@ -224,6 +224,7 @@ class VX3_VoxelyzeKernel {
 
     // To remember what voxels their groups should be update. and at the end of the timestep, update them one-by-one, sequentially, not in parallel.
     VX3_dVector<VX3_Voxel *> d_voxel_to_update_group;
+    VX3_dVector<VX3_Voxel *> d_voxel_to_absorb;
 
     bool VerboseMode;
     bool SkipThoroughTest;
