@@ -9,6 +9,7 @@
                 "${workspaceFolder}/src/old",
                 "${workspaceFolder}/src",
                 "${workspaceFolder}/3rdparty/thrust/dependencies/cub",
+                "${workspaceFolder}/3rdparty/halloc/src",
                 "/usr/local/cuda/include"
             ],
             "forcedInclude": [
