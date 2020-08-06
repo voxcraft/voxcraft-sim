@@ -57,19 +57,19 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Debug demos/attach/_debug.py",
+            "name": "Debug demos/replicate",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/vx3_node_worker",
             "args": [
                 "-i",
-                "${workspaceFolder}/demos/attach/workspace/locally/20200727175250.vxt",
+                "${workspaceFolder}/demos/replicate/workspace/locally/20200804210129.vxt",
                 "-o",
-                "${workspaceFolder}/demos/attach/workspace/locally/20200727175250.vxr",
+                "${workspaceFolder}/demos/replicate/workspace/locally/20200804210129.vxr",
                 "-f"
             ],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/demos/attach",
+            "cwd": "${workspaceFolder}/demos/replicate",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
