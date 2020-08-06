@@ -347,6 +347,7 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
                 ret = false; // Sida: this is a weird situation, the collision happened, but before this check, another voxel has been attached to this exact position. so this collision should not cause attachment.
             } else {
                 voxel_to_absorb->removed = true;
+                removed = true;
                 PRINT(d_kernel, "Absorb voxel (%p) from group (%p (needUpdate %d)) with %d voxels in it.\n", voxel_to_absorb, voxel_to_absorb->d_group, needUpdate, d_voxels.size());
                 // delete all the links as well
                 for (int i = 0; i < 6; i++) {
