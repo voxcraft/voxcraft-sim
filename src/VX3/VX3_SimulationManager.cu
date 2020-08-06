@@ -14,9 +14,9 @@
 
 __device__ void _CUDA_Simulation(VX3_VoxelyzeKernel *k, int thread_index, int device_index);
 
-__global__ void sequantial_CUDA_Simulation(VX3_VoxelyzeKernel *d_voxelyze_3, int num_simulation, int device_index) {
+__global__ void sequential_CUDA_Simulation(VX3_VoxelyzeKernel *d_voxelyze_3, int num_simulation, int device_index) {
     for (int i=0;i<num_simulation;i++) {
-        printf("Sequantially starting Simulation %d/%d on GPU %d.\n", i, num_simulation, device_index);
+        printf("Sequentially starting Simulation %d/%d on GPU %d.\n", i, num_simulation, device_index);
         _CUDA_Simulation(&d_voxelyze_3[i], i, device_index);
     }
 }
@@ -524,7 +524,7 @@ void VX3_SimulationManager::startKernel(int num_simulation, int device_index) {
     enlargeGPUHeapSize();
     printf("Start %d Simulations.\n", num_simulation);
     // CUDA_Simulation<<<numBlocks, threadsPerBlock>>>(d_voxelyze_3s[device_index], num_simulation, device_index);
-    sequantial_CUDA_Simulation<<<1, 1>>>(d_voxelyze_3s[device_index], num_simulation, device_index);
+    sequential_CUDA_Simulation<<<1, 1>>>(d_voxelyze_3s[device_index], num_simulation, device_index);
     CUDA_CHECK_AFTER_CALL();
     // VcudaDeviceSynchronize();
     // NO!! We don't need to synchronize here! It will be super slow to process large number of simulations!
