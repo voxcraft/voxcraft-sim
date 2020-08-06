@@ -75,11 +75,11 @@ __device__ void VX3_Voxel::deviceInit(VX3_VoxelyzeKernel* k) {
     }
     // d_group = new VX3_VoxelGroup(d_kernel); Sida: use halloc for now. note halloc and new need different de-allocation.
     d_group = (VX3_VoxelGroup*) hamalloc(sizeof(VX3_VoxelGroup));
+    PRINT(d_kernel, "Create VoxelGroup (%p) in deviceInit.\n", d_group);
     if (d_group==NULL) {
         printf("halloc: Out of memory. Please increate the size of memory that halloc manages.\n");
     }
-    d_group->deviceInit();
-    d_group->d_kernel = d_kernel;
+    d_group->deviceInit(d_kernel);
     //
     d_kernel->d_voxel_to_update_group.push_back(this);
     d_group->d_voxels.push_back(this);

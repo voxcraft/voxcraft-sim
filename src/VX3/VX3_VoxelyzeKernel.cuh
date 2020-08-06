@@ -19,6 +19,7 @@
 #include "VX_Enums.h"
 #include "VX3_AttachManager.h"
 #include "VX3_GrowthManager.h"
+#include "VX3_OnlineTest.h"
 
 #include "../Cu-Collision-Detection/include/CollisionSystem.cuh"
 
@@ -63,6 +64,10 @@ class VX3_VoxelyzeKernel {
 
     __device__ bool addVoxel(int x, int y, int z, int mat); // sam
 
+    // for Testing
+    // check all the voxels, links and voxelgroups for validation.
+    __device__ bool ThoroughValidationCheck();
+    
     /* data */
     bool forceExit = false;
     char vxa_filename[256];
@@ -72,7 +77,7 @@ class VX3_VoxelyzeKernel {
     double DtFrac;
     StopCondition StopConditionType;
     double StopConditionValue;
-    unsigned long CurStepCount = 0.0f;
+    unsigned long CurStepCount = 0;
 
     bool enableFloor = true;
 
@@ -219,6 +224,11 @@ class VX3_VoxelyzeKernel {
 
     // To remember what voxels their groups should be update. and at the end of the timestep, update them one-by-one, sequentially, not in parallel.
     VX3_dVector<VX3_Voxel *> d_voxel_to_update_group;
+
+    bool VerboseMode;
+    bool SkipThoroughTest;
+    unsigned int ThoroughTestStepSize;
+    unsigned int ThoroughTestStartAt;
 };
 
 #endif // VX3_VOXELYZE_KERNEL_H

@@ -425,6 +425,11 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         h_d_tmp.EnableCilia = pt_merged.get<int>("VXA.Simulator.EnableCilia", 0);
         h_d_tmp.EnableSignals = pt_merged.get<int>("VXA.Simulator.EnableSignals", 0);
         
+        h_d_tmp.VerboseMode = pt_merged.get<bool>("VXA.Simulator.ThoroughTest.VerboseMode", true);
+        h_d_tmp.SkipThoroughTest = pt_merged.get<bool>("VXA.Simulator.ThoroughTest.SkipTest", true);
+        h_d_tmp.ThoroughTestStepSize = pt_merged.get<unsigned int>("VXA.Simulator.ThoroughTest.TestStepSize", 100);
+        h_d_tmp.ThoroughTestStartAt = pt_merged.get<unsigned int>("VXA.Simulator.ThoroughTest.TestStartAt", 0);
+
         // for Secondary Experiment
         h_d_tmp.SecondaryExperiment = pt_merged.get<int>("VXA.Simulator.SecondaryExperiment", 0);
         h_d_tmp.SelfReplication = pt_merged.get<int>("VXA.Simulator.SelfReplication", 0);  // sam

@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include "VX3_Collision.h"
 #include "VX3_MemoryCleaner.h"
 #include "VX3_VoxelyzeKernel.cuh"
@@ -185,7 +186,7 @@ __device__ void VX3_VoxelyzeKernel::deviceInit() {
     registerTargets();  // sam
     
     for (int i=0;i<num_d_voxels;i++) {
-        d_voxels[i].d_group->updateGroup(); //it'll automatically skip those don't need update.
+        d_voxels[i].d_group->updateGroup(&d_voxels[i]); //it'll automatically skip those don't need update.
     }
     
 }
@@ -274,6 +275,11 @@ __device__ void VX3_VoxelyzeKernel::updateTemperature() {
 __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
     // clock_t time_measures[10];
     // time_measures[0] = clock();
+    if (!SkipThoroughTest) {
+        if (!ThoroughValidationCheck())
+            return false;
+    }
+
     CurStepCount++;
     updateTemperature();
     if (dt == 0)
@@ -529,11 +535,12 @@ __device__ void VX3_VoxelyzeKernel::reInitAllGroups() {
 
     for (int i = 0; i < num_d_voxels; i++) {
         d_voxels[i].deviceInit(this);
+        d_voxels[i].d_group->updateGroup(&d_voxels[i]);
     }
     
-    for (int i=0;i<d_voxelgroups.size();i++) {
-        d_voxelgroups[i]->updateGroup();
-    }
+    // for (int i=0;i<d_voxelgroups.size();i++) {
+    //     d_voxelgroups[i]->updateGroup();
+    // }
 }
 
 // sam:
@@ -544,7 +551,9 @@ __device__ void VX3_VoxelyzeKernel::convertMatIfSmallBody(int mat1, int mat2, bo
     for (int i=0;i<num_d_voxels;i++) {
         if (d_voxels[i].removed) continue;
         if (d_voxels[i].mat == &d_voxelMats[mat1]) {
-
+            if (d_voxels[i].d_group->removed) {
+                printf("Sida: A voxel's group should not be removed. d_voxels[%d].\n", i);
+            }
             if (d_voxels[i].d_group->d_voxels.size() < MinimumBotSize) {
 
                 if (convertSingletons) {
@@ -615,6 +624,8 @@ __device__ void VX3_VoxelyzeKernel::removeVoxels() {
 
                 if (d_voxels[j].mat == &d_voxelMats[i] && d_voxels[j].removed == false) {
                     d_voxels[j].removed = true; // mark this voxel as removed
+                    d_voxels[j].d_group->removed = true;
+                    PRINT(this, "Remove voxel (%p) explicitly.\n", &d_voxels[j]);
 
                     for (int k=0;k<6;k++) { // check links in all direction
                         if (d_voxels[j].links[k]) {
@@ -875,7 +886,7 @@ __device__ void VX3_VoxelyzeKernel::regenerateSurfaceVoxels() {
         delete d_surface_voxels;
         d_surface_voxels = NULL;
     }
-    DEBUG_PRINT("%f) regenerate surface voxels %d in %d. \n", currentTime, num_d_surface_voxels, num_d_voxels);
+    PRINT(this, "%f) regenerate surface voxels %d in %d. \n", currentTime, num_d_surface_voxels, num_d_voxels);
     VX3_dVector<VX3_Voxel *> tmp;
     for (int i = 0; i < num_d_voxels; i++) {
         d_voxels[i].updateSurface();
@@ -943,8 +954,19 @@ __device__ void VX3_VoxelyzeKernel::computeTargetCloseness() {
 
 __device__ void VX3_VoxelyzeKernel::updateGroups() {
     // Sida: Dont update groups parallelly, instead, only update those pertain to collision (recorded in d_voxel_to_update_group)
-    for (int i=0;i<d_voxel_to_update_group.size();i++) {
-        d_voxel_to_update_group[i]->d_group->updateGroup();
+    if (d_voxel_to_update_group.size()==0)
+        return;
+    PRINT(this, "d_voxel_to_update_group.size = %d.\n", d_voxel_to_update_group.size());
+    for (int i=0;i<(int)d_voxel_to_update_group.size();i++) {
+        if (d_voxel_to_update_group[i]->removed)
+            continue; // removed voxel doesn't deserve a update.
+        VX3_Voxel* v = d_voxel_to_update_group[i];
+
+        PRINT(this, "i=%d, d_voxel_to_update_group.size()=%d.\n", i, d_voxel_to_update_group.size());
+        PRINT(this, "(%p) to be update. %d voxels were in it's group (%p) (removed %d).\n", d_voxel_to_update_group[i], d_voxel_to_update_group[i]->d_group->d_voxels.size(), d_voxel_to_update_group[i]->d_group, d_voxel_to_update_group[i]->d_group->removed);
+        
+        d_voxel_to_update_group[i]->d_group->updateGroup(d_voxel_to_update_group[i]);
+        PRINT(this, "after update, %d voxels are in the group (%p) (removed %d).\n", d_voxel_to_update_group[i]->d_group->d_voxels.size(), d_voxel_to_update_group[i]->d_group, d_voxel_to_update_group[i]->d_group->removed);
     }
     d_voxel_to_update_group.clear();
 }
@@ -960,6 +982,11 @@ __device__ void VX3_VoxelyzeKernel::surfaceGrow() {
         CUDA_CHECK_AFTER_CALL();
         VcudaDeviceSynchronize();
     }
+}
+
+__device__ bool VX3_VoxelyzeKernel::ThoroughValidationCheck() {
+    VX3_OnlineTest tester;
+    return tester.ThoroughTest(this);
 }
 
 /* Sub GPU Threads */

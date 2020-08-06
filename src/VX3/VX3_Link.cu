@@ -338,7 +338,16 @@ __device__ void VX3_Link::detach() {
     pVNeg->links[linkdirNeg] = NULL;
     pVPos->links[linkdirPos] = NULL;
 
-    pVPos->d_group = new VX3_VoxelGroup(d_kernel);
+    // pVPos->d_group = new VX3_VoxelGroup(d_kernel);
+    pVPos->d_group = (VX3_VoxelGroup*) hamalloc(sizeof(VX3_VoxelGroup));
+    if (pVPos->d_group==NULL) {
+        printf("halloc: Out of memory. Please increate the size of memory that halloc manages.\n");
+    }
+    pVPos->d_group->deviceInit(d_kernel);
+    
+    PRINT(d_kernel, "detach: create a d_group = %p.\n", pVPos->d_group);
+    pVPos->d_group->needUpdate = true;
+    pVNeg->d_group->needUpdate = true;
     d_kernel->d_voxel_to_update_group.push_back(pVPos);
     d_kernel->d_voxel_to_update_group.push_back(pVNeg);
     pVPos->d_group->d_voxels.push_back(pVPos);

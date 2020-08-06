@@ -5,8 +5,17 @@
 
 __device__ VX3_VoxelGroup::VX3_VoxelGroup(VX3_VoxelyzeKernel *k) { d_kernel = k; }
 
-__device__ void VX3_VoxelGroup::deviceInit() {
+__device__ void VX3_VoxelGroup::deviceInit(VX3_VoxelyzeKernel *k) {
+    // halloc or malloc created objects need to be initialized before use.
+    d_kernel = k;
+
+    dim_x = dim_y = dim_z = 0;
     lastBuildTime = -1;
+    removed = false;
+    d_group_map = NULL;
+    buffer_size_group_map = 0;
+    hasNewLink = 0;
+    needUpdate = 0;
     d_surface_voxels.clear();
     d_voxels.clear();
 }
@@ -14,16 +23,21 @@ __device__ void VX3_VoxelGroup::deviceInit() {
 __device__ void VX3_VoxelGroup::switchAllVoxelsTo(VX3_VoxelGroup *group) {
     if (group == this)
         return;
+    if (removed)
+        return;
     for (int i = 0; i < d_voxels.size(); i++) {
         if (d_voxels[i]->d_group == NULL) {
+            printf("This should never happened.\n");
             d_voxels[i]->d_group = group;
+            printf("3 d_group = %p.\n", d_voxels[i]->d_group);
         } else if (d_voxels[i]->d_group != NULL && d_voxels[i]->d_group != group) {
-            d_voxels[i]->d_group->removed = true;
             d_voxels[i]->d_group = group;
+            printf("4 d_group = %p.\n", d_voxels[i]->d_group);
         } else {
             // d_group is already group.
         }
     }
+    removed = true;
 }
 
 __device__ VX3_Vec3D<int> VX3_VoxelGroup::moveGroupPosition(VX3_Vec3D<int> from, linkDirection dir, int step) {
@@ -53,14 +67,16 @@ __device__ VX3_Vec3D<int> VX3_VoxelGroup::moveGroupPosition(VX3_Vec3D<int> from,
     return to;
 }
 
-__device__ void VX3_VoxelGroup::updateGroup() {
+__device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *start_voxel) {
     if (removed)
         return;
     if (lastBuildTime == d_kernel->currentTime)
         return;
     lastBuildTime = d_kernel->currentTime;
 
-    VX3_Voxel *voxel = d_voxels[0];
+    // do we need check start_voxel is in the group?
+
+    VX3_Voxel *voxel = start_voxel;
     int min_x, min_y, min_z, max_x, max_y, max_z;
     min_x = 0;
     min_y = 0;
@@ -90,8 +106,14 @@ __device__ void VX3_VoxelGroup::updateGroup() {
             if (neighbor) {
                 if (BFS_visited.get(neighbor) == -1) {
                     neighbor->groupPosition = moveGroupPosition(v->groupPosition, (linkDirection)i);
+                    PRINT(d_kernel, "Set voxel (%p)'s group position to (%d, %d, %d).\n", neighbor, neighbor->groupPosition.x, neighbor->groupPosition.y, neighbor->groupPosition.z);
                     // Set all connected voxels' d_group to this
-                    neighbor->d_group->switchAllVoxelsTo(this);
+                    // neighbor->d_group->switchAllVoxelsTo(this);
+                    if (neighbor->d_group != this) {
+                        neighbor->d_group->removed = true;
+                        PRINT(d_kernel, "remove d_group: neighbor = %p, d_group = %p.\n", neighbor, neighbor->d_group);
+                    }
+                    neighbor->d_group = this;
 
                     BFS_result.push_back(neighbor);
                     BFS_visited.set(neighbor, 1);
@@ -118,8 +140,12 @@ __device__ void VX3_VoxelGroup::updateGroup() {
                 } else {
                     // check the group position to make sure the connection is right
                     if (neighbor->groupPosition != moveGroupPosition(v->groupPosition, (linkDirection)i)) {
-                        if (v->links[i])
-                            v->links[i]->detach(); // TODO: there are potential racing conditions here.
+                        printf("ERROR: group position inconsistent in updateGroup().\n");
+                    // Cannot detach here, because detach need updateGroup, but we are in updateGroup().
+                    //     printf("ERROR happened. detaching.\n");
+                    //     if (v->links[i]) {
+                    //         v->links[i]->detach();
+                    //     }
                     }
                 }
             }
@@ -156,18 +182,24 @@ __device__ void VX3_VoxelGroup::updateGroup() {
 
         // sam:
         bool absorb = false;
-        if (d_kernel->keepJustOneIfManyHaveSameGroupPosition) {
+        if (false && d_kernel->keepJustOneIfManyHaveSameGroupPosition) {
 
             for (int j = 0; j < d_voxels.size(); j++) {
                 if (v->groupPosition == d_voxels[j]->groupPosition) {
-                    assert(false); // Sida: Should never be in here. Why are there two voxels with the same group position?
+                    // printf("Sida: Should never be in here. Why are there two voxels with the same group position?\n");
+                    // assert(false); // Sida: Should never be in here. Why are there two voxels with the same group position?
                     absorb = true;
 
                     // Option 1: delete it
                     // v->removed = true;
 
                     // Option 2: just break off
-                    v->d_group = new VX3_VoxelGroup(d_kernel);
+                    v->d_group = (VX3_VoxelGroup*)hamalloc(sizeof(VX3_VoxelGroup));
+                    PRINT(d_kernel, "5 d_group = %p.\n", v->d_group);
+                    if (v->d_group == NULL) {
+                        printf("halloc: Out of memory. Please increate the size of memory that halloc manages.\n");
+                    }
+                    v->d_group->deviceInit(d_kernel);
                     d_kernel->d_voxel_to_update_group.push_back(v);
                     v->d_group->d_voxels.push_back(v);
                     d_kernel->d_voxelgroups.push_back(v->d_group);
@@ -193,6 +225,7 @@ __device__ void VX3_VoxelGroup::updateGroup() {
             }
         } // sam
     }
+    needUpdate = 0;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -205,6 +238,9 @@ __device__ void VX3_VoxelGroup::updateGroup() {
 __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *voxel_remote, int *ret_linkdir_1, int *ret_linkdir_2) {
     if (voxel_host->d_group != this) {
         printf("This method should be call from voxel_host's d_group.\n"); // here?
+        return false;
+    }
+    if (needUpdate || voxel_remote->d_group->needUpdate) {
         return false;
     }
     // Given two voxels, determine the best way to attach them.
@@ -222,7 +258,7 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
         voxel_host->isSingletonOrSmallBar(&voxel_host_singleton, &voxel_host_smallbar, &voxel_host_direction);
         if (voxel_remote_singleton || voxel_remote_smallbar || voxel_host_singleton || voxel_host_smallbar) {
             if (atomicCAS(&d_kernel->mutexRotateSingleton, 0, 1) == 0) {
-                //check again inside Criticle Area
+                // check again inside Criticle Area
                 voxel_remote->isSingletonOrSmallBar(&voxel_remote_singleton, &voxel_remote_smallbar, &voxel_remote_direction);
                 voxel_host->isSingletonOrSmallBar(&voxel_host_singleton, &voxel_host_smallbar, &voxel_host_direction);
 
@@ -234,10 +270,12 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
                     voxel_remote->adjacentVoxel((linkDirection)voxel_remote_direction)->changeOrientationTo(voxel_host->orient);
                     voxel_remote->changeOrientationTo(voxel_host->orient);
                     voxel_remote->links[voxel_remote_direction]->detach();
+                    return false; //Need to update the group first, continue at the next time step.
                 } else if (voxel_host_smallbar) { // host is a small bar
                     voxel_host->adjacentVoxel((linkDirection)voxel_host_direction)->changeOrientationTo(voxel_remote->orient);
                     voxel_host->changeOrientationTo(voxel_remote->orient);
                     voxel_host->links[voxel_host_direction]->detach();
+                    return false; //Need to update the group first, continue at the next time step.
                 }
                 atomicExch(&d_kernel->mutexRotateSingleton, 0);
                 hasSingleton = true;
@@ -265,11 +303,13 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
         return false;
     }
 
-    if (hasSingleton) { // no need to use group map to check for singletons
+    if (hasSingleton) { 
         if (voxel_host->links[potential_link_1] == NULL and voxel_remote->links[potential_link_2] == NULL) {
-            *ret_linkdir_1 = potential_link_1;
-            *ret_linkdir_2 = potential_link_2;
-            return true;
+            // still need to use group map to check for singletons
+            // *ret_linkdir_1 = potential_link_1;
+            // *ret_linkdir_2 = potential_link_2;
+            // printf("isCompatible hasSingleton: voxel (%p: %d) group (%p) and voxel (%p: %d) group (%p).\n", voxel_host, potential_link_1, voxel_host->d_group, voxel_remote, potential_link_2, voxel_remote->d_group);
+            // return true;
         } else {
             // DEBUG_PRINT("%f) BAD position for the rotated singleton. The singleton might in between two linked voxels. Skip.\n", d_kernel->currentTime);
             return false;
@@ -307,11 +347,21 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
                 ret = false; // Sida: this is a weird situation, the collision happened, but before this check, another voxel has been attached to this exact position. so this collision should not cause attachment.
             } else {
                 voxel_to_absorb->removed = true;
+                PRINT(d_kernel, "Absorb voxel (%p) from group (%p (needUpdate %d)) with %d voxels in it.\n", voxel_to_absorb, voxel_to_absorb->d_group, needUpdate, d_voxels.size());
                 // delete all the links as well
                 for (int i = 0; i < 6; i++) {
                     if (voxel_to_absorb->links[i]) {
+                        VX3_Voxel* neighbor = voxel_to_absorb->adjacentVoxel((linkDirection)i);
+                        VX3_VoxelGroup *g = (VX3_VoxelGroup*)hamalloc(sizeof(VX3_VoxelGroup));
+                        g->deviceInit(d_kernel);
+                        g->d_voxels.push_back(neighbor);
+                        g->needUpdate = true;
+                        neighbor->d_group = g;
+                        d_kernel->d_voxel_to_update_group.push_back(neighbor);
+                        PRINT(d_kernel, "add to update waiting list: voxel (%p) group (%p) (from %p).\n", neighbor, g, this);
+
                         voxel_to_absorb->links[i]->removed = true;
-                        voxel_to_absorb->adjacentVoxel((linkDirection)i)->links[oppositeDirection(i)] = NULL;
+                        neighbor->links[oppositeDirection(i)] = NULL;
                         voxel_to_absorb->links[i] = NULL;
                     }
                 }
@@ -320,5 +370,6 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
     }
     *ret_linkdir_1 = potential_link_1;
     *ret_linkdir_2 = potential_link_2;
+    PRINT(d_kernel, "isCompatible: voxel (%p) group (%p: %d) and voxel (%p) group (%p: %d).\n", voxel_host, voxel_host->d_group, voxel_host->d_group->d_voxels.size(), voxel_remote, voxel_remote->d_group, voxel_remote->d_group->d_voxels.size());
     return ret;
 }

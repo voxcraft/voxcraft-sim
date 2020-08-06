@@ -62,7 +62,7 @@ __device__ bool VX3_AttachManager::tryToAttach(VX3_Voxel *voxel1, int linkdir_1,
     // Only once attchment at a time, other potential attachments should be ignored, no wait.
     if (atomicCAS(&attachmentMutex, 0, 1) == 0) {
         // Entering Critical Area
-        if (!voxel1->d_group->hasNewLink && !voxel2->d_group->hasNewLink) { // to avoid two voxels attach at the same position
+        if (!voxel1->d_group->needUpdate && !voxel2->d_group->needUpdate) { // to avoid two voxels attach at the same position
             if (voxel1->links[linkdir_1] == NULL && voxel2->links[linkdir_2] == NULL) {
                 VX3_Link *pL;
                 pL = new VX3_Link(voxel1, (linkDirection)linkdir_1, voxel2, (linkDirection)linkdir_2, d_kernel); // make the new link (change to both materials, etc.
@@ -71,6 +71,7 @@ __device__ bool VX3_AttachManager::tryToAttach(VX3_Voxel *voxel1, int linkdir_1,
                 } else {
                     // update voxel1's group, it will set all connected voxels' group to voxel1's
                     voxel1->d_group->hasNewLink++;
+                    voxel1->d_group->needUpdate = 1;
                     d_kernel->d_voxel_to_update_group.push_back(voxel1);
 
                     // if (voxel1->d_group != voxel2->d_group) {
