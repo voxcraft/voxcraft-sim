@@ -46,7 +46,7 @@ __device__ bool VX3_OnlineTest::ThoroughTest(VX3_VoxelyzeKernel *k) {
                     ret = false;
                 }
                 if (v->adjacentVoxel((linkDirection)j)->removed) {
-                    printf("ERROR: adjacent voxel removed. A voxel cannot link to a removed voxel.\n");
+                    printf("ERROR: adjacent voxel removed. A voxel (%p) cannot link (%p) to a removed voxel (%p).\n", v, v->links[j], v->adjacentVoxel((linkDirection)j));
                     ret = false;
                 }
                 if (v->adjacentVoxel((linkDirection)j)->adjacentVoxel((linkDirection)oppositeDirection(j)) != v) {
@@ -73,7 +73,7 @@ __device__ bool VX3_OnlineTest::ThoroughTest(VX3_VoxelyzeKernel *k) {
             }
 
             if (v->d_group != g) {
-                printf("ERROR: group voxel inconsistent. A group should not contain voxels that is not belong to this group.\n");
+                printf("ERROR: group voxel inconsistent. A group (%p) should not contain a voxel (%p) that is not belong to this group (%p).\n", g, v, v->d_group);
                 ret = false;
             }
 
