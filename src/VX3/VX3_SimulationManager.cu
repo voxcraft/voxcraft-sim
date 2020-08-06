@@ -17,7 +17,6 @@ __device__ void _CUDA_Simulation(VX3_VoxelyzeKernel *k, int thread_index, int de
 __global__ void sequantial_CUDA_Simulation(VX3_VoxelyzeKernel *d_voxelyze_3, int num_simulation, int device_index) {
     for (int i=0;i<num_simulation;i++) {
         printf("Sequantially starting Simulation %d/%d on GPU %d.\n", i, num_simulation, device_index);
-        printf("Kernel set address %p.\n", d_voxelyze_3);
         _CUDA_Simulation(&d_voxelyze_3[i], i, device_index);
     }
 }
@@ -207,6 +206,9 @@ void VX3_SimulationManager::start() {
         auto files = sub_batches[device_index];
         if (files.size()) {
             VcudaSetDevice(device_index);
+            // Initialize halloc to manage device memory
+            ha_init(halloc_opts_t());
+
             cudaDeviceSetLimit(cudaLimitPrintfFifoSize, 1<<26);
             printf("=== set device to %d for %ld simulations ===\n", device_index, files.size());
             // readVXA(base)

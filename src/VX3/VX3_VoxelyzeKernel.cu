@@ -138,6 +138,7 @@ void VX3_VoxelyzeKernel::cleanup() {
  * filesystem. */
 
 __device__ void VX3_VoxelyzeKernel::deviceInit() {
+    PRINT(this, "Kernel (%p) deviceInit\n", this);
     d_v_linkMats.clear();
     d_v_collisions.clear();
     d_targets.clear();

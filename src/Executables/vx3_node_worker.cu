@@ -61,8 +61,6 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    ha_init(halloc_opts_t());
-
     //Read vxt file
     pt::ptree tree;
     pt::read_xml( input.string(), tree );
