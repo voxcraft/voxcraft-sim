@@ -16,7 +16,8 @@ __device__ void _CUDA_Simulation(VX3_VoxelyzeKernel *k, int thread_index, int de
 
 __global__ void sequantial_CUDA_Simulation(VX3_VoxelyzeKernel *d_voxelyze_3, int num_simulation, int device_index) {
     for (int i=0;i<num_simulation;i++) {
-        printf("Sequantially starting Simulation %d on GPU %d with kernel (%p).\n", i, device_index, &d_voxelyze_3[i]);
+        printf("Sequantially starting Simulation %d/%d on GPU %d.\n", i, num_simulation, device_index);
+        printf("Kernel set address %p.\n", d_voxelyze_3);
         _CUDA_Simulation(&d_voxelyze_3[i], i, device_index);
     }
 }
@@ -351,8 +352,11 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
     pt::read_xml(base.string(), pt_baseVXA);
 
     int num_simulation = files.size();
-
+    
+    printf("Allocate memory for the %d kernels on GPU %d.\n", num_simulation, device_index);
     VcudaMalloc((void **)&d_voxelyze_3s[device_index], num_simulation * sizeof(VX3_VoxelyzeKernel));
+    CUDA_CHECK_AFTER_CALL();
+    printf("Allocated kernel set (%p).\n", d_voxelyze_3s[device_index]);
 
     int i = 0;
     for (auto &file : files) {
