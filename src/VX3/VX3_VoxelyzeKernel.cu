@@ -144,7 +144,7 @@ __device__ void VX3_VoxelyzeKernel::deviceInit() {
     d_targets.clear();
     d_voxelgroups.clear();
     d_voxel_to_update_group.clear();
-    d_voxel_to_absorb.clear();
+    d_voxels_to_detach.clear();
 
     // allocate memory for collision lookup table
     num_lookupGrids = lookupGrid_n * lookupGrid_n * lookupGrid_n;
@@ -974,20 +974,28 @@ __device__ void VX3_VoxelyzeKernel::computeTargetCloseness() {
 }
 
 __device__ void VX3_VoxelyzeKernel::updateGroups() {
-    // Sida: Dont update groups parallelly, instead, only update those pertain to collision (recorded in d_voxel_to_update_group and d_voxel_to_absorb)
-    if (d_voxel_to_absorb.size()>0) {
-        PRINT(this, "d_voxel_to_absorb.size = %d.\n", d_voxel_to_absorb.size());
-        for (int i=0;i<d_voxel_to_absorb.size();i++) {
-            if (d_voxel_to_absorb[i]->removed)
+    // Sida: Dont update groups parallelly, instead, only update those pertain to collision (recorded in d_voxel_to_update_group and d_voxels_to_detach)
+    if (d_voxels_to_detach.size()>0) {
+        PRINT(this, "d_voxels_to_detach.size = %d.\n", d_voxels_to_detach.size());
+        for (int i=0;i<d_voxels_to_detach.size();i++) {
+            if (d_voxels_to_detach[i]->removed)
                 continue;
-            VX3_Voxel* voxel_to_absorb = d_voxel_to_absorb[i];
-            voxel_to_absorb->removed = true;
-            voxel_to_absorb->d_group->removed = true;
-            PRINT(this, "Absorb voxel (%p) and remove group (%p (needUpdate %d)) with %d voxels in it.\n", voxel_to_absorb, voxel_to_absorb->d_group, voxel_to_absorb->d_group->needUpdate, voxel_to_absorb->d_group->d_voxels.size());
+            VX3_Voxel* voxel_to_detach = d_voxels_to_detach[i];
+            // voxel_to_detach->removed = true;
+            // Remove the original group, replacing by new groups.
+            voxel_to_detach->d_group->removed = true;
+
+            VX3_VoxelGroup *g = (VX3_VoxelGroup*)hamalloc(sizeof(VX3_VoxelGroup));
+            g->deviceInit(this);
+            g->d_voxels.push_back(voxel_to_detach);
+            g->needUpdate = true;
+            voxel_to_detach->d_group = g;
+            d_voxel_to_update_group.push_back(voxel_to_detach);
+            PRINT(this, "Detach voxel (%p) and remove group (%p (needUpdate %d)) with %d voxels in it.\n", voxel_to_detach, voxel_to_detach->d_group, voxel_to_detach->d_group->needUpdate, voxel_to_detach->d_group->d_voxels.size());
             // delete all the links as well
             for (int i = 0; i < 6; i++) {
-                if (voxel_to_absorb->links[i]) {
-                    VX3_Voxel* neighbor = voxel_to_absorb->adjacentVoxel((linkDirection)i);
+                if (voxel_to_detach->links[i]) {
+                    VX3_Voxel* neighbor = voxel_to_detach->adjacentVoxel((linkDirection)i);
                     VX3_VoxelGroup *g = (VX3_VoxelGroup*)hamalloc(sizeof(VX3_VoxelGroup));
                     g->deviceInit(this);
                     g->d_voxels.push_back(neighbor);
@@ -996,14 +1004,14 @@ __device__ void VX3_VoxelyzeKernel::updateGroups() {
                     d_voxel_to_update_group.push_back(neighbor);
                     PRINT(this, "add to update waiting list: voxel (%p) group (%p) (from %p).\n", neighbor, g, this);
 
-                    voxel_to_absorb->links[i]->removed = true;
-                    PRINT(this, "Remove link (%p) of absorbed voxel (%p).\n", voxel_to_absorb->links[i], voxel_to_absorb);
+                    voxel_to_detach->links[i]->removed = true;
+                    PRINT(this, "Remove link (%p) of detached voxel (%p).\n", voxel_to_detach->links[i], voxel_to_detach);
                     neighbor->links[oppositeDirection(i)] = NULL;
-                    voxel_to_absorb->links[i] = NULL;
+                    voxel_to_detach->links[i] = NULL;
                 }
             }
         }
-        d_voxel_to_absorb.clear();
+        d_voxels_to_detach.clear();
     }
 
     if (d_voxel_to_update_group.size()>0) {

@@ -342,15 +342,15 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
         } else if (d_group_map[offset] == NULL) {
             // good, because empty position
         } else {
-            // printf("Not Compatible. Offset %d\n", offset); // Instead of return false, absorb the voxel!
+            // printf("Not Compatible. Offset %d\n", offset); // Instead of return false, detach the voxel!
             // TODO: Sida: Is this still in-place modifications?
-            VX3_Voxel *voxel_to_absorb = d_group_map[offset];
-            if (voxel_to_absorb == voxel_host) {
+            VX3_Voxel *voxel_to_detach = d_group_map[offset];
+            if (voxel_to_detach == voxel_host) {
                 ret = false; // Sida: this is a weird situation, the collision happened, but before this check, another voxel has been attached to this exact position. so this collision should not cause attachment.
             } else {
                 needUpdate = true;
                 PRINT(d_kernel, "While checking compatibility of (%p) group (%p) v.s. (%p) group (%p).\n", voxel_host, voxel_host->d_group, voxel_remote, voxel_remote->d_group );
-                d_kernel->d_voxel_to_absorb.push_back(voxel_to_absorb);
+                d_kernel->d_voxels_to_detach.push_back(voxel_to_detach);
             }
         }
     }
