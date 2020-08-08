@@ -458,14 +458,14 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
             // Step 1: Remove small bodies and allow self-attachment with momentum before tranisiton
             if ( (InitialPositionReinitialized) && (currentTime >= nextReplicationTime) ) {
                 // InitialPositionReinitialized is true at t=0
-                computeTargetCloseness(); // in case no bots remain and sim ends
-                computeFitness(); // in case no bots remain
 
                 // removeVoxels();  // remove mat 0 voxels that are flagged: removed=true
                 // reInitAllGroups();  // EXTREME
+
+                computeTargetCloseness(); // in case no bots remain and sim ends
                 
                 convertMatIfSmallBody(1, 0, false);   // convert small mat1 bodies>1 to mat0; flags material as not yet removed
-                removeVoxels();  // remove newly converted small mat 0 bodies
+                removeVoxels();  // remove bots and newly converted small mat 0 bodies
                 InitialPositionReinitialized = false; // false = transition period
             }
 
@@ -482,6 +482,12 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
                 saveInitialPosition();
                 InitialPositionReinitialized = true;  // switch that allows settle time between removing voxels and next round
                 lastReplicationTime = currentTime;  // reset timer
+
+                // check for inconsistent voxel groups (bad attach/detach)
+                if (!ThoroughValidationCheck()) {
+                    convertMatIfSmallBody(1, 0, false);  // so numClosePairs will be 0
+                    removeVoxels();  // failed the test so remove all the bots (causes sim to end)
+                }
             }
         }
     }
@@ -497,6 +503,22 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
 __device__ void VX3_VoxelyzeKernel::InitializeCenterOfMass() {
     initialCenterOfMass = currentCenterOfMass;
+}
+
+// sam:
+__device__ void VX3_VoxelyzeKernel::computeNumRealLinks() {
+    numRealLinks = 0;
+    for (int i = 0; i < d_v_links.size(); i++) {
+        auto l = d_v_links[i];
+        if (l->removed)
+            continue;
+        if (l->pVNeg->mat->fixed || l->pVPos->mat->fixed)
+            continue;
+        if (l->isDetached)
+            continue;
+
+        numRealLinks++;
+    }
 }
 
 // sam:

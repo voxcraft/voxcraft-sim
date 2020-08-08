@@ -59,6 +59,8 @@ class VX3_VoxelyzeKernel {
     __device__ void replenishMaterial(int start, int end, int step, int mat); // sam
     __device__ void convertMatIfSmallBody(int mat1, int mat2, bool convertSingletons); // sam
     __device__ void convertMatIfLargeBody(int mat1, int mat2); // sam
+
+    __device__ void computeNumRealLinks(); // sam
     
     __device__ void reInitAllGroups(); // sam
 
@@ -169,6 +171,7 @@ class VX3_VoxelyzeKernel {
     double  targetCloseness = 0;
     VX3_dVector<VX3_Voxel*> d_targets;
     int numClosePairs = 0;
+    int numRealLinks = 0; // sam
     bool isSurfaceChanged=false;
     double MaxDistInVoxelLengthsToCountAsPair=0.0;
 

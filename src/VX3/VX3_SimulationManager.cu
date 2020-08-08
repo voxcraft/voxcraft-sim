@@ -158,7 +158,13 @@ __device__ void _CUDA_Simulation(VX3_VoxelyzeKernel *k, int thread_index, int de
                             if (!d_v3->RecordFixedVoxels) {
                                 if (l->pVNeg->mat->fixed || l->pVPos->mat->fixed)
                                     continue;
-                            }   
+                            }
+                            
+                            // sam:
+                            if (d_v3->SurfaceVoxelsOnly) {
+                                if (l->pVNeg->isInterior() || l->pVPos->isInterior())
+                                    continue;
+                            }
                             
                            // only draw links that are not detached.
                            if (!l->isDetached) {
@@ -177,8 +183,10 @@ __device__ void _CUDA_Simulation(VX3_VoxelyzeKernel *k, int thread_index, int de
         }
         d_v3->updateCurrentCenterOfMass();
         d_v3->computeFitness();
-        printf(COLORCODE_BLUE "%d) Simulation %d ends: %s Time: %f, angleSampleTimes: %d.\n" COLORCODE_RESET, device_index, thread_index,
-               d_v3->vxa_filename, d_v3->currentTime, d_v3->angleSampleTimes);
+        // d_v3->computeTargetCloseness();
+        d_v3->computeNumRealLinks();
+        printf(COLORCODE_BLUE "%d) Simulation %d ends: %s Time: %f, angles: %d, pairs: %d, links: %d.\n" COLORCODE_RESET, device_index, thread_index,
+               d_v3->vxa_filename, d_v3->currentTime, d_v3->angleSampleTimes, d_v3->numClosePairs, d_v3->numRealLinks);  // sam
     }
 }
 
@@ -207,7 +215,8 @@ void VX3_SimulationManager::start() {
         if (files.size()) {
             VcudaSetDevice(device_index);
             // Initialize halloc to manage device memory
-            ha_init(halloc_opts_t());
+            // ha_init(halloc_opts_t());
+            ha_init(halloc_opts_t((size_t)1024*1024*1024)); // sam
 
             cudaDeviceSetLimit(cudaLimitPrintfFifoSize, 1<<26);
             printf("=== set device to %d for %ld simulations ===\n", device_index, files.size());
@@ -447,7 +456,7 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         h_d_tmp.EnableCilia = pt_merged.get<int>("VXA.Simulator.EnableCilia", 0);
         h_d_tmp.EnableSignals = pt_merged.get<int>("VXA.Simulator.EnableSignals", 0);
         
-        h_d_tmp.VerboseMode = pt_merged.get<bool>("VXA.Simulator.ThoroughTest.VerboseMode", true);
+        h_d_tmp.VerboseMode = pt_merged.get<bool>("VXA.Simulator.ThoroughTest.VerboseMode", false);  // sam: off by default
         h_d_tmp.SkipThoroughTest = pt_merged.get<bool>("VXA.Simulator.ThoroughTest.SkipTest", true);
         h_d_tmp.ThoroughTestStepSize = pt_merged.get<unsigned int>("VXA.Simulator.ThoroughTest.TestStepSize", 100);
         h_d_tmp.ThoroughTestStartAt = pt_merged.get<unsigned int>("VXA.Simulator.ThoroughTest.TestStartAt", 0);
@@ -544,6 +553,7 @@ void VX3_SimulationManager::collectResults(int num_simulation, int device_index)
         result_voxelyze_kernel[i].initialCenterOfMass.copyTo(tmp.initialCenterOfMass);
         result_voxelyze_kernel[i].currentCenterOfMass.copyTo(tmp.currentCenterOfMass);
 
+        tmp.numRealLinks = result_voxelyze_kernel[i].numRealLinks;
         tmp.numClosePairs = result_voxelyze_kernel[i].numClosePairs;
         tmp.voxSize = result_voxelyze_kernel[i].voxSize;
         tmp.num_voxel = result_voxelyze_kernel[i].num_d_voxels;

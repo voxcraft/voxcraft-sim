@@ -111,6 +111,7 @@ int main(int argc, char** argv) {
         tr_result.put("report.detail."+simulation_name+".num_measured_voxel", res.num_measured_voxel);
         tr_result.put("report.detail."+simulation_name+".voxSize", res.voxSize);
         tr_result.put("report.detail."+simulation_name+".numClosePairs", res.numClosePairs);
+        tr_result.put("report.detail."+simulation_name+".numRealLinks", res.numRealLinks);
         tr_result.put("report.detail."+simulation_name+".initialCenterOfMass.x", res.initialCenterOfMass.x);
         tr_result.put("report.detail."+simulation_name+".initialCenterOfMass.y", res.initialCenterOfMass.y);
         tr_result.put("report.detail."+simulation_name+".initialCenterOfMass.z", res.initialCenterOfMass.z);
