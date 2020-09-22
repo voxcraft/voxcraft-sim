@@ -60,7 +60,11 @@ class VX3_VoxelyzeKernel {
     __device__ void convertMatIfSmallBody(int mat1, int mat2, bool convertSingletons); // sam
     __device__ void convertMatIfLargeBody(int mat1, int mat2); // sam
 
+    __device__ void updateBrownianMotion(double seed, double currentTime); // sam
+
     __device__ void computeNumRealLinks(); // sam
+
+    __device__ void computeLargestStickyGroupSize(); // sam
     
     __device__ void reInitAllGroups(); // sam
 
@@ -167,10 +171,13 @@ class VX3_VoxelyzeKernel {
     int SavePositionOfAllVoxels = 0;
     int EnableCilia = 0;
     double RandomizeCiliaEvery = 0;  // sam
+    double RandomSeed = 0; // sam
+    double ReplenishDebrisEvery = 0; // sam
     int EnableSignals = 0;
     double  targetCloseness = 0;
     VX3_dVector<VX3_Voxel*> d_targets;
     int numClosePairs = 0;
+    int largestStickyGroupSize = 0; // sam
     int numRealLinks = 0; // sam
     bool isSurfaceChanged=false;
     double MaxDistInVoxelLengthsToCountAsPair=0.0;
@@ -192,12 +199,16 @@ class VX3_VoxelyzeKernel {
     //for Secondary Experiment
     int SecondaryExperiment = 0;
     int SelfReplication = 0;
+    int WorldSize = 100;
+    int SpaceBetweenDebris = 2;
     double ReinitializeInitialPositionAfterThisManySeconds = 0.0;
     double SettleTimeBeforeNextRoundOfReplication = 0.0;  // sam
     bool InitialPositionReinitialized = true;  // sam
     int MinimumBotSize = 2; // sam
 
     double lastReplicationTime = 0.0; // sam
+    double lastBrownianUpdateTime = 0.0; // sam
+    double lastReplenishDebrisTime = 0.0; // sam
 
     int EnableExpansion=0;
 

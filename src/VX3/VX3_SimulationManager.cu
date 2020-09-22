@@ -185,8 +185,8 @@ __device__ void _CUDA_Simulation(VX3_VoxelyzeKernel *k, int thread_index, int de
         d_v3->computeFitness();
         // d_v3->computeTargetCloseness();
         d_v3->computeNumRealLinks();
-        printf(COLORCODE_BLUE "%d) Simulation %d ends: %s Time: %f, angles: %d, pairs: %d, links: %d.\n" COLORCODE_RESET, device_index, thread_index,
-               d_v3->vxa_filename, d_v3->currentTime, d_v3->angleSampleTimes, d_v3->numClosePairs, d_v3->numRealLinks);  // sam
+        printf(COLORCODE_BLUE "%d) Simulation %d ends: %s Time: %f, pairs: %d, largestStickyGroup: %d.\n" COLORCODE_RESET, device_index, thread_index,
+               d_v3->vxa_filename, d_v3->currentTime, d_v3->numClosePairs, d_v3->largestStickyGroupSize);  // sam
     }
 }
 
@@ -454,7 +454,10 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         h_d_tmp.MaxDistInVoxelLengthsToCountAsPair = pt_merged.get<double>("VXA.Simulator.MaxDistInVoxelLengthsToCountAsPair", 0);
 
         h_d_tmp.EnableCilia = pt_merged.get<int>("VXA.Simulator.EnableCilia", 0);
+        h_d_tmp.RandomizeCiliaEvery = pt_merged.get<double>("VXA.Simulator.RandomizeCiliaEvery", 0);
+        h_d_tmp.RandomSeed = pt_merged.get<double>("VXA.Simulator.RandomSeed", 0);
         h_d_tmp.EnableSignals = pt_merged.get<int>("VXA.Simulator.EnableSignals", 0);
+        h_d_tmp.ReplenishDebrisEvery = pt_merged.get<double>("VXA.Simulator.ReplenishDebrisEvery", 0);
         
         h_d_tmp.VerboseMode = pt_merged.get<bool>("VXA.Simulator.ThoroughTest.VerboseMode", false);  // sam: off by default
         h_d_tmp.SkipThoroughTest = pt_merged.get<bool>("VXA.Simulator.ThoroughTest.SkipTest", true);
@@ -464,6 +467,8 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         // for Secondary Experiment
         h_d_tmp.SecondaryExperiment = pt_merged.get<int>("VXA.Simulator.SecondaryExperiment", 0);
         h_d_tmp.SelfReplication = pt_merged.get<int>("VXA.Simulator.SelfReplication", 0);  // sam
+        h_d_tmp.WorldSize = pt_merged.get<int>("VXA.Simulator.WorldSize", 100);  // sam
+        h_d_tmp.SpaceBetweenDebris = pt_merged.get<int>("VXA.Simulator.SpaceBetweenDebris", 2);  // sam
         h_d_tmp.ReinitializeInitialPositionAfterThisManySeconds = pt_merged.get<double>("VXA.Simulator.ReinitializeInitialPositionAfterThisManySeconds", 0.0);
         h_d_tmp.SettleTimeBeforeNextRoundOfReplication = pt_merged.get<double>("VXA.Simulator.SettleTimeBeforeNextRoundOfReplication", 0.0); // sam
         h_d_tmp.MinimumBotSize = pt_merged.get<int>("VXA.Simulator.MinimumBotSize", 0); // sam
@@ -553,6 +558,7 @@ void VX3_SimulationManager::collectResults(int num_simulation, int device_index)
         result_voxelyze_kernel[i].initialCenterOfMass.copyTo(tmp.initialCenterOfMass);
         result_voxelyze_kernel[i].currentCenterOfMass.copyTo(tmp.currentCenterOfMass);
 
+        tmp.largestStickyGroupSize = result_voxelyze_kernel[i].largestStickyGroupSize;
         tmp.numRealLinks = result_voxelyze_kernel[i].numRealLinks;
         tmp.numClosePairs = result_voxelyze_kernel[i].numClosePairs;
         tmp.voxSize = result_voxelyze_kernel[i].voxSize;

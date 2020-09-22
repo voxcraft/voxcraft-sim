@@ -27,6 +27,7 @@ struct VX3_SimulationResult {
     Vec3D<> currentCenterOfMass;
     int numClosePairs = 0;
     int numRealLinks = 0;
+    int largestStickyGroupSize = 0;
 
     static bool compareFitnessScore(VX3_SimulationResult i1, VX3_SimulationResult i2) // for sorting results
     {

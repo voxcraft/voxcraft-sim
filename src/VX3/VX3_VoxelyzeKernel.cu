@@ -20,7 +20,7 @@ __global__ void gpu_update_collision_system_pos_radius(VX3_Voxel **surface_voxel
 __global__ void gpu_update_sync_collisions(VX3_Voxel **surface_voxels, int num, double watchDistance, VX3_VoxelyzeKernel *k);
 __global__ void gpu_update_attach(VX3_Voxel **surface_voxels, int num, double watchDistance, VX3_VoxelyzeKernel *k);
 __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k);
-__global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k);  // sam
+__global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, double seed, double currentTime, VX3_VoxelyzeKernel *k);  // sam
 __global__ void gpu_clear_lookupgrid(VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid, int num);
 __global__ void gpu_insert_lookupgrid(VX3_Voxel **d_surface_voxels, int num, VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid,
                                       VX3_Vec3D<> *gridLowerBound, VX3_Vec3D<> *gridDelta, int lookupGrid_n);
@@ -342,17 +342,25 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
     if (EnableCilia) {
 
         // sam:
-        if (RandomizeCiliaEvery > 0) {
-            int CiliaStep = int(RandomizeCiliaEvery / dt);
-            if (CurStepCount % CiliaStep == 0) {
+        if (RandomizeCiliaEvery > 0) { 
+            // int CiliaStep = int(RandomizeCiliaEvery / dt);
+            // if (CurStepCount % CiliaStep == 0) {
+            if (currentTime >= lastBrownianUpdateTime + RandomizeCiliaEvery) {
+                // in parallel:
                 cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_brownian_motion, 0, num_d_surface_voxels);
                 int gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
                 int blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
-                gpu_update_brownian_motion<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, this);
+                gpu_update_brownian_motion<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, RandomSeed, currentTime, this);
                 CUDA_CHECK_AFTER_CALL();
                 VcudaDeviceSynchronize();
+
+                // // just do a big loop:
+                // updateBrownianMotion(RandomSeed, currentTime);
+
+                lastBrownianUpdateTime = currentTime;
             }
         }
+
 
         cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_cilia_force, 0,
                                            num_d_surface_voxels); // Dynamically calculate blockSize
@@ -391,6 +399,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
         // Also calculate targetCloseness here.
         computeTargetCloseness();
+        computeLargestStickyGroupSize();
     }
 
     if (EnableSurfaceGrowth) {
@@ -450,10 +459,11 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
         if (SelfReplication) {  // kinematic self replication experiments
 
-            // // catch for any tiny bodies that snuck through filter (these by def must be mat1)
-            // if (InitialPositionReinitialized) {
-            //     convertMatIfSmallBody(0, 1, true);   // convert small mat0 voxels to mat1 (including singletons)
-            // }
+            // debris treadmill
+            if ( (ReplenishDebrisEvery > 0) && (currentTime >= lastReplenishDebrisTime + ReplenishDebrisEvery) ) {
+                replenishMaterial(2, WorldSize, SpaceBetweenDebris+1, 1);  // replenish sticky building material along the surface plane
+                lastReplenishDebrisTime = currentTime;  // reset timer
+            }
 
             // Step 1: Remove small bodies and allow self-attachment with momentum before tranisiton
             if ( (InitialPositionReinitialized) && (currentTime >= nextReplicationTime) ) {
@@ -463,6 +473,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
                 // reInitAllGroups();  // EXTREME
 
                 computeTargetCloseness(); // in case no bots remain and sim ends
+                computeLargestStickyGroupSize();
                 
                 convertMatIfSmallBody(1, 0, false);   // convert small mat1 bodies>1 to mat0; flags material as not yet removed
                 removeVoxels();  // remove bots and newly converted small mat 0 bodies
@@ -472,11 +483,15 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
             // Transition period
             if (!InitialPositionReinitialized) {
                 // do stuff here before next round
+                // push debris to ground?
+                // vary gravity in a concave function returning to normal
             }
 
             // Step 2: Transform piles into organisms (mat1->mat0)
             if (currentTime >= nextReplicationTime + SettleTimeBeforeNextRoundOfReplication) {
-                replenishMaterial(2, 146, 3, 1);  // replenish sticky building material along the surface plane
+                if (ReplenishDebrisEvery == 0) {
+                    replenishMaterial(2, WorldSize, SpaceBetweenDebris+1, 1);  // replenish just before new filial generation
+                }
                 convertMatIfLargeBody(1, 0); // finally, convert large mat1 bodies>MinimumBotSize to mat0 [new organisms]
                 InitializeCenterOfMass();  // in case fitness is a function of x,y,z
                 saveInitialPosition();
@@ -503,6 +518,22 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
 __device__ void VX3_VoxelyzeKernel::InitializeCenterOfMass() {
     initialCenterOfMass = currentCenterOfMass;
+}
+
+
+
+// sam:
+__device__ void VX3_VoxelyzeKernel::computeLargestStickyGroupSize() {
+    largestStickyGroupSize = 0;
+    for (int i = 0; i < d_voxelgroups.size(); i++) {
+        
+        int thisSize = d_voxelgroups[i]->d_voxels.size();
+        bool sticky = d_voxelgroups[i]->d_voxels[0]->mat->sticky;
+
+        if ( (sticky) && (thisSize > largestStickyGroupSize) )
+            largestStickyGroupSize = thisSize;
+
+    }
 }
 
 // sam:
@@ -553,6 +584,26 @@ __device__ void VX3_VoxelyzeKernel::replenishMaterial(int start, int end, int st
         for (int y = start; y < end; y+=step) {
             addVoxel(x, y, 0, mat);
         }
+    }
+}
+
+
+// sam:
+__device__ void VX3_VoxelyzeKernel::updateBrownianMotion(double seed, double currentTime) {
+    curandState state;
+    curand_init(seed + currentTime, 0, 0, &state);  // seed, sequence number (in a loop this can be 0), offset, state
+    for (int i = 0; i < num_d_surface_voxels; i++) {
+
+        if (d_surface_voxels[i]->removed)
+            return;
+        if (d_surface_voxels[i]->mat->Cilia == 0)
+            return;
+        if (d_surface_voxels[i]->mat->TurnOnCiliaAfterThisManySeconds > currentTime)
+            return;
+
+        d_surface_voxels[i]->baseCiliaForce.x = 2*curand_uniform(&state)-1;
+        d_surface_voxels[i]->baseCiliaForce.y = 2*curand_uniform(&state)-1;
+
     }
 }
 
@@ -1312,7 +1363,7 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
 }
 
 // sam:
-__global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k) {
+__global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, double seed, double currentTime, VX3_VoxelyzeKernel *k) {
     int index = threadIdx.x + blockIdx.x * blockDim.x;
     if (index < num) {
         if (surface_voxels[index]->removed)
@@ -1323,7 +1374,7 @@ __global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, 
             return;
         
         curandState state;
-        curand_init(clock(), index, 0, &state);
+        curand_init(seed + currentTime, index, 0, &state);  // this should be repeatable every time.
         // surface_voxels[index]->randCiliaCoef = curand_uniform(&state);
         surface_voxels[index]->baseCiliaForce.x = 2*curand_uniform(&state)-1;
         surface_voxels[index]->baseCiliaForce.y = 2*curand_uniform(&state)-1;
