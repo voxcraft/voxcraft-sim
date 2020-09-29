@@ -461,7 +461,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
             // debris treadmill
             if ( (ReplenishDebrisEvery > 0) && (currentTime >= lastReplenishDebrisTime + ReplenishDebrisEvery) ) {
-                replenishMaterial(2, WorldSize, SpaceBetweenDebris+1, 1);  // replenish sticky building material along the surface plane
+                replenishMaterial(2, WorldSize, SpaceBetweenDebris+1, DebrisMat-1, DebrisHeight);  // replenish sticky building material along the surface plane
                 lastReplenishDebrisTime = currentTime;  // reset timer
             }
 
@@ -475,7 +475,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
                 computeTargetCloseness(); // in case no bots remain and sim ends
                 computeLargestStickyGroupSize();
                 
-                convertMatIfSmallBody(1, 0, false);   // convert small mat1 bodies>1 to mat0; flags material as not yet removed
+                convertMatIfSmallBody(1, 0, DebrisHeight+1);   // convert small mat1 bodies>1 to mat0; flags material as not yet removed
                 removeVoxels();  // remove bots and newly converted small mat 0 bodies
                 InitialPositionReinitialized = false; // false = transition period
             }
@@ -490,7 +490,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
             // Step 2: Transform piles into organisms (mat1->mat0)
             if (currentTime >= nextReplicationTime + SettleTimeBeforeNextRoundOfReplication) {
                 if (ReplenishDebrisEvery == 0) {
-                    replenishMaterial(2, WorldSize, SpaceBetweenDebris+1, 1);  // replenish just before new filial generation
+                    replenishMaterial(2, WorldSize, SpaceBetweenDebris+1, DebrisMat-1, DebrisHeight);  // replenish just before new filial generation
                 }
                 convertMatIfLargeBody(1, 0); // finally, convert large mat1 bodies>MinimumBotSize to mat0 [new organisms]
                 InitializeCenterOfMass();  // in case fitness is a function of x,y,z
@@ -500,7 +500,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
                 // check for inconsistent voxel groups (bad attach/detach)
                 if (!ThoroughValidationCheck()) {
-                    convertMatIfSmallBody(1, 0, false);  // so numClosePairs will be 0
+                    convertMatIfSmallBody(1, 0, DebrisHeight+1);  // so numClosePairs will be 0
                     removeVoxels();  // failed the test so remove all the bots (causes sim to end)
                 }
             }
@@ -578,11 +578,13 @@ __device__ bool VX3_VoxelyzeKernel::EarlyStopIfNoBotsRemain() {
 }
 
 // sam:
-__device__ void VX3_VoxelyzeKernel::replenishMaterial(int start, int end, int step, int mat) {
+__device__ void VX3_VoxelyzeKernel::replenishMaterial(int start, int end, int step, int mat, int height) {
     // TODO: make this a material attribute, replenish at initialized position.
     for (int x = start; x < end; x+=step) {
         for (int y = start; y < end; y+=step) {
-            addVoxel(x, y, 0, mat);
+            for (int z = 0; z < height; z++) {
+                addVoxel(x, y, z, mat);
+            }
         }
     }
 }
@@ -623,7 +625,7 @@ __device__ void VX3_VoxelyzeKernel::reInitAllGroups() {
 }
 
 // sam:
-__device__ void VX3_VoxelyzeKernel::convertMatIfSmallBody(int mat1, int mat2, bool convertSingletons) {
+__device__ void VX3_VoxelyzeKernel::convertMatIfSmallBody(int mat1, int mat2, int minSizeToConvert) {
 
     d_voxelMats[mat2].removed = false;  // this material will be removed next removeVoxels() call
 
@@ -633,26 +635,10 @@ __device__ void VX3_VoxelyzeKernel::convertMatIfSmallBody(int mat1, int mat2, bo
             if (d_voxels[i].d_group->removed) {
                 printf("Sida: A voxel's group should not be removed. d_voxels[%d].\n", i);
             }
-            if (d_voxels[i].d_group->d_voxels.size() < MinimumBotSize) {
-
-                if (convertSingletons) {
-                    d_voxels[i].mat = &d_voxelMats[mat2];
-                }
-                else {
-                    bool singleton = true;
-                    for (int k=0;k<6;k++) {
-                        if (d_voxels[i].links[k]) {
-                            singleton = false;
-                            break;
-                        }
-                    }
-                    if (!singleton) {
-                        d_voxels[i].mat = &d_voxelMats[mat2];
-                    }
-                }
-
+            if ( (d_voxels[i].d_group->d_voxels.size() >= minSizeToConvert) && (d_voxels[i].d_group->d_voxels.size() < MinimumBotSize) ) {
+                d_voxels[i].mat = &d_voxelMats[mat2];
             }
-            // resets voxels that moved but didn't attach
+            // resets debris that moved but didn't attach
             // TODO: debug initial position of newly added voxels
             // if ( (singleton) && (abs(d_initialPosition[i].x - d_voxels[i].pos.x) > voxSize*0.1) ) {
             //         d_voxels[i].mat = &d_voxelMats[mat2]; // moved out of position: convert it 

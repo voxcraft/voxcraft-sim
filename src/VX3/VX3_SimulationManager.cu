@@ -490,9 +490,17 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
 
         // for Secondary Experiment
         h_d_tmp.SecondaryExperiment = pt_merged.get<int>("VXA.Simulator.SecondaryExperiment", 0);
+<<<<<<< HEAD
         h_d_tmp.SelfReplication = pt_merged.get<int>("VXA.Simulator.SelfReplication", 0);       // sam
         h_d_tmp.WorldSize = pt_merged.get<int>("VXA.Simulator.WorldSize", 100);                 // sam
         h_d_tmp.SpaceBetweenDebris = pt_merged.get<int>("VXA.Simulator.SpaceBetweenDebris", 2); // sam
+=======
+        h_d_tmp.SelfReplication = pt_merged.get<int>("VXA.Simulator.SelfReplication", 0);  // sam
+        h_d_tmp.WorldSize = pt_merged.get<int>("VXA.Simulator.WorldSize", 100);  // sam
+        h_d_tmp.SpaceBetweenDebris = pt_merged.get<int>("VXA.Simulator.SpaceBetweenDebris", 2);  // sam
+        h_d_tmp.DebrisMat = pt_merged.get<int>("VXA.Simulator.DebrisMat", 2);  // sam
+        h_d_tmp.DebrisHeight = pt_merged.get<int>("VXA.Simulator.DebrisHeight", 1);  // sam
+>>>>>>> ffbf78e0adbc7fe80e981ca03529e815396147d5
         h_d_tmp.ReinitializeInitialPositionAfterThisManySeconds = pt_merged.get<double>("VXA.Simulator.ReinitializeInitialPositionAfterThisManySeconds", 0.0);
         h_d_tmp.SettleTimeBeforeNextRoundOfReplication = pt_merged.get<double>("VXA.Simulator.SettleTimeBeforeNextRoundOfReplication", 0.0); // sam
         h_d_tmp.MinimumBotSize = pt_merged.get<int>("VXA.Simulator.MinimumBotSize", 0);                                                      // sam

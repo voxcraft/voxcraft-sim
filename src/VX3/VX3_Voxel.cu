@@ -425,6 +425,18 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
         totalForce.z = 0;
     }
 
+    // sam
+    if ( (mat->WaterLevel > 0) and (pos.z >= mat->WaterLevel*d_kernel->voxSize) ) { 
+        double adjustment = pos.z / d_kernel->voxSize - mat->WaterLevel;
+        totalForce.z += adjustment*adjustment * mat->gravityForce(); 
+    }
+
+    // sam
+    // totalForce.z += mat->Buoyancy * mat->mass();  // sam: lift bodies without simulating light stiff material
+    if (mat->Buoyancy > 0) {
+        totalForce.z += -1 * mat->gravityForce();  // just remove gravity
+    }
+
     return totalForce;
 }
 

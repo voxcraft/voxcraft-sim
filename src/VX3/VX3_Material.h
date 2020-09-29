@@ -119,6 +119,8 @@ public:
 	double Cilia = 0;
 
 	bool LockZ = false;  // sam
+	double WaterLevel = 0;  // sam
+	double Buoyancy = 0; // sam
 	bool EndSimIfCompletelyRemoved = false; // sam
 
 	bool linear; //!< Set to true if this material is specified as linear.
