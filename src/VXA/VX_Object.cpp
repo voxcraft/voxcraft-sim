@@ -1192,6 +1192,8 @@ CVXC_Material& CVXC_Material::operator=(const CVXC_Material& RefMat)
 	Cilia = RefMat.Cilia;
 
 	LockZ = RefMat.LockZ;  // sam
+	WaterLevel = RefMat.WaterLevel;  // sam
+	Buoyancy = RefMat.Buoyancy;  // sam
 	EndSimIfCompletelyRemoved = RefMat.EndSimIfCompletelyRemoved;  // sam
 
 	RemoveFromSimulationAfterThisManySeconds = RefMat.RemoveFromSimulationAfterThisManySeconds;
@@ -1440,6 +1442,8 @@ void CVXC_Material::ReadXML(CXML_Rip* pXML, std::string Version, std::string* Re
 				if (!pXML->FindLoadElement("Cilia", &Cilia)) Cilia = 0;
 
 				if (!pXML->FindLoadElement("LockZ", &LockZ)) LockZ = 0; // sam
+				if (!pXML->FindLoadElement("WaterLevel", &WaterLevel)) WaterLevel = 0; // sam
+				if (!pXML->FindLoadElement("Buoyancy", &Buoyancy)) Buoyancy = 0; // sam
 				if (!pXML->FindLoadElement("EndSimIfCompletelyRemoved", &EndSimIfCompletelyRemoved)) EndSimIfCompletelyRemoved = 0; // sam
 
 				if (!pXML->FindLoadElement("Elastic_Mod", &Elastic_Mod)) Elastic_Mod = 0;
