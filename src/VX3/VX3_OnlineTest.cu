@@ -8,6 +8,13 @@ __device__ bool VX3_OnlineTest::ThoroughTest(VX3_VoxelyzeKernel *k) {
         return true;
     }
     printf("GPU (%d) Online Testing at step %lu ...\n", k->GPU_id, k->CurStepCount);
+    int num_groups = 0;
+    for (int i=0;i<k->d_voxelgroups.size();i++) {
+        if(!k->d_voxelgroups[i]->removed) {
+            num_groups++;
+        }
+    }
+    printf("# Group: %d/%d.\n", num_groups, k->d_voxelgroups.size());
     bool ret = true;
 
     // Testing all voxels.

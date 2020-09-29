@@ -1038,6 +1038,7 @@ __device__ void VX3_VoxelyzeKernel::updateGroups() {
 
             VX3_VoxelGroup *g = (VX3_VoxelGroup*)hamalloc(sizeof(VX3_VoxelGroup));
             g->deviceInit(this);
+            // d_voxelgroups.push_back(g);
             g->d_voxels.push_back(voxel_to_detach);
             g->needUpdate = true;
             voxel_to_detach->d_group = g;
@@ -1049,6 +1050,8 @@ __device__ void VX3_VoxelyzeKernel::updateGroups() {
                     VX3_Voxel* neighbor = voxel_to_detach->adjacentVoxel((linkDirection)i);
                     VX3_VoxelGroup *g = (VX3_VoxelGroup*)hamalloc(sizeof(VX3_VoxelGroup));
                     g->deviceInit(this);
+                    // d_voxelgroups.push_back(g);
+
                     g->d_voxels.push_back(neighbor);
                     g->needUpdate = true;
                     neighbor->d_group = g;

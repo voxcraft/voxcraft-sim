@@ -142,6 +142,7 @@ class VX3_VoxelyzeKernel {
     int RecordVoxel = 0;
     int RecordFixedVoxels = 1; // sam
     int SurfaceVoxelsOnly = 1;
+    int RecordCoMTraceOfEachVoxelGroupfOfThisMaterial = 0;
 
     // Safety Guard during the creation of new link
     int SafetyGuard = 500;

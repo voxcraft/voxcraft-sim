@@ -5,14 +5,40 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "recordCoM",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/vx3_node_worker",
+            "args": [
+                "-i",
+                "/home/liusida/Simulators/voxcraft/voxcraft-dev-sida-growth/demos/recordCoM/workspace/locally/20200925112011.vxt",
+                "-o",
+                "/home/liusida/Simulators/voxcraft/voxcraft-dev-sida-growth/demos/recordCoM/workspace/locally/20200925112011.vxr",
+                "-f",
+            ],
+            "stopAtEntry": false,
+            "cwd": "/home/liusida/Simulators/voxcraft/voxcraft-dev-sida-growth/demos/recordCoM",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/cuda-gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "----1.py----"
         },
         {
-            "name": "Python: test/1.py",
+            "name": "Python: recordCoM",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/demos/test/1.py",
-            "cwd": "${workspaceFolder}/demos/test/",
+            "program": "${workspaceFolder}/demos/recordCoM/1.py",
+            "cwd": "${workspaceFolder}/demos/recordCoM/",
             "console": "integratedTerminal"
         },
         {
