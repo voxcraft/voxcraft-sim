@@ -190,6 +190,11 @@ __device__ void _CUDA_Simulation(VX3_VoxelyzeKernel *k, int thread_index, int de
                                 if (d_v3->d_voxels[CoMi].removed) {
                                     continue;
                                 }
+
+                                // sam:
+                                if (d_v3->d_voxels[CoMi].matid != d_v3->RecordCoMTraceOfEachVoxelGroupfOfThisMaterial)
+                                    continue;
+
                                 VX3_VoxelGroup *g = d_v3->d_voxels[CoMi].d_group;
                                 if (visited_groups.get(g) == 1) {
                                     continue;

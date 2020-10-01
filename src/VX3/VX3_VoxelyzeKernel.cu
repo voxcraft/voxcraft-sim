@@ -20,7 +20,7 @@ __global__ void gpu_update_collision_system_pos_radius(VX3_Voxel **surface_voxel
 __global__ void gpu_update_sync_collisions(VX3_Voxel **surface_voxels, int num, double watchDistance, VX3_VoxelyzeKernel *k);
 __global__ void gpu_update_attach(VX3_Voxel **surface_voxels, int num, double watchDistance, VX3_VoxelyzeKernel *k);
 __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k);
-__global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, double seed, double currentTime, VX3_VoxelyzeKernel *k);  // sam
+__global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, int WorldSize, double seed, double currentTime, VX3_VoxelyzeKernel *k);  // sam
 __global__ void gpu_clear_lookupgrid(VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid, int num);
 __global__ void gpu_insert_lookupgrid(VX3_Voxel **d_surface_voxels, int num, VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid,
                                       VX3_Vec3D<> *gridLowerBound, VX3_Vec3D<> *gridDelta, int lookupGrid_n);
@@ -350,7 +350,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
                 cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_brownian_motion, 0, num_d_surface_voxels);
                 int gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
                 int blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
-                gpu_update_brownian_motion<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, RandomSeed, currentTime, this);
+                gpu_update_brownian_motion<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, WorldSize, RandomSeed, currentTime, this);
                 CUDA_CHECK_AFTER_CALL();
                 VcudaDeviceSynchronize();
 
@@ -1352,7 +1352,7 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
 }
 
 // sam:
-__global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, double seed, double currentTime, VX3_VoxelyzeKernel *k) {
+__global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, int WorldSize, double seed, double currentTime, VX3_VoxelyzeKernel *k) {
     int index = threadIdx.x + blockIdx.x * blockDim.x;
     if (index < num) {
         if (surface_voxels[index]->removed)
@@ -1362,8 +1362,15 @@ __global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, 
         if (surface_voxels[index]->mat->TurnOnCiliaAfterThisManySeconds > k->currentTime)
             return;
         
+        // randomize according to seed, timestep and original position in the grid (all of this is repeatable)
+        int ix = surface_voxels[index]->indexX();
+        int iy = surface_voxels[index]->indexY();
+        int iz = surface_voxels[index]->indexZ();
+        int randIndex = ix + WorldSize*iy + WorldSize*WorldSize*iz;
+
         curandState state;
-        curand_init(seed + currentTime, index, 0, &state);  // this should be repeatable every time.
+        // curand_init(seed + currentTime, index, 0, &state);
+        curand_init(seed + currentTime, randIndex, 0, &state);
         // surface_voxels[index]->randCiliaCoef = curand_uniform(&state);
         surface_voxels[index]->baseCiliaForce.x = 2*curand_uniform(&state)-1;
         surface_voxels[index]->baseCiliaForce.y = 2*curand_uniform(&state)-1;
