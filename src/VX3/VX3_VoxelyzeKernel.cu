@@ -664,13 +664,14 @@ __device__ bool VX3_VoxelyzeKernel::addVoxel(int x, int y, int z, int mat) {
 
     float r = float(voxSize);
 
-    bool voxAlreadyThere = d_collision_system->check_collisions_device(float(x)*r, float(y)*r, float(z)*r, staticWatchDistance);
+    bool voxAlreadyThere = d_collision_system->check_collisions_device(float(x)*r, float(y)*r, float(z)*r, r);
 
     if ( (!voxAlreadyThere) && (num_d_voxels - num_d_init_voxels < MaxNewVoxelsAddedMidSim) ) { // memory limitation, refer to pre-allocation.
         d_voxels[num_d_voxels].deviceInit(this); // do this first
         d_voxels[num_d_voxels].pos = VX3_Vec3D<>(float(x)*r, float(y)*r, float(z)*r);
         d_voxels[num_d_voxels].orient = VX3_Quat3D<>(); // default orientation
         d_voxels[num_d_voxels].mat = &d_voxelMats[mat];
+        d_voxels[num_d_voxels].baseCiliaForce = VX3_Vec3D<>(0.0, -1.0, -1.0);
         atomicAdd(&num_d_voxels, 1); // safer to use atomic add.
         isSurfaceChanged = true;
         return true;
