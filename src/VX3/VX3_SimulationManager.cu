@@ -456,7 +456,7 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         h_d_tmp.CollisionMode = pt_merged.get<bool>("VXA.Simulator.AttachDetach.CollisionMode", true);
         h_d_tmp.enableAttach = pt_merged.get<bool>("VXA.Simulator.AttachDetach.EnableAttach", false);
         h_d_tmp.enableDetach = pt_merged.get<bool>("VXA.Simulator.AttachDetach.EnableDetach", false);
-        h_d_tmp.keepJustOneIfManyHaveSameGroupPosition = pt_merged.get<bool>("VXA.Simulator.AttachDetach.KeepJustOneIfManyHaveSameGroupPosition", false); // sam
+        h_d_tmp.ForceAttachment = pt_merged.get<bool>("VXA.Simulator.AttachDetach.ForceAttachment", false); // sam
         h_d_tmp.watchDistance = pt_merged.get<double>("VXA.Simulator.AttachDetach.watchDistance", 1.0);
         h_d_tmp.boundingRadius = pt_merged.get<double>("VXA.Simulator.AttachDetach.boundingRadius", 0.75);
         h_d_tmp.SafetyGuard = pt_merged.get<int>("VXA.Simulator.AttachDetach.SafetyGuard", 500);

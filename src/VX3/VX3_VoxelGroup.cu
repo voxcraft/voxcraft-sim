@@ -181,51 +181,13 @@ __device__ void VX3_VoxelGroup::updateGroup(VX3_Voxel *start_voxel) {
         v->groupPosition.y -= min_y;
         v->groupPosition.z -= min_z;
 
-        // sam:
-        bool absorb = false;
-        if (false && d_kernel->keepJustOneIfManyHaveSameGroupPosition) {
-
-            for (int j = 0; j < d_voxels.size(); j++) {
-                if (v->groupPosition == d_voxels[j]->groupPosition) {
-                    // printf("Sida: Should never be in here. Why are there two voxels with the same group position?\n");
-                    // assert(false); // Sida: Should never be in here. Why are there two voxels with the same group position?
-                    absorb = true;
-
-                    // Option 1: delete it
-                    // v->removed = true;
-
-                    // Option 2: just break off
-                    v->d_group = (VX3_VoxelGroup*)hamalloc(sizeof(VX3_VoxelGroup));
-                    PRINT(d_kernel, "5 d_group = %p.\n", v->d_group);
-                    if (v->d_group == NULL) {
-                        printf("halloc: Out of memory. Please increate the size of memory that halloc manages.\n");
-                    }
-                    v->d_group->deviceInit(d_kernel);
-                    d_kernel->d_voxel_to_update_group.push_back(v);
-                    v->d_group->d_voxels.push_back(v);
-                    d_kernel->d_voxelgroups.push_back(v->d_group);
-
-                    // either way, delete all the links
-                    for (int k = 0; k < 6; k++) { // check links in all direction
-                        if (v->links[k]) {
-                            v->links[k]->removed = true;
-                            PRINT(d_kernel, "Remove a link (%p).\n", v->links[k]);
-                            v->adjacentVoxel((linkDirection)k)->links[oppositeDirection(k)] = NULL;
-                            v->links[k] = NULL;
-                        }
-                    }
-                }
-            }
+        int offset = to1D(v->groupPosition, VX3_Vec3D<int>(dim_x, dim_y, dim_z));
+        d_group_map[offset] = v;
+        d_voxels.push_back(v);
+        // If any link is NULL => is surface voxel
+        if (!(v->links[0] && v->links[1] && v->links[2] && v->links[3] && v->links[4] && v->links[5])) {
+            d_surface_voxels.push_back(v);
         }
-        if (!absorb) { // sam
-            int offset = to1D(v->groupPosition, VX3_Vec3D<int>(dim_x, dim_y, dim_z));
-            d_group_map[offset] = v;
-            d_voxels.push_back(v);
-            // If any link is NULL => is surface voxel
-            if (!(v->links[0] && v->links[1] && v->links[2] && v->links[3] && v->links[4] && v->links[5])) {
-                d_surface_voxels.push_back(v);
-            }
-        } // sam
     }
     needUpdate = 0;
 }
@@ -285,7 +247,7 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
         }
     }
 
-    if (relativeRotation.w > 0.866 || hasSingleton) // within 30 degree
+    if (relativeRotation.w > 0.866 || hasSingleton || d_kernel->ForceAttachment) // within 30 degree
     {
         VX3_Vec3D<> raw_pos = voxel_remote->position() - voxel_host->position();
         VX3_Vec3D<> pos = voxel_host->orientation().RotateVec3DInv(raw_pos); // the position of remote voxel relative to host voxel.

@@ -134,7 +134,7 @@ class VX3_VoxelyzeKernel {
 
     bool enableAttach;
     bool enableDetach;
-    bool keepJustOneIfManyHaveSameGroupPosition = false; // sam
+    bool ForceAttachment = false; // sam
     bool EnableCollision = true;
     int CollisionMode = 1;
     int RecordStepSize = 0;
