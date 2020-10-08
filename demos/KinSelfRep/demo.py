@@ -15,11 +15,15 @@ BODY_SIZE = (8, 8, 7)
 # then the cilia force of the material will need to be recalibrated
 
 MIN_BOT_SIZE = 64
-EVAL_PERIOD = 4.5
+EVAL_PERIOD = 4
+SETTLE_TIME = 0.5
 
 SPACE_BETWEEN_DEBRIS = 2
 DEBRIS_MAT = 2
-REPLENISH_DEBRIS_EVERY = EVAL_PERIOD
+REPLENISH_DEBRIS_EVERY = EVAL_PERIOD + SETTLE_TIME
+
+ATTACH_WATCH_DISTANCE = 1.25
+ATTACH_BOUNDING_RADIUS = 0.8
 
 SEED = 1
 np.random.seed(SEED)
@@ -63,6 +67,14 @@ vxa_replenish_debris_every = etree.SubElement(root, "ReplenishDebrisEvery")
 vxa_replenish_debris_every.set('replace', 'VXA.Simulator.ReplenishDebrisEvery')
 vxa_replenish_debris_every.text = str(REPLENISH_DEBRIS_EVERY)
 
+vxa_eval_period = etree.SubElement(root, "ReinitializeInitialPositionAfterThisManySeconds")
+vxa_eval_period.set('replace', 'VXA.Simulator.ReinitializeInitialPositionAfterThisManySeconds')
+vxa_eval_period.text = str(EVAL_PERIOD)
+
+vxa_settle_time = etree.SubElement(root, "SettleTimeBeforeNextRoundOfReplication")
+vxa_settle_time.set('replace', 'VXA.Simulator.SettleTimeBeforeNextRoundOfReplication')
+vxa_settle_time.text = str(SETTLE_TIME) 
+
 vxa_debris_mat = etree.SubElement(root, "DebrisMat")
 vxa_debris_mat.set('replace', 'VXA.Simulator.DebrisMat')
 vxa_debris_mat.text = str(DEBRIS_MAT)
@@ -70,6 +82,11 @@ vxa_debris_mat.text = str(DEBRIS_MAT)
 vxa_world_size = etree.SubElement(root, "WorldSize")
 vxa_world_size.set('replace', 'VXA.Simulator.WorldSize')
 vxa_world_size.text = str(wx)
+
+attach_detach = etree.SubElement(root, "AttachDetach")
+attach_detach.set('replace', 'VXA.Simulator.AttachDetach')
+etree.SubElement(attach_detach, "watchDistance").text = str(ATTACH_WATCH_DISTANCE)
+etree.SubElement(attach_detach, "boundingRadius").text = str(ATTACH_BOUNDING_RADIUS)
 
 # set seed for browain cilia motion
 vxa_seed = etree.SubElement(root, "RandomSeed")
