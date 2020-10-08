@@ -42,7 +42,7 @@
             <ForceAttachment>1</ForceAttachment>
             <CollisionMode>1</CollisionMode>
             <watchDistance>1.25</watchDistance>
-            <boundingRadius>0.8</boundingRadius>
+            <boundingRadius>0.75</boundingRadius>
             <SafetyGuard>0</SafetyGuard>
             <AttachCondition>
                 <Condition_0>

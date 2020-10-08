@@ -5,25 +5,26 @@ import numpy as np
 
 RECORD_HISTORY = True
 DRAW_LINKS = False
-DRAW_WALLS = False
+DRAW_WALLS = True
 
-SWARM_SIZE = 4  # if this is greater than 4 then add more coordinates to (lines 103 and 104)
+SWARM_SIZE = 9  # was 4  # if this is greater than 9 then add more coordinates to (lines 122 and 123)
 
-WORLD_SIZE = 107
-BODY_SIZE = (8, 8, 7)
+WORLD_SIZE = 66  # 107
+BODY_SIZE = (4, 4, 4)  # (8, 8, 7)
 # if body size changes, or if the stiffness/density of body material changes, 
 # then the cilia force of the material will need to be recalibrated
 
-MIN_BOT_SIZE = 64
-EVAL_PERIOD = 4
-SETTLE_TIME = 0.5
+MIN_BOT_SIZE = 16  # 64
+EVAL_PERIOD = 4  # 4
+SETTLE_TIME = 0.5  # 0.5
 
-SPACE_BETWEEN_DEBRIS = 2
+SPACE_BETWEEN_DEBRIS = 2 
 DEBRIS_MAT = 2
 REPLENISH_DEBRIS_EVERY = EVAL_PERIOD + SETTLE_TIME
 
-ATTACH_WATCH_DISTANCE = 1.25
-ATTACH_BOUNDING_RADIUS = 0.8
+# manually adjust in base.vxa:
+# ATTACH_WATCH_DISTANCE = 1.25
+# ATTACH_BOUNDING_RADIUS = 0.8
 
 SEED = 1
 np.random.seed(SEED)
@@ -31,7 +32,7 @@ np.random.seed(SEED)
 bx, by, bz = BODY_SIZE
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, bz)
 
-spacing_between_bodies = int(4.25*bx)-1  
+spacing_between_bodies = int(4*bx)-1  
 # if spacing is too big compared to worldsize then you'll get an error when trying to broadcast the body onto the world
 
 # controller
@@ -83,10 +84,10 @@ vxa_world_size = etree.SubElement(root, "WorldSize")
 vxa_world_size.set('replace', 'VXA.Simulator.WorldSize')
 vxa_world_size.text = str(wx)
 
-attach_detach = etree.SubElement(root, "AttachDetach")
-attach_detach.set('replace', 'VXA.Simulator.AttachDetach')
-etree.SubElement(attach_detach, "watchDistance").text = str(ATTACH_WATCH_DISTANCE)
-etree.SubElement(attach_detach, "boundingRadius").text = str(ATTACH_BOUNDING_RADIUS)
+# attach_detach = etree.SubElement(root, "AttachDetach")
+# attach_detach.set('replace', 'VXA.Simulator.AttachDetach')
+# etree.SubElement(attach_detach, "watchDistance").text = str(ATTACH_WATCH_DISTANCE)
+# etree.SubElement(attach_detach, "boundingRadius").text = str(ATTACH_BOUNDING_RADIUS)
 
 # set seed for browain cilia motion
 vxa_seed = etree.SubElement(root, "RandomSeed")
@@ -118,8 +119,8 @@ world = np.zeros((wx, wy, wz), dtype=np.int8)
 bodies = [BODY_PLAN] * SWARM_SIZE
 
 s = spacing_between_bodies
-a = [s, 2*s, s, 2*s]
-b = [s, 2*s, 2*s, s]
+a = [s, s, s, 2*s, 2*s, 2*s, 3*s, 3*s, 3*s]
+b = [s, 2*s, 3*s, s, 2*s, 3*s, s, 2*s, 3*s]
 
 for n, (ai, bi) in enumerate(zip(a,b)):
     try:  
