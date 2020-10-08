@@ -4,29 +4,38 @@ import numpy as np
 
 
 RECORD_HISTORY = True
+DRAW_LINKS = False
+DRAW_WALLS = False
 
-SWARM_SIZE = 4
+SWARM_SIZE = 4  # if this is greater than 4 then add more coordinates to (lines 103 and 104)
 
-# update manually in base.vxa:
+WORLD_SIZE = 107
+BODY_SIZE = (8, 8, 7)
+# if body size changes, or if the stiffness/density of body material changes, 
+# then the cilia force of the material will need to be recalibrated
+
 MIN_BOT_SIZE = 64
 EVAL_PERIOD = 4.5
+
 SPACE_BETWEEN_DEBRIS = 2
 DEBRIS_MAT = 2
+REPLENISH_DEBRIS_EVERY = EVAL_PERIOD
 
 SEED = 1
 np.random.seed(SEED)
 
-X, Y = 107, 107
-WORLD_SIZE = (X, Y, 7)
-BODY_SIZE = (8, 8, 7)
-(bx, by, bz) = BODY_SIZE
-(wx, wy, wz) = WORLD_SIZE
+bx, by, bz = BODY_SIZE
+wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, bz)
 
-wx, wy, wz = WORLD_SIZE
+spacing_between_bodies = int(4.25*bx)-1  
+# if spacing is too big compared to worldsize then you'll get an error when trying to broadcast the body onto the world
+
+# controller
 BASE_CILIA_FORCE = np.ones((wx, wy, wz, 3))  * -1  # pointing downward
 BASE_CILIA_FORCE[:, :, :, :2] = 2 * np.random.rand(wx, wy, wz, 2) - 1  # initial forces
 
-BODY_PLAN = np.ones(BODY_SIZE)
+# morphology
+BODY_PLAN = np.ones(BODY_SIZE, dtype=np.int)
 
 # create data folder if it doesn't already exist
 sub.call("mkdir data{}".format(SEED), shell=True)
@@ -50,6 +59,14 @@ vxa_debris_spacing = etree.SubElement(root, "SpaceBetweenDebris")
 vxa_debris_spacing.set('replace', 'VXA.Simulator.SpaceBetweenDebris')
 vxa_debris_spacing.text = str(SPACE_BETWEEN_DEBRIS)
 
+vxa_replenish_debris_every = etree.SubElement(root, "ReplenishDebrisEvery")
+vxa_replenish_debris_every.set('replace', 'VXA.Simulator.ReplenishDebrisEvery')
+vxa_replenish_debris_every.text = str(REPLENISH_DEBRIS_EVERY)
+
+vxa_debris_mat = etree.SubElement(root, "DebrisMat")
+vxa_debris_mat.set('replace', 'VXA.Simulator.DebrisMat')
+vxa_debris_mat.text = str(DEBRIS_MAT)
+
 vxa_world_size = etree.SubElement(root, "WorldSize")
 vxa_world_size.set('replace', 'VXA.Simulator.WorldSize')
 vxa_world_size.text = str(wx)
@@ -66,8 +83,8 @@ if RECORD_HISTORY:
     history.set('replace', 'VXA.Simulator.RecordHistory')
     etree.SubElement(history, "RecordStepSize").text = '100'
     etree.SubElement(history, "RecordVoxel").text = '1'
-    etree.SubElement(history, "RecordLink").text = '1'
-    etree.SubElement(history, "RecordFixedVoxels").text = '0'  # draw the walls of the dish
+    etree.SubElement(history, "RecordLink").text = str(int(DRAW_LINKS))
+    etree.SubElement(history, "RecordFixedVoxels").text = str(int(DRAW_WALLS))
     etree.SubElement(history, "RecordCoMTraceOfEachVoxelGroupfOfThisMaterial").text = '0'  # draw CoM trace=
     
 
@@ -83,9 +100,9 @@ world = np.zeros((wx, wy, wz), dtype=np.int8)
 
 bodies = [BODY_PLAN] * SWARM_SIZE
 
-spacing = int(4.25*bx)-1
-a = [spacing, 2*spacing, spacing, 2*spacing]
-b = [spacing, 2*spacing, 2*spacing, spacing]
+s = spacing_between_bodies
+a = [s, 2*s, s, 2*s]
+b = [s, 2*s, 2*s, s]
 
 for n, (ai, bi) in enumerate(zip(a,b)):
     try:  
