@@ -417,11 +417,6 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
     totalForce -= contactForce;
     contactForce.clear();
 
-    // sam
-    if (mat->LockZ) { 
-        CiliaForce.z = 0;
-    }
-
     totalForce += CiliaForce * mat->Cilia;
     CiliaForce.clear();
 
@@ -435,6 +430,11 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
     // totalForce.z += mat->Buoyancy * mat->mass();  // sam: lift bodies without simulating light stiff material
     if (mat->Buoyancy > 0) {
         totalForce.z += -1 * mat->gravityForce();  // just remove gravity
+    }
+
+    // sam
+    if (mat->LockZ) { 
+        totalForce.z = 0;
     }
 
     return totalForce;
@@ -454,6 +454,11 @@ __device__ VX3_Vec3D<double> VX3_Voxel::moment() {
     if (externalExists())
         totalMoment += external()->moment();                        // external moments
     totalMoment -= angularVelocity() * mat->globalDampingRotateC(); // global damping
+
+    // sam
+    if (mat->LockZ) { 
+        totalMoment.z = 0;
+    }
 
     return totalMoment;
 }
