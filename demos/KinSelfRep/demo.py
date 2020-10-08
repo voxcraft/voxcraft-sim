@@ -9,7 +9,7 @@ DRAW_WALLS = True
 
 SWARM_SIZE = 9  # was 4  # if this is greater than 9 then add more coordinates to (lines 122 and 123)
 
-WORLD_SIZE = 66  # 107
+WORLD_SIZE = 65  # 107
 BODY_SIZE = (4, 4, 4)  # (8, 8, 7)
 # if body size changes, or if the stiffness/density of body material changes, 
 # then the cilia force of the material will need to be recalibrated
@@ -21,6 +21,8 @@ SETTLE_TIME = 0.5  # 0.5
 SPACE_BETWEEN_DEBRIS = 2 
 DEBRIS_MAT = 2
 REPLENISH_DEBRIS_EVERY = EVAL_PERIOD + SETTLE_TIME
+
+RANDMONIZE_CILIA_EVERY = 0.5
 
 # manually adjust in base.vxa:
 # ATTACH_WATCH_DISTANCE = 1.25
@@ -83,6 +85,10 @@ vxa_debris_mat.text = str(DEBRIS_MAT)
 vxa_world_size = etree.SubElement(root, "WorldSize")
 vxa_world_size.set('replace', 'VXA.Simulator.WorldSize')
 vxa_world_size.text = str(wx)
+
+vxa_randomize_cilia_every = etree.SubElement(root, "RandomizeCiliaEvery")
+vxa_randomize_cilia_every.set('replace', 'VXA.Simulator.RandomizeCiliaEvery')
+vxa_randomize_cilia_every.text = str(RANDMONIZE_CILIA_EVERY)
 
 # attach_detach = etree.SubElement(root, "AttachDetach")
 # attach_detach.set('replace', 'VXA.Simulator.AttachDetach')
