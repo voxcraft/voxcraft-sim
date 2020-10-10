@@ -35,7 +35,9 @@ public:
 	__device__ float stress(float strain, float transverseStrainSum=0.0f, bool forceLinear = false); //!<returns the stress of the material model accounting for volumetric strain effects. @param [in] strain The strain to query. The resulting stress in this direction will be returned. @param [in] transverseStrainSum The sum of the two principle normal strains in the plane perpendicular to strain. @param [in] forceLinear If true, the result will be calculated according to the elastic modulus of the material regardless of non-linearities in the model.
 	__device__ float modulus(float strain); //!<returns the modulus (slope of the stress/strain curve) of the material model at the specified strain. @param [in] strain The strain to query.
 	__device__ bool isYielded(float strain) {return epsilonYield != -1.0f && strain>epsilonYield;} //!< Returns true if the specified strain is past the yield point (if one is specified). @param [in] strain The strain to query.
-	__device__ bool isFailed(float strain) {return epsilonFail != -1.0f && strain>epsilonFail;} //!< Returns true if the specified strain is past the failure point (if one is specified). @param [in] strain The strain to query.
+	__device__ bool isFailed(float strain, float additionalStrengthFactor=1.0f) {  // sam: additionalStrength
+			return epsilonFail != -1.0f && strain>epsilonFail*additionalStrengthFactor;
+		} //!< Returns true if the specified strain is past the failure point (if one is specified). @param [in] strain The strain to query.
 
 	//color
 	__device__ void setColor(int red, int green, int blue, int alpha=255); //!< Sets the material color. Values from [0,255]. @param [in] red Red channel @param [in] green Green channel @param [in] blue Blue channel @param [in] alpha Alpha channel
@@ -122,6 +124,8 @@ public:
 	double WaterLevel = 0;  // sam
 	double Buoyancy = 0; // sam
 	bool EndSimIfCompletelyRemoved = false; // sam
+
+	float FailStressAddedStrengthPerNeighbor = 0; //sam
 
 	bool linear; //!< Set to true if this material is specified as linear.
 	float E; //!< Young's modulus (stiffness) in Pa.

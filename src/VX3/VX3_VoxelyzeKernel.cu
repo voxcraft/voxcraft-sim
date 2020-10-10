@@ -461,7 +461,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
             // debris treadmill
             if ( (ReplenishDebrisEvery > 0) && (currentTime >= lastReplenishDebrisTime + ReplenishDebrisEvery) ) {
-                replenishMaterial(2, WorldSize, SpaceBetweenDebris+1, DebrisMat-1, DebrisHeight);  // replenish sticky building material along the surface plane
+                replenishMaterial(2, WorldSize, SpaceBetweenDebris+1, DebrisMat-1, DebrisHeight-1, HighDebrisConcentration);  // replenish sticky building material along the surface plane
                 lastReplenishDebrisTime = currentTime;  // reset timer
             }
 
@@ -475,7 +475,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
                 computeTargetCloseness(); // in case no bots remain and sim ends
                 computeLargestStickyGroupSize();
                 
-                convertMatIfSmallBody(1, 0, DebrisHeight+1);   // convert small mat1 bodies>1 to mat0; flags material as not yet removed
+                convertMatIfSmallBody(1, 0, 2);   // convert small mat1 bodies>1 to mat0; flags material as not yet removed
                 removeVoxels();  // remove bots and newly converted small mat 0 bodies
                 InitialPositionReinitialized = false; // false = transition period
             }
@@ -490,7 +490,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
             // Step 2: Transform piles into organisms (mat1->mat0)
             if (currentTime >= nextReplicationTime + SettleTimeBeforeNextRoundOfReplication) {
                 if (ReplenishDebrisEvery == 0) {
-                    replenishMaterial(2, WorldSize, SpaceBetweenDebris+1, DebrisMat-1, DebrisHeight);  // replenish just before new filial generation
+                    replenishMaterial(2, WorldSize, SpaceBetweenDebris+1, DebrisMat-1, DebrisHeight-1, HighDebrisConcentration);  // replenish just before new filial generation
                 }
                 convertMatIfLargeBody(1, 0); // finally, convert large mat1 bodies>MinimumBotSize to mat0 [new organisms]
                 InitializeCenterOfMass();  // in case fitness is a function of x,y,z
@@ -500,7 +500,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
                 // check for inconsistent voxel groups (bad attach/detach)
                 if (!ThoroughValidationCheck()) {
-                    convertMatIfSmallBody(1, 0, DebrisHeight+1);  // so numClosePairs will be 0
+                    convertMatIfSmallBody(1, 0, 2);  // so numClosePairs will be 0
                     removeVoxels();  // failed the test so remove all the bots (causes sim to end)
                 }
             }
@@ -578,13 +578,17 @@ __device__ bool VX3_VoxelyzeKernel::EarlyStopIfNoBotsRemain() {
 }
 
 // sam:
-__device__ void VX3_VoxelyzeKernel::replenishMaterial(int start, int end, int step, int mat, int height) {
+__device__ void VX3_VoxelyzeKernel::replenishMaterial(int start, int end, int step, int mat, int height, bool secondLevel) {
     // TODO: make this a material attribute, replenish at initialized position.
     for (int x = start; x < end; x+=step) {
         for (int y = start; y < end; y+=step) {
-            for (int z = 0; z < height; z++) {
-                addVoxel(x, y, z, mat);
+            if (secondLevel){ 
+                addVoxel(x+1, y+1, height/2, mat);
             }
+            addVoxel(x, y, height, mat);
+            // for (int z = 0; z < height; z++) {
+            //     addVoxel(x, y, z, mat);
+            // }
         }
     }
 }

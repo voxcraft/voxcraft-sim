@@ -390,6 +390,8 @@ void CVX_Sim::CopyMat(CVXC_Material *pOld, CVX_Material *pNew) // copies paramet
     pNew->Buoyancy = (double)pOld->Buoyancy;  // sam
     pNew->EndSimIfCompletelyRemoved = (bool)pOld->EndSimIfCompletelyRemoved;  // sam
 
+    pNew->FailStressAddedStrengthPerNeighbor = (float)pOld->FailStressAddedStrengthPerNeighbor;  // sam
+
     pNew->setName(pOld->GetName().c_str());
     pNew->setColor(pOld->GetRedi(), pOld->GetGreeni(), pOld->GetBluei(), pOld->GetAlphai());
     switch (pOld->GetMatModel()) {

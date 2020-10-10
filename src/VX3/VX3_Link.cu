@@ -67,7 +67,24 @@ __device__ float VX3_Link::axialStrain(bool positiveEnd) const {
 
 __device__ bool VX3_Link::isYielded() const { return mat->isYielded(maxStrain); }
 
-__device__ bool VX3_Link::isFailed() const { return mat->isFailed(maxStrain); }
+__device__ bool VX3_Link::isFailed() const {
+    
+    // sam: If this tag is zero then just see if the link exceeds the maxStrain.
+    //      The link will break isFailed and MatModel == 1 (MDL_LINEAR_FAIL).
+    if (mat->FailStressAddedStrengthPerNeighbor == 0.0f) 
+        return mat->isFailed(maxStrain);
+
+    // sam:
+    // count the neighbors of the two voxels connected by this link
+    float numNeighbors = 1;
+    for (int i = 0; i < 6; i++) {
+        if (pVNeg->links[i] && (pVNeg->links[i] != this)) numNeighbors += 1;
+        if (pVPos->links[i] && (pVPos->links[i] != this)) numNeighbors += 1;
+    }
+    // beam strength is proportional to number of neighbors:
+    float additionalStrength = numNeighbors * mat->FailStressAddedStrengthPerNeighbor;
+    return mat->isFailed(maxStrain, additionalStrength);  // strain>epsilonFail*additionalStrength
+}
 
 __device__ void VX3_Link::updateRestLength() {
     // update rest length according to temperature of both end

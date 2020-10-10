@@ -486,6 +486,7 @@ public:
 	double WaterLevel = 0; // sam
 	double Buoyancy = 0;  // sam
 	int EndSimIfCompletelyRemoved = 0; // sam
+	float FailStressAddedStrengthPerNeighbor = 0; // sam
 	vfloat Density, Elastic_Mod, Yield_Stress, Plastic_Mod, Fail_Stress, Fail_Strain, Poissons_Ratio, CTE, CurMaterialTemp, MaterialTempPhase, uStatic, uDynamic;
 	std::vector<vfloat> DStress, DStrain; //arbitrary stress/strain values for material model (in tension only for now)
 

@@ -56,7 +56,7 @@ class VX3_VoxelyzeKernel {
     __device__ void removeVoxels();
     __device__ void InitializeCenterOfMass();
     __device__ bool EarlyStopIfNoBotsRemain(); // sam
-    __device__ void replenishMaterial(int start, int end, int step, int mat, int height); // sam
+    __device__ void replenishMaterial(int start, int end, int step, int mat, int height, bool secondLevel); // sam
     __device__ void convertMatIfSmallBody(int mat1, int mat2, int minSizeToConvert); // sam
     __device__ void convertMatIfLargeBody(int mat1, int mat2); // sam
 
@@ -204,6 +204,7 @@ class VX3_VoxelyzeKernel {
     int SpaceBetweenDebris = 2;
     int DebrisMat = 2;
     int DebrisHeight = 1;
+    bool HighDebrisConcentration = false;
     double ReinitializeInitialPositionAfterThisManySeconds = 0.0;
     double SettleTimeBeforeNextRoundOfReplication = 0.0;  // sam
     bool InitialPositionReinitialized = true;  // sam

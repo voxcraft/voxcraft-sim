@@ -247,7 +247,7 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
         }
     }
 
-    if (relativeRotation.w > 0.866 || hasSingleton || d_kernel->ForceAttachment) // within 30 degree
+    if (relativeRotation.w > 0.866 || hasSingleton || d_kernel->ForceAttachment ) // 0.866 is within 30 degree
     {
         VX3_Vec3D<> raw_pos = voxel_remote->position() - voxel_host->position();
         VX3_Vec3D<> pos = voxel_host->orientation().RotateVec3DInv(raw_pos); // the position of remote voxel relative to host voxel.
