@@ -583,7 +583,7 @@ __device__ void VX3_VoxelyzeKernel::replenishMaterial(int start, int end, int st
     for (int x = start; x < end; x+=step) {
         for (int y = start; y < end; y+=step) {
             if (secondLevel){ 
-                addVoxel(x+1, y+1, height/2, mat);
+                addVoxel(x+1, y+1, int(floor(double(height/2))), mat);
             }
             addVoxel(x, y, height, mat);
             // for (int z = 0; z < height; z++) {

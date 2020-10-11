@@ -21,7 +21,7 @@ SWARM_SIZE = 2**2  # this should be a perfect square: 4, 9, 16, 25, etc.
 ROWS = int(np.sqrt(SWARM_SIZE))
 spacing_between_bodies = (wx - bx*ROWS) / (ROWS+1)
 
-MIN_BOT_SIZE = 32#16  # 64
+MIN_BOT_SIZE = 64 #16
 EVAL_PERIOD = 4  # 4
 SETTLE_TIME = 0.5  # 0.5
 

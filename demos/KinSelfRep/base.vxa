@@ -96,10 +96,10 @@
                     <isTarget>0</isTarget>
                     <RemoveFromSimulationAfterThisManySeconds>0.01</RemoveFromSimulationAfterThisManySeconds><!--need to redo this logic-->
                     <EndSimIfCompletelyRemoved>1</EndSimIfCompletelyRemoved>
-                    <WaterLevel>6</WaterLevel>
+                    <WaterLevel>10</WaterLevel>
                     <Buoyancy>1</Buoyancy>
                     <Cilia>0.15</Cilia>
-                    <LockZ>0</LockZ>
+                    <LockZ>1</LockZ>
                     <MatModel>0</MatModel><!--0 = no failing-->
                     <Elastic_Mod>5e+04</Elastic_Mod>
                     <Fail_Stress>0</Fail_Stress>
@@ -123,7 +123,7 @@
                     <isMeasured>1</isMeasured>
                     <isTarget>1</isTarget>
                     <Sticky>1</Sticky>
-                    <WaterLevel>6</WaterLevel>
+                    <WaterLevel>5</WaterLevel>
                     <Buoyancy>1</Buoyancy>
                     <Cilia>0</Cilia>
                     <MatModel>0</MatModel><!--1=MDL_LINEAR_FAIL-->

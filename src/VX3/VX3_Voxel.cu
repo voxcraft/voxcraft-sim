@@ -457,7 +457,8 @@ __device__ VX3_Vec3D<double> VX3_Voxel::moment() {
 
     // sam
     if (mat->LockZ) { 
-        totalMoment.z = 0;
+        totalMoment.x = 0;
+        totalMoment.y = 0;
     }
 
     return totalMoment;
