@@ -420,6 +420,8 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
     totalForce += CiliaForce * mat->Cilia;
     CiliaForce.clear();
 
+    totalForce += 100 * InwardForce / d_kernel->voxSize;  // sam: todo: tag
+
     // sam
     if ( (mat->WaterLevel > 0) and (pos.z >= mat->WaterLevel*d_kernel->voxSize) ) { 
         double adjustment = pos.z / d_kernel->voxSize - mat->WaterLevel;
@@ -434,6 +436,7 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
 
     // sam
     if (mat->LockZ) { 
+        totalForce += velocity() * 0.9*mat->globalDampingTranslateC(); // todo: tag
         totalForce.z = 0;
     }
 
@@ -457,6 +460,7 @@ __device__ VX3_Vec3D<double> VX3_Voxel::moment() {
 
     // sam
     if (mat->LockZ) { 
+        totalMoment -= angularVelocity() * 0.9 * mat->globalDampingRotateC();  // todo: tag
         totalMoment.x = 0;
         totalMoment.y = 0;
     }

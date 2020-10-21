@@ -65,6 +65,8 @@ class VX3_VoxelyzeKernel {
     __device__ void computeNumRealLinks(); // sam
 
     __device__ void computeLargestStickyGroupSize(); // sam
+
+    __device__ void BreakWeakLinks(double seed, double currentTime); // sam
     
     __device__ void reInitAllGroups(); // sam
 
@@ -183,6 +185,9 @@ class VX3_VoxelyzeKernel {
     bool isSurfaceChanged=false;
     double MaxDistInVoxelLengthsToCountAsPair=0.0;
 
+    bool ComputeLargestSitckyGroupForFirstRound = false; // sam
+    bool firstRound = true; // sam
+
     //Spatial Hash
     //index all surface voxels into grid, so we only need to compare neighbor grids for detecting collision
     //dx,dy,dz width height of one single grid. must larger than collision watch distance.
@@ -209,6 +214,10 @@ class VX3_VoxelyzeKernel {
     double SettleTimeBeforeNextRoundOfReplication = 0.0;  // sam
     bool InitialPositionReinitialized = true;  // sam
     int MinimumBotSize = 2; // sam
+    double DetachStringyBodiesEvery = 0; // sam
+    int nonStickyTimeAfterStringyBodyDetach = 0; // sam
+    double lastDetachStringyBodiesTime = 0.0; // sam
+    double DetachProbability = 0.0; // sam
 
     double lastReplicationTime = 0.0; // sam
     double lastBrownianUpdateTime = 0.0; // sam

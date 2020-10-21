@@ -250,9 +250,13 @@ public:
     VX3_Vec3D<> shiftCiliaForce;
     VX3_Vec3D<> CiliaForce;
 
+    VX3_Vec3D<> InwardForce;  // sam
+
     // double randCiliaCoef = 1.0; // sam
 
     bool enableAttach = true;
+
+    double nonStickTimer = 0.0;
 
     VX3_dQueue<VX3_Signal *> d_signals;
     VX3_Signal d_signal;
@@ -264,6 +268,8 @@ public:
     // for Secondary Experiment
     bool removed = false;
     bool isMeasured = true;
+
+    bool weakLink = false;  // sam
 
     VX3_VoxelGroup *d_group = NULL;
     VX3_Vec3D<int> groupPosition;

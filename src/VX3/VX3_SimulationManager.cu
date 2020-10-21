@@ -487,6 +487,7 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         h_d_tmp.RandomSeed = pt_merged.get<double>("VXA.Simulator.RandomSeed", 0);  // sam
         h_d_tmp.EnableSignals = pt_merged.get<int>("VXA.Simulator.EnableSignals", 0);
         h_d_tmp.ReplenishDebrisEvery = pt_merged.get<double>("VXA.Simulator.ReplenishDebrisEvery", 0);  // sam
+        h_d_tmp.ComputeLargestSitckyGroupForFirstRound = pt_merged.get<bool>("VXA.Simulator.ComputeLargestSitckyGroupForFirstRound", false);  // sam
 
         h_d_tmp.VerboseMode = pt_merged.get<bool>("VXA.Simulator.ThoroughTest.VerboseMode", false); // sam: off by default
         h_d_tmp.SkipThoroughTest = pt_merged.get<bool>("VXA.Simulator.ThoroughTest.SkipTest", true);
@@ -501,6 +502,9 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         h_d_tmp.DebrisMat = pt_merged.get<int>("VXA.Simulator.DebrisMat", 2);  // sam
         h_d_tmp.DebrisHeight = pt_merged.get<int>("VXA.Simulator.DebrisHeight", 1);  // sam
         h_d_tmp.HighDebrisConcentration = pt_merged.get<bool>("VXA.Simulator.HighDebrisConcentration", true);  // sam
+        h_d_tmp.DetachStringyBodiesEvery = pt_merged.get<double>("VXA.Simulator.DetachStringyBodiesEvery", 0);  // sam
+        h_d_tmp.nonStickyTimeAfterStringyBodyDetach = pt_merged.get<double>("VXA.Simulator.nonStickyTimefterStringyBodyDetach", 0);  // sam
+        h_d_tmp.DetachProbability = pt_merged.get<double>("VXA.Simulator.DetachProbability", 0);  // sam
         
         h_d_tmp.ReinitializeInitialPositionAfterThisManySeconds = pt_merged.get<double>("VXA.Simulator.ReinitializeInitialPositionAfterThisManySeconds", 0.0);
         h_d_tmp.SettleTimeBeforeNextRoundOfReplication = pt_merged.get<double>("VXA.Simulator.SettleTimeBeforeNextRoundOfReplication", 0.0); // sam

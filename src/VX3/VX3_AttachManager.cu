@@ -20,6 +20,10 @@ __device__ bool VX3_AttachManager::attachWhileCollide(VX3_Voxel *voxel1, VX3_Vox
     if (!voxel1->mat->sticky)
         return false;
 
+    // sam:
+    if (voxel1->nonStickTimer > d_kernel->currentTime || voxel2->nonStickTimer > d_kernel->currentTime)
+        return false;
+
     // Check VoxelGroup map for compatible
     int linkdir_1, linkdir_2;
 

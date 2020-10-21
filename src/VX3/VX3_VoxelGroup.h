@@ -37,6 +37,8 @@ public:
     // No need to rebuild in the same timestep.
     double lastBuildTime; // time of the simulation in seconds
 
+    double CoM; // sam
+
 
 };
 

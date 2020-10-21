@@ -21,6 +21,7 @@ __global__ void gpu_update_sync_collisions(VX3_Voxel **surface_voxels, int num, 
 __global__ void gpu_update_attach(VX3_Voxel **surface_voxels, int num, double watchDistance, VX3_VoxelyzeKernel *k);
 __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k);
 __global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, int WorldSize, double seed, double currentTime, VX3_VoxelyzeKernel *k);  // sam
+__global__ void gpu_find_weak_links(VX3_Voxel **surface_voxels, int num, int MinimumBotSize, VX3_VoxelyzeKernel *k);  // sam
 __global__ void gpu_clear_lookupgrid(VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid, int num);
 __global__ void gpu_insert_lookupgrid(VX3_Voxel **d_surface_voxels, int num, VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid,
                                       VX3_Vec3D<> *gridLowerBound, VX3_Vec3D<> *gridDelta, int lookupGrid_n);
@@ -402,6 +403,24 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
         computeLargestStickyGroupSize();
     }
 
+    // sam:
+    if (DetachStringyBodiesEvery > 0) {
+
+        if (currentTime >= lastDetachStringyBodiesTime + DetachStringyBodiesEvery) {
+            cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_find_weak_links, 0, num_d_surface_voxels);
+            int gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
+            int blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
+            gpu_find_weak_links<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, MinimumBotSize, this);
+            CUDA_CHECK_AFTER_CALL();
+            VcudaDeviceSynchronize();
+
+            if (InitialPositionReinitialized) {
+                BreakWeakLinks(RandomSeed, currentTime);
+            }
+            lastDetachStringyBodiesTime = currentTime;
+        }
+    }
+
     if (EnableSurfaceGrowth) {
         if (currentTime>=SurfaceGrowth_activeTime) {
             SurfaceGrowth_activeTime = currentTime + SurfaceGrowth_Interval;
@@ -473,7 +492,15 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
                 // reInitAllGroups();  // EXTREME
 
                 computeTargetCloseness(); // in case no bots remain and sim ends
-                computeLargestStickyGroupSize();
+
+                if (ComputeLargestSitckyGroupForFirstRound){
+                    if (firstRound){
+                        computeLargestStickyGroupSize();
+                        firstRound = false;
+                    }
+                } else{
+                    computeLargestStickyGroupSize();
+                }
                 
                 convertMatIfSmallBody(1, 0, 2);   // convert small mat1 bodies>1 to mat0; flags material as not yet removed
                 removeVoxels();  // remove bots and newly converted small mat 0 bodies
@@ -520,6 +547,29 @@ __device__ void VX3_VoxelyzeKernel::InitializeCenterOfMass() {
     initialCenterOfMass = currentCenterOfMass;
 }
 
+
+// sam:
+__device__ void VX3_VoxelyzeKernel::BreakWeakLinks(double seed, double currentTime) {
+
+    curandState state;
+    curand_init(seed + currentTime, 0, 0, &state);  // seed, sequence number (in a loop this can be 0), offset, state
+
+    for (int i = 0; i < num_d_surface_voxels; i++) {
+
+        if (d_surface_voxels[i]->removed)
+            continue;
+        if (d_surface_voxels[i]->mat->Cilia != 0)
+            continue;
+        if (d_surface_voxels[i]->d_group->d_voxels.size() < MinimumBotSize)
+            continue;
+
+        if (d_surface_voxels[i]->weakLink && curand_uniform(&state)-1 < DetachProbability) {           
+            d_voxels_to_detach.push_back(d_surface_voxels[i]);
+            isSurfaceChanged = true;
+        }
+
+    }
+}
 
 
 // sam:
@@ -583,7 +633,7 @@ __device__ void VX3_VoxelyzeKernel::replenishMaterial(int start, int end, int st
     for (int x = start; x < end; x+=step) {
         for (int y = start; y < end; y+=step) {
             if (secondLevel){ 
-                addVoxel(x+1, y+1, int(floor(double(height/2))), mat);
+                addVoxel(x+step/2, y+step/2, height/2, mat);
             }
             addVoxel(x, y, height, mat);
             // for (int z = 0; z < height; z++) {
@@ -1145,20 +1195,24 @@ __global__ void gpu_update_voxels(VX3_Voxel *voxels, int num, double dt, double 
         } else if (t->pos.z > k->gridUpperBound.z) {
             k->gridUpperBound.z = t->pos.z;
         }
-        // update sticky status
-        t->enableAttach = false;
-        if (VX3_MathTree::eval(t->pos.x, t->pos.y, t->pos.z, k->collisionCount, currentTime, k->recentAngle, k->targetCloseness,
-                               k->numClosePairs, k->num_d_voxels, k->AttachCondition[0]) > 0 &&
-            VX3_MathTree::eval(t->pos.x, t->pos.y, t->pos.z, k->collisionCount, currentTime, k->recentAngle, k->targetCloseness,
-                               k->numClosePairs, k->num_d_voxels, k->AttachCondition[1]) > 0 &&
-            VX3_MathTree::eval(t->pos.x, t->pos.y, t->pos.z, k->collisionCount, currentTime, k->recentAngle, k->targetCloseness,
-                               k->numClosePairs, k->num_d_voxels, k->AttachCondition[2]) > 0 &&
-            VX3_MathTree::eval(t->pos.x, t->pos.y, t->pos.z, k->collisionCount, currentTime, k->recentAngle, k->targetCloseness,
-                               k->numClosePairs, k->num_d_voxels, k->AttachCondition[3]) > 0 &&
-            VX3_MathTree::eval(t->pos.x, t->pos.y, t->pos.z, k->collisionCount, currentTime, k->recentAngle, k->targetCloseness,
-                               k->numClosePairs, k->num_d_voxels, k->AttachCondition[4]) > 0) {
-            t->enableAttach = true;
-        };
+
+        if (false){
+            // update sticky status
+            t->enableAttach = false;
+            if (VX3_MathTree::eval(t->pos.x, t->pos.y, t->pos.z, k->collisionCount, currentTime, k->recentAngle, k->targetCloseness,
+                                k->numClosePairs, k->num_d_voxels, k->AttachCondition[0]) > 0 &&
+                VX3_MathTree::eval(t->pos.x, t->pos.y, t->pos.z, k->collisionCount, currentTime, k->recentAngle, k->targetCloseness,
+                                k->numClosePairs, k->num_d_voxels, k->AttachCondition[1]) > 0 &&
+                VX3_MathTree::eval(t->pos.x, t->pos.y, t->pos.z, k->collisionCount, currentTime, k->recentAngle, k->targetCloseness,
+                                k->numClosePairs, k->num_d_voxels, k->AttachCondition[2]) > 0 &&
+                VX3_MathTree::eval(t->pos.x, t->pos.y, t->pos.z, k->collisionCount, currentTime, k->recentAngle, k->targetCloseness,
+                                k->numClosePairs, k->num_d_voxels, k->AttachCondition[3]) > 0 &&
+                VX3_MathTree::eval(t->pos.x, t->pos.y, t->pos.z, k->collisionCount, currentTime, k->recentAngle, k->targetCloseness,
+                                k->numClosePairs, k->num_d_voxels, k->AttachCondition[4]) > 0) {
+                t->enableAttach = true;
+            };
+        }
+
     }
 }
 
@@ -1379,6 +1433,50 @@ __global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, 
         // surface_voxels[index]->randCiliaCoef = curand_uniform(&state);
         surface_voxels[index]->baseCiliaForce.x = 2*curand_uniform(&state)-1;
         surface_voxels[index]->baseCiliaForce.y = 2*curand_uniform(&state)-1;
+    }
+}
+
+// sam:
+__global__ void gpu_find_weak_links(VX3_Voxel **surface_voxels, int num, int MinimumBotSize, VX3_VoxelyzeKernel *k) {
+    int index = threadIdx.x + blockIdx.x * blockDim.x;
+    if (index < num) {
+        if (surface_voxels[index]->mat->fixed)
+            return;
+        if (surface_voxels[index]->removed)
+            return;
+        if (surface_voxels[index]->mat->Cilia != 0)
+            return;
+
+        surface_voxels[index]->weakLink = false;
+        surface_voxels[index]->InwardForce =  VX3_Vec3D<>();
+        surface_voxels[index]->enableAttach = true;
+
+        if (surface_voxels[index]->d_group->d_voxels.size() < MinimumBotSize)
+            return;
+        
+        int numNeigh = 0;
+        for (int k = 0; k < 6; k++) {
+            if (surface_voxels[index]->links[k])
+                numNeigh++;
+                if (numNeigh > 2)  // voxels with 3 or more links are strong
+                    break;  // stop checking links 
+        }
+        if (numNeigh == 1 || numNeigh == 2) {
+            surface_voxels[index]->weakLink = true;  // voxels with 1 or 2 links are weak
+            surface_voxels[index]->enableAttach = false;
+
+            VX3_Vec3D<double> TotalPosition;
+            int thisSize = surface_voxels[index]->d_group->d_voxels.size();
+            for (int j = 0; j < thisSize; j++) {
+                if (surface_voxels[index]->d_group->d_voxels[j]->removed)
+                    continue;  // next voxel
+                TotalPosition += surface_voxels[index]->pos;
+            }
+            TotalPosition /= thisSize;
+
+            surface_voxels[index]->InwardForce = surface_voxels[index]->pos - TotalPosition;  // send toward center of group
+
+        }
     }
 }
 
