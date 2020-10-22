@@ -251,6 +251,7 @@ public:
     VX3_Vec3D<> CiliaForce;
 
     VX3_Vec3D<> InwardForce;  // sam
+    VX3_Vec3D<> groupCoM;  // sam
 
     // double randCiliaCoef = 1.0; // sam
 

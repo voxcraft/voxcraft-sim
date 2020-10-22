@@ -420,7 +420,9 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
     totalForce += CiliaForce * mat->Cilia;
     CiliaForce.clear();
 
-    totalForce += 100 * InwardForce / d_kernel->voxSize;  // sam: todo: tag
+    // // sam: todo: this doesn't work:
+    // if (weakLink && !enableAttach)  // is broken weak link
+    //     totalForce += 1.0 * (pos - groupCoM);  // sam: todo: tag
 
     // sam
     if ( (mat->WaterLevel > 0) and (pos.z >= mat->WaterLevel*d_kernel->voxSize) ) { 

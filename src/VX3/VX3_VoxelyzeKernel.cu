@@ -556,15 +556,20 @@ __device__ void VX3_VoxelyzeKernel::BreakWeakLinks(double seed, double currentTi
 
     for (int i = 0; i < num_d_surface_voxels; i++) {
 
+        if (d_surface_voxels[i]->mat->fixed)
+            continue;
         if (d_surface_voxels[i]->removed)
             continue;
         if (d_surface_voxels[i]->mat->Cilia != 0)
             continue;
-        if (d_surface_voxels[i]->d_group->d_voxels.size() < MinimumBotSize)
-            continue;
+        // if (d_surface_voxels[i]->d_group->d_voxels.size() < MinimumBotSize)
+        //     continue;
 
-        if (d_surface_voxels[i]->weakLink && curand_uniform(&state)-1 < DetachProbability) {           
+        int groupSize = d_surface_voxels[i]->d_group->d_voxels.size();
+
+        if (d_surface_voxels[i]->weakLink && curand_uniform(&state) < DetachProbability*groupSize) {           
             d_voxels_to_detach.push_back(d_surface_voxels[i]);
+            d_surface_voxels[i]->enableAttach = false;
             isSurfaceChanged = true;
         }
 
@@ -576,6 +581,9 @@ __device__ void VX3_VoxelyzeKernel::BreakWeakLinks(double seed, double currentTi
 __device__ void VX3_VoxelyzeKernel::computeLargestStickyGroupSize() {
     largestStickyGroupSize = 0;
     for (int i = 0; i < d_voxelgroups.size(); i++) {
+
+        if (d_voxelgroups[i]->removed)
+            continue;
         
         int thisSize = d_voxelgroups[i]->d_voxels.size();
         bool sticky = d_voxelgroups[i]->d_voxels[0]->mat->sticky;
@@ -1448,33 +1456,47 @@ __global__ void gpu_find_weak_links(VX3_Voxel **surface_voxels, int num, int Min
             return;
 
         surface_voxels[index]->weakLink = false;
-        surface_voxels[index]->InwardForce =  VX3_Vec3D<>();
+        surface_voxels[index]->groupCoM.clear();
         surface_voxels[index]->enableAttach = true;
 
-        if (surface_voxels[index]->d_group->d_voxels.size() < MinimumBotSize)
-            return;
+        // if (surface_voxels[index]->d_group->d_voxels.size() < MinimumBotSize)
+        //     return;
         
         int numNeigh = 0;
+        bool middleVoxel = false;
         for (int k = 0; k < 6; k++) {
-            if (surface_voxels[index]->links[k])
+            
+            if (surface_voxels[index]->links[k]) {
                 numNeigh++;
-                if (numNeigh > 2)  // voxels with 3 or more links are strong
-                    break;  // stop checking links 
-        }
-        if (numNeigh == 1 || numNeigh == 2) {
-            surface_voxels[index]->weakLink = true;  // voxels with 1 or 2 links are weak
-            surface_voxels[index]->enableAttach = false;
 
-            VX3_Vec3D<double> TotalPosition;
-            int thisSize = surface_voxels[index]->d_group->d_voxels.size();
-            for (int j = 0; j < thisSize; j++) {
-                if (surface_voxels[index]->d_group->d_voxels[j]->removed)
-                    continue;  // next voxel
-                TotalPosition += surface_voxels[index]->pos;
+                if (surface_voxels[index]->links[oppositeDirection(k)])
+                    middleVoxel = true;
             }
-            TotalPosition /= thisSize;
+            if (numNeigh > 2)  // voxels with 3 or more links are not weak
+                break;  // stop checking links 
+        }
 
-            surface_voxels[index]->InwardForce = surface_voxels[index]->pos - TotalPosition;  // send toward center of group
+        if ( (numNeigh == 1) || (numNeigh == 2 && middleVoxel) ) {
+
+            surface_voxels[index]->weakLink = true;
+
+            // another function that takes all the detached voxels and attaches them somewhere on the body
+
+            // surface_voxels[index]->enableAttach = false;  // brought to outer loop conditional
+
+            // VX3_Vec3D<> TotalPosition;
+            // int trueSize = 0;
+            // int thisSize = surface_voxels[index]->d_group->d_voxels.size();
+            // for (int j = 0; j < thisSize; j++) {
+            //     if (surface_voxels[index]->d_group->d_voxels[j]->removed)
+            //         continue;  // next voxel
+            //     TotalPosition += surface_voxels[index]->pos;
+            //     trueSize++;
+            // }
+            // TotalPosition -= surface_voxels[index]->pos;  // want center of rest of the group
+            // TotalPosition /= trueSize-1;
+
+            // surface_voxels[index]->groupCoM = TotalPosition;  // send toward center of group
 
         }
     }
