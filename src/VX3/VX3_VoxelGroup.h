@@ -37,9 +37,6 @@ public:
     // No need to rebuild in the same timestep.
     double lastBuildTime; // time of the simulation in seconds
 
-    double CoM; // sam
-
-
 };
 
 #endif // VX3_VOXELGROUP_H

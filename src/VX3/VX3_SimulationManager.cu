@@ -503,7 +503,7 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         h_d_tmp.DebrisHeight = pt_merged.get<int>("VXA.Simulator.DebrisHeight", 1);  // sam
         h_d_tmp.HighDebrisConcentration = pt_merged.get<bool>("VXA.Simulator.HighDebrisConcentration", true);  // sam
         h_d_tmp.DetachStringyBodiesEvery = pt_merged.get<double>("VXA.Simulator.DetachStringyBodiesEvery", 0);  // sam
-        h_d_tmp.nonStickyTimeAfterStringyBodyDetach = pt_merged.get<double>("VXA.Simulator.nonStickyTimefterStringyBodyDetach", 0);  // sam
+        h_d_tmp.nonStickyTimeAfterStringyBodyDetach = pt_merged.get<double>("VXA.Simulator.nonStickyTimeAfterStringyBodyDetach", 0);  // sam
         h_d_tmp.DetachProbability = pt_merged.get<double>("VXA.Simulator.DetachProbability", 0);  // sam
         
         h_d_tmp.ReinitializeInitialPositionAfterThisManySeconds = pt_merged.get<double>("VXA.Simulator.ReinitializeInitialPositionAfterThisManySeconds", 0.0);

@@ -21,7 +21,7 @@ __global__ void gpu_update_sync_collisions(VX3_Voxel **surface_voxels, int num, 
 __global__ void gpu_update_attach(VX3_Voxel **surface_voxels, int num, double watchDistance, VX3_VoxelyzeKernel *k);
 __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k);
 __global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, int WorldSize, double seed, double currentTime, VX3_VoxelyzeKernel *k);  // sam
-__global__ void gpu_find_weak_links(VX3_Voxel **surface_voxels, int num, int MinimumBotSize, VX3_VoxelyzeKernel *k);  // sam
+__global__ void gpu_handle_weak_links(VX3_Voxel **surface_voxels, int num, int WorldSize, double seed, double currentTime, VX3_VoxelyzeKernel *k);  // sam
 __global__ void gpu_clear_lookupgrid(VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid, int num);
 __global__ void gpu_insert_lookupgrid(VX3_Voxel **d_surface_voxels, int num, VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid,
                                       VX3_Vec3D<> *gridLowerBound, VX3_Vec3D<> *gridDelta, int lookupGrid_n);
@@ -407,16 +407,15 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
     if (DetachStringyBodiesEvery > 0) {
 
         if (currentTime >= lastDetachStringyBodiesTime + DetachStringyBodiesEvery) {
-            cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_find_weak_links, 0, num_d_surface_voxels);
+            cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_handle_weak_links, 0, num_d_surface_voxels);
             int gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
             int blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
-            gpu_find_weak_links<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, MinimumBotSize, this);
+            gpu_handle_weak_links<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, WorldSize, RandomSeed, currentTime, this);
             CUDA_CHECK_AFTER_CALL();
             VcudaDeviceSynchronize();
 
-            if (InitialPositionReinitialized) {
-                BreakWeakLinks(RandomSeed, currentTime);
-            }
+            // if (InitialPositionReinitialized)
+            BreakWeakLinks(RandomSeed, currentTime);
             lastDetachStringyBodiesTime = currentTime;
         }
     }
@@ -510,6 +509,16 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
             // Transition period
             if (!InitialPositionReinitialized) {
                 // do stuff here before next round
+                for (int i=0;i<num_d_voxels;i++) {
+                    if (d_voxels[i].mat->fixed)
+                        continue;
+                    if (d_voxels[i].removed)
+                        continue;
+                    if (d_voxels[i].mat->Cilia != 0)
+                        continue;
+                    d_voxels->targetPos.clear();
+                }
+                // todo:
                 // push debris to ground?
                 // vary gravity in a concave function returning to normal
             }
@@ -562,14 +571,16 @@ __device__ void VX3_VoxelyzeKernel::BreakWeakLinks(double seed, double currentTi
             continue;
         if (d_surface_voxels[i]->mat->Cilia != 0)
             continue;
-        // if (d_surface_voxels[i]->d_group->d_voxels.size() < MinimumBotSize)
-        //     continue;
+        if (!d_surface_voxels[i]->weakLink)
+            continue;
 
         int groupSize = d_surface_voxels[i]->d_group->d_voxels.size();
 
-        if (d_surface_voxels[i]->weakLink && curand_uniform(&state) < DetachProbability*groupSize) {           
+        if ( (d_surface_voxels[i]->weakLink) && (curand_uniform(&state) < DetachProbability * groupSize) ) {           
             d_voxels_to_detach.push_back(d_surface_voxels[i]);
             d_surface_voxels[i]->enableAttach = false;
+            d_surface_voxels[i]->weakLink = false;
+            d_surface_voxels[i]->nonStickTimer = currentTime + nonStickyTimeAfterStringyBodyDetach;
             isSurfaceChanged = true;
         }
 
@@ -1445,60 +1456,76 @@ __global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, 
 }
 
 // sam:
-__global__ void gpu_find_weak_links(VX3_Voxel **surface_voxels, int num, int MinimumBotSize, VX3_VoxelyzeKernel *k) {
+__global__ void gpu_handle_weak_links(VX3_Voxel **surface_voxels, int num, int WorldSize, double seed, double currentTime, VX3_VoxelyzeKernel *k) {
     int index = threadIdx.x + blockIdx.x * blockDim.x;
+
+    VX3_Voxel *v = surface_voxels[index];
+
     if (index < num) {
-        if (surface_voxels[index]->mat->fixed)
+        if (v->mat->fixed)
             return;
-        if (surface_voxels[index]->removed)
+        if (v->removed)
             return;
-        if (surface_voxels[index]->mat->Cilia != 0)
+        if (v->mat->Cilia != 0)
             return;
+        if (currentTime < v->nonStickTimer) {
+            v->nonStickyTimeRemaining = v->nonStickTimer - currentTime;
+            return;
+        }
 
-        surface_voxels[index]->weakLink = false;
-        surface_voxels[index]->groupCoM.clear();
-        surface_voxels[index]->enableAttach = true;
+        // randomize according to seed, timestep and original position in the grid
+        int ix = v->indexX();
+        int iy = v->indexY();
+        int iz = v->indexZ();
+        int randIndex = ix + WorldSize*iy + WorldSize*WorldSize*iz;
 
-        // if (surface_voxels[index]->d_group->d_voxels.size() < MinimumBotSize)
-        //     return;
-        
-        int numNeigh = 0;
-        bool middleVoxel = false;
+        curandState state;
+        curand_init(seed + currentTime, randIndex, 0, &state);
+
+        v->weakLink = false;
+        v->enableAttach = true;
+
+        for (int k=0; k<6; k++)
+            v->free_slots[k].clear();
+
+        v->numNeigh = 0;
+        // v->middleVoxel = false;
+        v->numEmptySlots = 0;
         for (int k = 0; k < 6; k++) {
-            
-            if (surface_voxels[index]->links[k]) {
-                numNeigh++;
-
-                if (surface_voxels[index]->links[oppositeDirection(k)])
-                    middleVoxel = true;
+            if (v->links[k]) {
+                v->numNeigh++;
+                // if (v->links[oppositeDirection(k)])
+                //     v->middleVoxel = true;
             }
-            if (numNeigh > 2)  // voxels with 3 or more links are not weak
-                break;  // stop checking links 
+            else {
+                v->free_slots[v->numEmptySlots] = v->potentialNeighborPosition(k);
+                v->numEmptySlots++;
+            }
         }
 
-        if ( (numNeigh == 1) || (numNeigh == 2 && middleVoxel) ) {
+        // break apart
+        if (v->numNeigh < 3) {
 
-            surface_voxels[index]->weakLink = true;
+            // targetPos.clear();  // happens after re-attach
 
-            // another function that takes all the detached voxels and attaches them somewhere on the body
+            v->weakLink = true;
 
-            // surface_voxels[index]->enableAttach = false;  // brought to outer loop conditional
+            // now go through the group and find somewhere to shoot this voxel to
+            int thisSize = v->d_group->d_voxels.size();
+            for (int j = 0; j < thisSize; j++) {
+                if (v->d_group->d_voxels[j]->removed)
+                    continue;
+                if (v->d_group->d_voxels[j]->weakLink)
+                    continue;
 
-            // VX3_Vec3D<> TotalPosition;
-            // int trueSize = 0;
-            // int thisSize = surface_voxels[index]->d_group->d_voxels.size();
-            // for (int j = 0; j < thisSize; j++) {
-            //     if (surface_voxels[index]->d_group->d_voxels[j]->removed)
-            //         continue;  // next voxel
-            //     TotalPosition += surface_voxels[index]->pos;
-            //     trueSize++;
-            // }
-            // TotalPosition -= surface_voxels[index]->pos;  // want center of rest of the group
-            // TotalPosition /= trueSize-1;
-
-            // surface_voxels[index]->groupCoM = TotalPosition;  // send toward center of group
+                int numSlots = v->d_group->d_voxels[j]->numEmptySlots;
+                int randChoice = numSlots*curand_uniform(&state);
+                if (numSlots > 0)
+                    v->targetPos = v->d_group->d_voxels[j]->free_slots[randChoice];
+            }
 
         }
+
     }
 }
 

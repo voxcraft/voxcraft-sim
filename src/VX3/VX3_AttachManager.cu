@@ -90,6 +90,11 @@ __device__ bool VX3_AttachManager::tryToAttach(VX3_Voxel *voxel1, int linkdir_1,
                     // d_kernel->EnableCilia = false; // for debug: no cilia after attachment.
                     ret = true;
                     totalLinksFormed++;
+                    
+                    // sam:
+                    voxel1->targetPos.clear();
+                    voxel2->targetPos.clear();
+
                 }
             }
         }

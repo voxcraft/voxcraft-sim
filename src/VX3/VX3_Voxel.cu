@@ -318,6 +318,17 @@ __device__ void VX3_Voxel::timeStep(double dt, double currentTime, VX3_VoxelyzeK
         packMaker(currentTime);
         localSignalDecay(currentTime);
     }
+
+
+    // // sam:
+    // if (teleportPos.Length2() > 0) {
+    //     pos = teleportPos;
+    //     // orient = teleportOrient;
+    //     // angMom = VX3_Vec3D<>(0, 0, 0);
+    //     // linMom = VX3_Vec3D<>(0, 0, 0);
+    // }
+
+
 }
 
 __device__ void VX3_Voxel::localSignalDecay(double currentTime) {
@@ -420,9 +431,10 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
     totalForce += CiliaForce * mat->Cilia;
     CiliaForce.clear();
 
-    // // sam: todo: this doesn't work:
-    // if (weakLink && !enableAttach)  // is broken weak link
-    //     totalForce += 1.0 * (pos - groupCoM);  // sam: todo: tag
+    // sam:
+    if (targetPos.Length2() > 0) {
+        totalForce += (targetPos - pos);
+    }
 
     // sam
     if ( (mat->WaterLevel > 0) and (pos.z >= mat->WaterLevel*d_kernel->voxSize) ) { 

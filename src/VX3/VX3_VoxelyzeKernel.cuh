@@ -215,7 +215,7 @@ class VX3_VoxelyzeKernel {
     bool InitialPositionReinitialized = true;  // sam
     int MinimumBotSize = 2; // sam
     double DetachStringyBodiesEvery = 0; // sam
-    int nonStickyTimeAfterStringyBodyDetach = 0; // sam
+    double nonStickyTimeAfterStringyBodyDetach = 0; // sam
     double lastDetachStringyBodiesTime = 0.0; // sam
     double DetachProbability = 0.0; // sam
 
