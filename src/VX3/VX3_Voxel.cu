@@ -432,7 +432,7 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
     CiliaForce.clear();
 
     // sam:
-    if (targetPos.Length2() > 0) {
+    if ( (targetPos.Length2() > 0) && (!weakLink) ) {  // was detached
         totalForce += (targetPos - pos);
     }
 

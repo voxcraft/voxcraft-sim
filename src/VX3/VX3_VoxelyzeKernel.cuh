@@ -66,7 +66,8 @@ class VX3_VoxelyzeKernel {
 
     __device__ void computeLargestStickyGroupSize(); // sam
 
-    __device__ void BreakWeakLinks(double seed, double currentTime); // sam
+    __device__ void FindWeakLinks(); // sam
+    __device__ void BreakWeakLinks(); // sam
     
     __device__ void reInitAllGroups(); // sam
 
@@ -218,6 +219,7 @@ class VX3_VoxelyzeKernel {
     double nonStickyTimeAfterStringyBodyDetach = 0; // sam
     double lastDetachStringyBodiesTime = 0.0; // sam
     double DetachProbability = 0.0; // sam
+    int detachmentMutex = 0; // push_back one voxel to detach at a time
 
     double lastReplicationTime = 0.0; // sam
     double lastBrownianUpdateTime = 0.0; // sam

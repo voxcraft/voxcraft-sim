@@ -255,7 +255,6 @@ public:
     bool enableAttach = true;
 
     double nonStickTimer = 0.0;  // sam
-    double nonStickyTimeRemaining = 0.0;  // sam
 
     VX3_Vec3D<double> free_slots[6]; // sam
     int numEmptySlots = 0; // sam

@@ -20,8 +20,9 @@ __global__ void gpu_update_collision_system_pos_radius(VX3_Voxel **surface_voxel
 __global__ void gpu_update_sync_collisions(VX3_Voxel **surface_voxels, int num, double watchDistance, VX3_VoxelyzeKernel *k);
 __global__ void gpu_update_attach(VX3_Voxel **surface_voxels, int num, double watchDistance, VX3_VoxelyzeKernel *k);
 __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k);
-__global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, int WorldSize, double seed, double currentTime, VX3_VoxelyzeKernel *k);  // sam
-__global__ void gpu_handle_weak_links(VX3_Voxel **surface_voxels, int num, int WorldSize, double seed, double currentTime, VX3_VoxelyzeKernel *k);  // sam
+__global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k);  // sam
+__global__ void gpu_break_weak_links(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k); // sam
+__global__ void gpu_find_weak_links(VX3_Voxel **surface_voxels, int num, double currentTime); // sam
 __global__ void gpu_clear_lookupgrid(VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid, int num);
 __global__ void gpu_insert_lookupgrid(VX3_Voxel **d_surface_voxels, int num, VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid,
                                       VX3_Vec3D<> *gridLowerBound, VX3_Vec3D<> *gridDelta, int lookupGrid_n);
@@ -351,7 +352,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
                 cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_brownian_motion, 0, num_d_surface_voxels);
                 int gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
                 int blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
-                gpu_update_brownian_motion<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, WorldSize, RandomSeed, currentTime, this);
+                gpu_update_brownian_motion<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, this);
                 CUDA_CHECK_AFTER_CALL();
                 VcudaDeviceSynchronize();
 
@@ -405,17 +406,9 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
     // sam:
     if (DetachStringyBodiesEvery > 0) {
-
         if (currentTime >= lastDetachStringyBodiesTime + DetachStringyBodiesEvery) {
-            cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_handle_weak_links, 0, num_d_surface_voxels);
-            int gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
-            int blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
-            gpu_handle_weak_links<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, WorldSize, RandomSeed, currentTime, this);
-            CUDA_CHECK_AFTER_CALL();
-            VcudaDeviceSynchronize();
-
-            // if (InitialPositionReinitialized)
-            BreakWeakLinks(RandomSeed, currentTime);
+            FindWeakLinks();
+            BreakWeakLinks();
             lastDetachStringyBodiesTime = currentTime;
         }
     }
@@ -509,22 +502,17 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
             // Transition period
             if (!InitialPositionReinitialized) {
                 // do stuff here before next round
-                for (int i=0;i<num_d_voxels;i++) {
-                    if (d_voxels[i].mat->fixed)
-                        continue;
-                    if (d_voxels[i].removed)
-                        continue;
-                    if (d_voxels[i].mat->Cilia != 0)
-                        continue;
-                    d_voxels->targetPos.clear();
-                }
-                // todo:
                 // push debris to ground?
                 // vary gravity in a concave function returning to normal
             }
 
             // Step 2: Transform piles into organisms (mat1->mat0)
             if (currentTime >= nextReplicationTime + SettleTimeBeforeNextRoundOfReplication) {
+
+                // clear the inward force
+                for (int i=0;i<num_d_voxels;i++)
+                    d_voxels[i].targetPos.clear();
+
                 if (ReplenishDebrisEvery == 0) {
                     replenishMaterial(2, WorldSize, SpaceBetweenDebris+1, DebrisMat-1, DebrisHeight-1, HighDebrisConcentration);  // replenish just before new filial generation
                 }
@@ -558,33 +546,25 @@ __device__ void VX3_VoxelyzeKernel::InitializeCenterOfMass() {
 
 
 // sam:
-__device__ void VX3_VoxelyzeKernel::BreakWeakLinks(double seed, double currentTime) {
+__device__ void VX3_VoxelyzeKernel::FindWeakLinks() {
+    int minGridSize, blockSize;
+    cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_find_weak_links, 0, num_d_surface_voxels);
+    int gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
+    int blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
+    gpu_find_weak_links<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, currentTime);
+    CUDA_CHECK_AFTER_CALL();
+    VcudaDeviceSynchronize();
+}
 
-    curandState state;
-    curand_init(seed + currentTime, 0, 0, &state);  // seed, sequence number (in a loop this can be 0), offset, state
-
-    for (int i = 0; i < num_d_surface_voxels; i++) {
-
-        if (d_surface_voxels[i]->mat->fixed)
-            continue;
-        if (d_surface_voxels[i]->removed)
-            continue;
-        if (d_surface_voxels[i]->mat->Cilia != 0)
-            continue;
-        if (!d_surface_voxels[i]->weakLink)
-            continue;
-
-        int groupSize = d_surface_voxels[i]->d_group->d_voxels.size();
-
-        if ( (d_surface_voxels[i]->weakLink) && (curand_uniform(&state) < DetachProbability * groupSize) ) {           
-            d_voxels_to_detach.push_back(d_surface_voxels[i]);
-            d_surface_voxels[i]->enableAttach = false;
-            d_surface_voxels[i]->weakLink = false;
-            d_surface_voxels[i]->nonStickTimer = currentTime + nonStickyTimeAfterStringyBodyDetach;
-            isSurfaceChanged = true;
-        }
-
-    }
+// sam:
+__device__ void VX3_VoxelyzeKernel::BreakWeakLinks() {
+    int minGridSize, blockSize;
+    cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_break_weak_links, 0, num_d_surface_voxels);
+    int gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
+    int blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
+    gpu_break_weak_links<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, this);
+    CUDA_CHECK_AFTER_CALL();
+    VcudaDeviceSynchronize();   
 }
 
 
@@ -1430,7 +1410,7 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
 }
 
 // sam:
-__global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, int WorldSize, double seed, double currentTime, VX3_VoxelyzeKernel *k) {
+__global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k) {
     int index = threadIdx.x + blockIdx.x * blockDim.x;
     if (index < num) {
         if (surface_voxels[index]->removed)
@@ -1444,11 +1424,11 @@ __global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, 
         int ix = surface_voxels[index]->indexX();
         int iy = surface_voxels[index]->indexY();
         int iz = surface_voxels[index]->indexZ();
-        int randIndex = ix + WorldSize*iy + WorldSize*WorldSize*iz;
+        int randIndex = ix + k->WorldSize*iy + k->WorldSize*k->WorldSize*iz;
 
         curandState state;
         // curand_init(seed + currentTime, index, 0, &state);
-        curand_init(seed + currentTime, randIndex, 0, &state);
+        curand_init(k->RandomSeed + k->currentTime, randIndex, 0, &state);
         // surface_voxels[index]->randCiliaCoef = curand_uniform(&state);
         surface_voxels[index]->baseCiliaForce.x = 2*curand_uniform(&state)-1;
         surface_voxels[index]->baseCiliaForce.y = 2*curand_uniform(&state)-1;
@@ -1456,9 +1436,9 @@ __global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, 
 }
 
 // sam:
-__global__ void gpu_handle_weak_links(VX3_Voxel **surface_voxels, int num, int WorldSize, double seed, double currentTime, VX3_VoxelyzeKernel *k) {
+__global__ void gpu_find_weak_links(VX3_Voxel **surface_voxels, int num, double currentTime) {
+    
     int index = threadIdx.x + blockIdx.x * blockDim.x;
-
     VX3_Voxel *v = surface_voxels[index];
 
     if (index < num) {
@@ -1468,66 +1448,94 @@ __global__ void gpu_handle_weak_links(VX3_Voxel **surface_voxels, int num, int W
             return;
         if (v->mat->Cilia != 0)
             return;
-        if (currentTime < v->nonStickTimer) {
-            v->nonStickyTimeRemaining = v->nonStickTimer - currentTime;
+        if (currentTime < v->nonStickTimer)
+            return;
+
+        v->weakLink = false;
+        v->enableAttach = true;
+
+        int groupSize = v->d_group->d_voxels.size();
+        if (groupSize < 4) {  // don't break up smaller than a box
             return;
         }
+        if (groupSize <= 8) {  // small cube
+            if (v->numNeigh == 1) v->weakLink = true;
+        }
+        if (groupSize > 8) {
+            if (v->numNeigh == 1 || v->numNeigh == 2) v->weakLink = true;
+        }
+
+        // find the exposed faces on this voxel
+        // so other voxels can be shot here
+        for (int j=0; j<6; j++)
+            v->free_slots[j].clear();
+
+        v->numNeigh = 0;
+        v->numEmptySlots = 0;
+        for (int j = 0; j < 6; j++) {
+            if (v->links[j]) {
+                v->numNeigh++;
+            }
+            else {
+                v->free_slots[v->numEmptySlots] = v->potentialNeighborPosition(j);
+                v->numEmptySlots++;
+            }
+        }
+
+    }
+}
+
+
+// sam:
+__global__ void gpu_break_weak_links(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k) {
+    
+    int index = threadIdx.x + blockIdx.x * blockDim.x;
+    VX3_Voxel *v = surface_voxels[index];
+
+    if (index < num) {
+        if (!v->weakLink)
+            return;
+        if (v->removed)
+            return;
+        if (v->mat->Cilia != 0)
+            return;
 
         // randomize according to seed, timestep and original position in the grid
         int ix = v->indexX();
         int iy = v->indexY();
         int iz = v->indexZ();
-        int randIndex = ix + WorldSize*iy + WorldSize*WorldSize*iz;
+        int randIndex = ix + k->WorldSize*iy + k->WorldSize*k->WorldSize*iz;
 
         curandState state;
-        curand_init(seed + currentTime, randIndex, 0, &state);
+        curand_init(k->RandomSeed + k->currentTime, randIndex, 0, &state);
 
-        v->weakLink = false;
-        v->enableAttach = true;
+        int groupSize = v->d_group->d_voxels.size();
 
-        for (int k=0; k<6; k++)
-            v->free_slots[k].clear();
+        if (curand_uniform(&state) < k->DetachProbability * groupSize) { 
 
-        v->numNeigh = 0;
-        // v->middleVoxel = false;
-        v->numEmptySlots = 0;
-        for (int k = 0; k < 6; k++) {
-            if (v->links[k]) {
-                v->numNeigh++;
-                // if (v->links[oppositeDirection(k)])
-                //     v->middleVoxel = true;
-            }
-            else {
-                v->free_slots[v->numEmptySlots] = v->potentialNeighborPosition(k);
-                v->numEmptySlots++;
+            if (atomicCAS(&k->detachmentMutex, 0, 1) == 0) {
+                // push back and update parameters of voxel to detach
+                k->d_voxels_to_detach.push_back(v);
+                v->enableAttach = false;
+                v->weakLink = false;
+                v->nonStickTimer = k->currentTime + k->nonStickyTimeAfterStringyBodyDetach;
+                k->isSurfaceChanged = true;
+
+                // find another surface voxel in the pile (targetVox)
+                int numGroupSurfVox = v->d_group->d_surface_voxels.size();
+                int randVoxel = numGroupSurfVox*curand_uniform(&state);
+                VX3_Voxel *targetVox = v->d_group->d_surface_voxels[randVoxel];
+                // pick a random face of the targetVox
+                int randSlot = targetVox->numEmptySlots*curand_uniform(&state);
+                // shoot this vox toward target
+                v->targetPos = targetVox->free_slots[randSlot];
+                // unlock for other voxels to detach
+                atomicExch(&k->detachmentMutex, 0);
             }
         }
-
-        // break apart
-        if (v->numNeigh < 3) {
-
-            // targetPos.clear();  // happens after re-attach
-
-            v->weakLink = true;
-
-            // now go through the group and find somewhere to shoot this voxel to
-            int thisSize = v->d_group->d_voxels.size();
-            for (int j = 0; j < thisSize; j++) {
-                if (v->d_group->d_voxels[j]->removed)
-                    continue;
-                if (v->d_group->d_voxels[j]->weakLink)
-                    continue;
-
-                int numSlots = v->d_group->d_voxels[j]->numEmptySlots;
-                int randChoice = numSlots*curand_uniform(&state);
-                if (numSlots > 0)
-                    v->targetPos = v->d_group->d_voxels[j]->free_slots[randChoice];
-            }
-
-        }
-
     }
 }
+
 
 __global__ void gpu_clear_lookupgrid(VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid, int num) {
     int index = threadIdx.x + blockIdx.x * blockDim.x;
