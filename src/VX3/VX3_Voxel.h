@@ -252,6 +252,8 @@ public:
 
     // double randCiliaCoef = 1.0; // sam
 
+    curandState randomState; // sam
+
     bool enableAttach = true;
 
     double nonStickTimer = 0.0;  // sam

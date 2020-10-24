@@ -1417,6 +1417,7 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
     }
 }
 
+
 // sam:
 __global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k) {
     int index = threadIdx.x + blockIdx.x * blockDim.x;
@@ -1426,20 +1427,10 @@ __global__ void gpu_update_brownian_motion(VX3_Voxel **surface_voxels, int num, 
         if (surface_voxels[index]->mat->Cilia == 0)
             return;
         if (surface_voxels[index]->mat->TurnOnCiliaAfterThisManySeconds > k->currentTime)
-            return;
-        
-        // randomize according to seed, timestep and original position in the grid (all of this is repeatable)
-        int ix = surface_voxels[index]->indexX();
-        int iy = surface_voxels[index]->indexY();
-        int iz = surface_voxels[index]->indexZ();
-        int randIndex = ix + k->WorldSize*iy + k->WorldSize*k->WorldSize*iz;
+            return;  
 
-        curandState state;
-        // curand_init(seed + currentTime, index, 0, &state);
-        curand_init(k->RandomSeed + k->currentTime, randIndex, 0, &state);
-        // surface_voxels[index]->randCiliaCoef = curand_uniform(&state);
-        surface_voxels[index]->baseCiliaForce.x = 2*curand_uniform(&state)-1;
-        surface_voxels[index]->baseCiliaForce.y = 2*curand_uniform(&state)-1;
+        surface_voxels[index]->baseCiliaForce.x = 2*curand_uniform(&surface_voxels[index]->randomState)-1;
+        surface_voxels[index]->baseCiliaForce.y = 2*curand_uniform(&surface_voxels[index]->randomState)-1;
     }
 }
 
@@ -1526,18 +1517,18 @@ __global__ void gpu_break_weak_links(VX3_Voxel **surface_voxels, int num, VX3_Vo
         if (v->mat->Cilia != 0)
             return;
 
-        // randomize according to seed, timestep and original position in the grid
-        int ix = v->indexX();
-        int iy = v->indexY();
-        int iz = v->indexZ();
-        int randIndex = ix + k->WorldSize*iy + k->WorldSize*k->WorldSize*iz;
+        // // randomize according to seed, timestep and original position in the grid
+        // int ix = v->indexX();
+        // int iy = v->indexY();
+        // int iz = v->indexZ();
+        // int randIndex = ix + k->WorldSize*iy + k->WorldSize*k->WorldSize*iz;
 
-        curandState state;
-        curand_init(k->RandomSeed + k->currentTime, randIndex, 0, &state);
+        // curandState state;
+        // curand_init(k->RandomSeed + k->currentTime, randIndex, 0, &state);
 
         int groupSize = v->d_group->d_voxels.size();
 
-        if (curand_uniform(&state) < k->DetachProbability * groupSize) { 
+        if (curand_uniform(&surface_voxels[index]->randomState) < k->DetachProbability * groupSize) { 
 
             if (atomicCAS(&k->detachmentMutex, 0, 1) == 0) {
                 // push back and update parameters of voxel to detach
@@ -1549,10 +1540,10 @@ __global__ void gpu_break_weak_links(VX3_Voxel **surface_voxels, int num, VX3_Vo
 
                 // find another surface voxel in the pile (targetVox)
                 int numGroupSurfVox = v->d_group->d_surface_voxels.size();
-                int randVoxel = numGroupSurfVox*curand_uniform(&state);
+                int randVoxel = numGroupSurfVox*curand_uniform(&surface_voxels[index]->randomState);
                 VX3_Voxel *targetVox = v->d_group->d_surface_voxels[randVoxel];
                 // pick a random face of the targetVox
-                int randSlot = targetVox->numEmptySlots*curand_uniform(&state);
+                int randSlot = targetVox->numEmptySlots*curand_uniform(&surface_voxels[index]->randomState);
                 // shoot this vox toward target
                 v->targetPos = targetVox->free_slots[randSlot];
                 // unlock for other voxels to detach

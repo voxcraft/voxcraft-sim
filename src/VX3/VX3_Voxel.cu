@@ -61,6 +61,10 @@ __device__ void VX3_Voxel::deviceInit(VX3_VoxelyzeKernel* k) {
 
     // orient = VX3_Quat3D<>(); // default orientation
 
+    // init randomState
+    int randIndex = ix + k->WorldSize*iy + k->WorldSize*k->WorldSize*iz;
+    curand_init(k->RandomSeed + k->currentTime, randIndex, 0, &randomState);
+
     // init linkdir
     for (int i=0;i<6;i++) {
         if (links[i]) {
