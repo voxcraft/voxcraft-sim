@@ -220,6 +220,7 @@ class VX3_VoxelyzeKernel {
     double lastDetachStringyBodiesTime = 0.0; // sam
     double DetachProbability = 0.0; // sam
     int detachmentMutex = 0; // push_back one voxel to detach at a time
+    bool readyToDetach = true; //sam
 
     double lastReplicationTime = 0.0; // sam
     double lastBrownianUpdateTime = 0.0; // sam

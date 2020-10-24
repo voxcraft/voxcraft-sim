@@ -406,7 +406,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
     // sam:
     if (DetachStringyBodiesEvery > 0) {
-        if (currentTime >= lastDetachStringyBodiesTime + DetachStringyBodiesEvery) {
+        if (readyToDetach && currentTime >= lastDetachStringyBodiesTime + DetachStringyBodiesEvery) {
             FindWeakLinks();
             BreakWeakLinks();
             lastDetachStringyBodiesTime = currentTime;
@@ -470,6 +470,8 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
         if (SelfReplication) {  // kinematic self replication experiments
 
+            readyToDetach = true;
+
             // debris treadmill
             if ( (ReplenishDebrisEvery > 0) && (currentTime >= lastReplenishDebrisTime + ReplenishDebrisEvery) ) {
                 replenishMaterial(2, WorldSize, SpaceBetweenDebris+1, DebrisMat-1, DebrisHeight-1, HighDebrisConcentration);  // replenish sticky building material along the surface plane
@@ -504,6 +506,12 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
                 // do stuff here before next round
                 // push debris to ground?
                 // vary gravity in a concave function returning to normal
+                //
+                // let floaters reattach before next round:
+                double detachBuffer = nonStickyTimeAfterStringyBodyDetach > DetachStringyBodiesEvery ? nonStickyTimeAfterStringyBodyDetach : DetachStringyBodiesEvery;
+                if (currentTime >= nextReplicationTime + SettleTimeBeforeNextRoundOfReplication - detachBuffer) {
+                    readyToDetach = false;
+                }
             }
 
             // Step 2: Transform piles into organisms (mat1->mat0)
@@ -1454,17 +1462,6 @@ __global__ void gpu_find_weak_links(VX3_Voxel **surface_voxels, int num, double 
         v->weakLink = false;
         v->enableAttach = true;
 
-        int groupSize = v->d_group->d_voxels.size();
-        if (groupSize < 4) {  // don't break up smaller than a box
-            return;
-        }
-        if (groupSize <= 8) {  // small cube
-            if (v->numNeigh == 1) v->weakLink = true;
-        }
-        if (groupSize > 8) {
-            if (v->numNeigh == 1 || v->numNeigh == 2) v->weakLink = true;
-        }
-
         // find the exposed faces on this voxel
         // so other voxels can be shot here
         for (int j=0; j<6; j++)
@@ -1472,14 +1469,43 @@ __global__ void gpu_find_weak_links(VX3_Voxel **surface_voxels, int num, double 
 
         v->numNeigh = 0;
         v->numEmptySlots = 0;
+        v->middleVoxel = false;
         for (int j = 0; j < 6; j++) {
             if (v->links[j]) {
                 v->numNeigh++;
+                if (surface_voxels[index]->links[oppositeDirection(j)]) {
+                    v->middleVoxel = true;
+                }   
             }
             else {
                 v->free_slots[v->numEmptySlots] = v->potentialNeighborPosition(j);
                 v->numEmptySlots++;
             }
+        }
+
+        int groupSize = v->d_group->d_voxels.size();
+        // don't break up smaller than a box
+        if (groupSize < 4)
+            return;
+
+        // promote small cubes of 8 voxels, only tag tentacles
+        if (groupSize <= 8){
+            if (v->numNeigh == 2 && v->middleVoxel)
+                v->weakLink = true;
+            return;
+        }
+
+        // tag staircases
+        if (groupSize > 8){
+            if (v->numNeigh == 2)
+                v->weakLink = true;
+        }
+
+        // let nubs form around a small cube (4 slots on each face)
+        // after that, tag all nubs
+        if (groupSize > 24){
+            if (v->numNeigh == 1)
+                v->weakLink = true;
         }
 
     }
