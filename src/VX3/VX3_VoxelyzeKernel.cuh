@@ -66,6 +66,7 @@ class VX3_VoxelyzeKernel {
 
     __device__ void computeLargestStickyGroupSize(); // sam
 
+    __device__ void SandDownPiles(); // sam
     __device__ void FindWeakLinks(); // sam
     __device__ void BreakWeakLinks(); // sam
     

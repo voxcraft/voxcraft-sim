@@ -507,12 +507,11 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
                 // push debris to ground?
                 // vary gravity in a concave function returning to normal
                 //
-                // let floaters reattach before next round:
                 double detachBuffer = DetachStringyBodiesEvery + nonStickyTimeAfterStringyBodyDetach;
                 if (currentTime >= nextReplicationTime + SettleTimeBeforeNextRoundOfReplication - detachBuffer) {
                     readyToDetach = false;
-                    for (int i=0;i<num_d_surface_voxels;i++)
-                        d_surface_voxels[i]->enableAttach = true;
+                    FindWeakLinks(); // updates numNeigh
+                    SandDownPiles(); // removes nubs
                 }
             }
 
@@ -520,9 +519,10 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
             if (currentTime >= nextReplicationTime + SettleTimeBeforeNextRoundOfReplication) {
 
                 // clear the inward force
-                for (int i=0;i<num_d_voxels;i++)
+                for (int i=0;i<num_d_voxels;i++) {
                     d_voxels[i].targetPos.clear();
-
+                }
+                    
                 if (ReplenishDebrisEvery == 0) {
                     replenishMaterial(2, WorldSize, SpaceBetweenDebris+1, DebrisMat-1, DebrisHeight-1, HighDebrisConcentration);  // replenish just before new filial generation
                 }
@@ -552,6 +552,21 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
 __device__ void VX3_VoxelyzeKernel::InitializeCenterOfMass() {
     initialCenterOfMass = currentCenterOfMass;
+}
+
+
+// sam
+__device__ void VX3_VoxelyzeKernel::SandDownPiles() {
+    double nextReplicationTime = lastReplicationTime + ReinitializeInitialPositionAfterThisManySeconds;
+    for (int i=0;i<num_d_surface_voxels;i++) {
+        if (d_surface_voxels[i]->numNeigh == 1) {
+            // detach all nubs and keep them off until next round
+            d_voxels_to_detach.push_back(d_surface_voxels[i]);
+            d_surface_voxels[i]->nonStickTimer = nextReplicationTime + SettleTimeBeforeNextRoundOfReplication;
+        } else { // let everything else reattach
+            d_surface_voxels[i]->nonStickTimer = 0;
+        }
+    }
 }
 
 
@@ -1453,7 +1468,7 @@ __global__ void gpu_find_weak_links(VX3_Voxel **surface_voxels, int num, double 
             return;
 
         v->weakLink = false;
-        v->enableAttach = true;
+        // v->enableAttach = true;  // use nonStickTimer instead
 
         // find the exposed faces on this voxel
         // so other voxels can be shot here
@@ -1537,7 +1552,7 @@ __global__ void gpu_break_weak_links(VX3_Voxel **surface_voxels, int num, VX3_Vo
                 if (atomicCAS(&k->detachmentMutex, 0, 1) == 0) {
                     // push back and update parameters of voxel to detach
                     k->d_voxels_to_detach.push_back(v);
-                    v->enableAttach = false;
+                    // v->enableAttach = false;
                     v->weakLink = false;
                     v->nonStickTimer = k->currentTime + k->nonStickyTimeAfterStringyBodyDetach;
                     k->isSurfaceChanged = true;
