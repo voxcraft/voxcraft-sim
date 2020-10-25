@@ -478,7 +478,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
                 lastReplenishDebrisTime = currentTime;  // reset timer
             }
 
-            // Step 1: Remove small bodies and allow self-attachment with momentum before tranisiton
+            // Step 1: Remove small bodies and allow self-attachment with momentum before transition
             if ( (InitialPositionReinitialized) && (currentTime >= nextReplicationTime) ) {
                 // InitialPositionReinitialized is true at t=0
 
@@ -508,9 +508,11 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
                 // vary gravity in a concave function returning to normal
                 //
                 // let floaters reattach before next round:
-                double detachBuffer = nonStickyTimeAfterStringyBodyDetach > DetachStringyBodiesEvery ? nonStickyTimeAfterStringyBodyDetach : DetachStringyBodiesEvery;
+                double detachBuffer = DetachStringyBodiesEvery + nonStickyTimeAfterStringyBodyDetach;
                 if (currentTime >= nextReplicationTime + SettleTimeBeforeNextRoundOfReplication - detachBuffer) {
                     readyToDetach = false;
+                    for (int i=0;i<num_d_surface_voxels;i++)
+                        d_surface_voxels[i]->enableAttach = true;
                 }
             }
 
@@ -1491,9 +1493,10 @@ __global__ void gpu_find_weak_links(VX3_Voxel **surface_voxels, int num, double 
             if (v->numNeigh == 2)
                 v->weakLink = true;
         }
-
-        // let nubs form around a small cube (2 diagonal slots on each face)
+        
+        // if we want to promote nubs form around a small cube (2 diagonal slots on each face)
         // that means waiting to tag nubs until groupSize > 8+2*6=20 to tag nubs
+        // note that this indirectly promotes breaking 8< piles <=20 in half instead of just moving nubs around
         if (groupSize > 20){
             if (v->numNeigh == 1)
                 v->weakLink = true;
