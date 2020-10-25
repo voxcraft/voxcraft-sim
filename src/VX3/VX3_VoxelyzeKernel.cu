@@ -1492,9 +1492,9 @@ __global__ void gpu_find_weak_links(VX3_Voxel **surface_voxels, int num, double 
                 v->weakLink = true;
         }
 
-        // let nubs form around a small cube (4 slots on each face)
-        // after that, tag all nubs
-        if (groupSize > 24){
+        // let nubs form around a small cube (2 diagonal slots on each face)
+        // that means waiting to tag nubs until groupSize > 8+2*6=20 to tag nubs
+        if (groupSize > 20){
             if (v->numNeigh == 1)
                 v->weakLink = true;
         }
@@ -1529,25 +1529,28 @@ __global__ void gpu_break_weak_links(VX3_Voxel **surface_voxels, int num, VX3_Vo
         int groupSize = v->d_group->d_voxels.size();
 
         if (curand_uniform(&surface_voxels[index]->randomState) < k->DetachProbability * groupSize) { 
+            // keep trying to detach
+            while (1) {
+                if (atomicCAS(&k->detachmentMutex, 0, 1) == 0) {
+                    // push back and update parameters of voxel to detach
+                    k->d_voxels_to_detach.push_back(v);
+                    v->enableAttach = false;
+                    v->weakLink = false;
+                    v->nonStickTimer = k->currentTime + k->nonStickyTimeAfterStringyBodyDetach;
+                    k->isSurfaceChanged = true;
 
-            if (atomicCAS(&k->detachmentMutex, 0, 1) == 0) {
-                // push back and update parameters of voxel to detach
-                k->d_voxels_to_detach.push_back(v);
-                v->enableAttach = false;
-                v->weakLink = false;
-                v->nonStickTimer = k->currentTime + k->nonStickyTimeAfterStringyBodyDetach;
-                k->isSurfaceChanged = true;
-
-                // find another surface voxel in the pile (targetVox)
-                int numGroupSurfVox = v->d_group->d_surface_voxels.size();
-                int randVoxel = numGroupSurfVox*curand_uniform(&surface_voxels[index]->randomState);
-                VX3_Voxel *targetVox = v->d_group->d_surface_voxels[randVoxel];
-                // pick a random face of the targetVox
-                int randSlot = targetVox->numEmptySlots*curand_uniform(&surface_voxels[index]->randomState);
-                // shoot this vox toward target
-                v->targetPos = targetVox->free_slots[randSlot];
-                // unlock for other voxels to detach
-                atomicExch(&k->detachmentMutex, 0);
+                    // find another surface voxel in the pile (targetVox)
+                    int numGroupSurfVox = v->d_group->d_surface_voxels.size();
+                    int randVoxel = numGroupSurfVox*curand_uniform(&surface_voxels[index]->randomState);
+                    VX3_Voxel *targetVox = v->d_group->d_surface_voxels[randVoxel];
+                    // pick a random face of the targetVox
+                    int randSlot = targetVox->numEmptySlots*curand_uniform(&surface_voxels[index]->randomState);
+                    // shoot this vox toward target
+                    v->targetPos = targetVox->free_slots[randSlot];
+                    // unlock for other voxels to detach
+                    atomicExch(&k->detachmentMutex, 0);
+                    break;
+                }
             }
         }
     }
