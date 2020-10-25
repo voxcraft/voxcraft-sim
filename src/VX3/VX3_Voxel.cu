@@ -441,6 +441,9 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
         totalForce += (targetPos - pos);
     }
 
+    if (settleForceZ < 0)
+        totalForce.z += settleForceZ;
+
     // sam
     if ( (mat->WaterLevel > 0) and (pos.z >= mat->WaterLevel*d_kernel->voxSize) ) { 
         double adjustment = pos.z / d_kernel->voxSize - mat->WaterLevel;

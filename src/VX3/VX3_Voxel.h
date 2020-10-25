@@ -261,6 +261,7 @@ public:
     VX3_Vec3D<double> free_slots[6]; // sam
     int numEmptySlots = 0; // sam
     VX3_Vec3D<double> targetPos;
+    double settleForceZ = 0; // sam
 
     VX3_dQueue<VX3_Signal *> d_signals;
     VX3_Signal d_signal;

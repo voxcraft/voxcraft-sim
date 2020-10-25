@@ -498,19 +498,15 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
                 
                 convertMatIfSmallBody(1, 0, 2);   // convert small mat1 bodies>1 to mat0; flags material as not yet removed
                 removeVoxels();  // remove bots and newly converted small mat 0 bodies
+                pushPilesToFloor();  // turn on gravity for piles during transition
                 InitialPositionReinitialized = false; // false = transition period
             }
 
             // Transition period
             if (!InitialPositionReinitialized) {
-                // do stuff here before next round
-                // push debris to ground?
-                // vary gravity in a concave function returning to normal
-                //
-                double detachBuffer = DetachStringyBodiesEvery + nonStickyTimeAfterStringyBodyDetach;
-                if (currentTime >= nextReplicationTime + SettleTimeBeforeNextRoundOfReplication - detachBuffer) {
+                // do stuff here (multiple times) before next round
+                if (currentTime >= nextReplicationTime + SettleTimeBeforeNextRoundOfReplication - nonStickyTimeAfterStringyBodyDetach) {
                     readyToDetach = false;
-                    FindWeakLinks(); // updates numNeigh
                     SandDownPiles(); // removes nubs
                 }
             }
@@ -521,7 +517,12 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
                 // clear the inward force
                 for (int i=0;i<num_d_voxels;i++) {
                     d_voxels[i].targetPos.clear();
+                    d_voxels[i].settleForceZ = 0;
                 }
+
+                // in case sanding down body made it too small, do this again
+                convertMatIfSmallBody(1, 0, 2);   // convert small mat1 bodies>1 to mat0; flags material as not yet removed
+                removeVoxels();  // remove bots and newly converted small mat 0 bodies
                     
                 if (ReplenishDebrisEvery == 0) {
                     replenishMaterial(2, WorldSize, SpaceBetweenDebris+1, DebrisMat-1, DebrisHeight-1, HighDebrisConcentration);  // replenish just before new filial generation
@@ -557,6 +558,7 @@ __device__ void VX3_VoxelyzeKernel::InitializeCenterOfMass() {
 
 // sam
 __device__ void VX3_VoxelyzeKernel::SandDownPiles() {
+    FindWeakLinks(); // updates numNeigh
     double nextReplicationTime = lastReplicationTime + ReinitializeInitialPositionAfterThisManySeconds;
     for (int i=0;i<num_d_surface_voxels;i++) {
         if (d_surface_voxels[i]->numNeigh == 1) {
@@ -565,6 +567,17 @@ __device__ void VX3_VoxelyzeKernel::SandDownPiles() {
             d_surface_voxels[i]->nonStickTimer = nextReplicationTime + SettleTimeBeforeNextRoundOfReplication;
         } else { // let everything else reattach
             d_surface_voxels[i]->nonStickTimer = 0;
+        }
+    }
+}
+
+
+// sam
+__device__ void VX3_VoxelyzeKernel::pushPilesToFloor() {
+    FindWeakLinks(); // updates numNeigh
+    for (int i=0;i<num_d_surface_voxels;i++) {
+        if (d_surface_voxels[i]->numNeigh > 1){
+            d_surface_voxels[i]->settleForceZ = d_surface_voxels[i]->mat->gravityForce();
         }
     }
 }
