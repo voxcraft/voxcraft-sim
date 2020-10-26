@@ -60,7 +60,7 @@ class VX3_VoxelyzeKernel {
     __device__ void convertMatIfSmallBody(int mat1, int mat2, int minSizeToConvert); // sam
     __device__ void convertMatIfLargeBody(int mat1, int mat2); // sam
 
-    __device__ void updateBrownianMotion(double seed, double currentTime); // sam
+    __device__ void updateBrownianMotion(); // sam
 
     __device__ void computeNumRealLinks(); // sam
 

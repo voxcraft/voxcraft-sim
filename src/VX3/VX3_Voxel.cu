@@ -60,6 +60,10 @@ __device__ void VX3_Voxel::deviceInit(VX3_VoxelyzeKernel* k) {
     d_signals.clear();
 
     // orient = VX3_Quat3D<>(); // default orientation
+    targetPos = VX3_Vec3D<>();
+    settleForceZ = 0;
+    enableAttach = true;
+    nonStickTimer = 0.0;
 
     // init randomState
     int randIndex = ix + k->WorldSize*iy + k->WorldSize*k->WorldSize*iz;
