@@ -223,7 +223,7 @@ __device__ void _CUDA_Simulation(VX3_VoxelyzeKernel *k, int thread_index, int de
         d_v3->updateCurrentCenterOfMass();
         d_v3->computeFitness();
         // d_v3->computeTargetCloseness();
-        d_v3->computeNumRealLinks();
+        // d_v3->computeNumRealLinks();
         printf(COLORCODE_BLUE "%d) Simulation %d ends: %s Time: %f, pairs: %d, largestStickyGroup: %d.\n" COLORCODE_RESET, device_index, thread_index, d_v3->vxa_filename, d_v3->currentTime, d_v3->numClosePairs, d_v3->largestStickyGroupSize); // sam
     }
 }
@@ -497,11 +497,12 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         // for Secondary Experiment
         h_d_tmp.SecondaryExperiment = pt_merged.get<int>("VXA.Simulator.SecondaryExperiment", 0);
         h_d_tmp.SelfReplication = pt_merged.get<int>("VXA.Simulator.SelfReplication", 0);  // sam
-        h_d_tmp.WorldSize = pt_merged.get<int>("VXA.Simulator.WorldSize", 100);  // sam
+        h_d_tmp.WorldSize = pt_merged.get<int>("VXA.Simulator.WorldSize", 1);  // sam
+        h_d_tmp.WallForce = pt_merged.get<double>("VXA.Simulator.WallForce", 0);  // sam
         h_d_tmp.SpaceBetweenDebris = pt_merged.get<int>("VXA.Simulator.SpaceBetweenDebris", 2);  // sam
         h_d_tmp.DebrisMat = pt_merged.get<int>("VXA.Simulator.DebrisMat", 2);  // sam
         h_d_tmp.DebrisHeight = pt_merged.get<int>("VXA.Simulator.DebrisHeight", 1);  // sam
-        h_d_tmp.HighDebrisConcentration = pt_merged.get<bool>("VXA.Simulator.HighDebrisConcentration", true);  // sam
+        h_d_tmp.DebrisConcentration = pt_merged.get<int>("VXA.Simulator.DebrisConcentration", 1);  // sam
         h_d_tmp.DetachStringyBodiesEvery = pt_merged.get<double>("VXA.Simulator.DetachStringyBodiesEvery", 0);  // sam
         h_d_tmp.nonStickyTimeAfterStringyBodyDetach = pt_merged.get<double>("VXA.Simulator.nonStickyTimeAfterStringyBodyDetach", 0);  // sam
         h_d_tmp.DetachProbability = pt_merged.get<double>("VXA.Simulator.DetachProbability", 0);  // sam

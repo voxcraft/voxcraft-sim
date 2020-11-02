@@ -48,6 +48,7 @@ CVX_Material& CVX_Material::operator=(const CVX_Material& vIn)
 	Cilia = vIn.Cilia;
 
 	LockZ = vIn.LockZ;  // sam
+	SlowDampingFrac = vIn.SlowDampingFrac; // sam
 	WaterLevel = vIn.WaterLevel;  // sam
 	Buoyancy = vIn.Buoyancy; // sam
 	EndSimIfCompletelyRemoved = vIn.EndSimIfCompletelyRemoved; // sam

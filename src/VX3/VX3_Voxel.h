@@ -263,6 +263,9 @@ public:
     VX3_Vec3D<double> targetPos;
     double settleForceZ = 0; // sam
 
+    double WallRadius = 0; // sam
+    double WallForce = 0;
+
     VX3_dQueue<VX3_Signal *> d_signals;
     VX3_Signal d_signal;
     double localSignal = 0.0;

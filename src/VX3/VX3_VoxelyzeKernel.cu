@@ -347,9 +347,9 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
         if (RandomizeCiliaEvery > 0) { 
             // int CiliaStep = int(RandomizeCiliaEvery / dt);
             // if (CurStepCount % CiliaStep == 0) {
-            if (currentTime >= lastBrownianUpdateTime + RandomizeCiliaEvery) {
+            if (currentTime >= nextBrownianUpdateTime) { // randomize at t=0
                 updateBrownianMotion();
-                lastBrownianUpdateTime = currentTime;
+                nextBrownianUpdateTime = currentTime + RandomizeCiliaEvery;
             }
         }
 
@@ -371,27 +371,30 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
     CUDA_CHECK_AFTER_CALL();
     VcudaDeviceSynchronize();
 
-    int CycleStep =
-        int(TempPeriod / dt); // Sample at the same time point in the cycle, to avoid the impact of actuation as much as possible.
-    if (CurStepCount % CycleStep == 0) {
-        angleSampleTimes++;
+    if (TempPeriod > 0) {
+        int CycleStep =
+            int(TempPeriod / dt); // Sample at the same time point in the cycle, to avoid the impact of actuation as much as possible.
+            
+        if (CurStepCount % CycleStep == 0) {
+            angleSampleTimes++;
 
-        currentCenterOfMass_history[0] = currentCenterOfMass_history[1];
-        currentCenterOfMass_history[1] = currentCenterOfMass;
-        updateCurrentCenterOfMass();
-        auto A = currentCenterOfMass_history[0];
-        auto B = currentCenterOfMass_history[1];
-        auto C = currentCenterOfMass;
-        if (B == C || A == B || angleSampleTimes < 3) {
-            recentAngle = 0; // avoid divide by zero, and don't include first two steps where A and B are still 0.
-        } else {
-            recentAngle = acos((B - A).Dot(C - B) / (B.Dist(A) * C.Dist(B)));
+            currentCenterOfMass_history[0] = currentCenterOfMass_history[1];
+            currentCenterOfMass_history[1] = currentCenterOfMass;
+            updateCurrentCenterOfMass();
+            auto A = currentCenterOfMass_history[0];
+            auto B = currentCenterOfMass_history[1];
+            auto C = currentCenterOfMass;
+            if (B == C || A == B || angleSampleTimes < 3) {
+                recentAngle = 0; // avoid divide by zero, and don't include first two steps where A and B are still 0.
+            } else {
+                recentAngle = acos((B - A).Dot(C - B) / (B.Dist(A) * C.Dist(B)));
+            }
+            // printf("(%d) recentAngle = %f\n", angleSampleTimes, recentAngle);
+
+            // Also calculate targetCloseness here.
+            computeTargetCloseness();
+            // computeLargestStickyGroupSize();
         }
-        // printf("(%d) recentAngle = %f\n", angleSampleTimes, recentAngle);
-
-        // Also calculate targetCloseness here.
-        computeTargetCloseness();
-        computeLargestStickyGroupSize();
     }
 
     // sam:
@@ -464,30 +467,14 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
             // debris treadmill
             if ( (ReplenishDebrisEvery > 0) && (currentTime >= lastReplenishDebrisTime + ReplenishDebrisEvery) ) {
-                replenishMaterial(2, WorldSize, SpaceBetweenDebris+1, DebrisMat-1, DebrisHeight-1, HighDebrisConcentration);  // replenish sticky building material along the surface plane
+                replenishMaterial(2, WorldSize-1, SpaceBetweenDebris+1, DebrisMat-1, DebrisHeight-1, DebrisConcentration);  // replenish sticky building material along the surface plane
                 lastReplenishDebrisTime = currentTime;  // reset timer
             }
 
             // Step 1: Remove small bodies and allow self-attachment with momentum before transition
             if ( (InitialPositionReinitialized) && (currentTime >= nextReplicationTime) ) {
                 // InitialPositionReinitialized is true at t=0
-
-                // removeVoxels();  // remove mat 0 voxels that are flagged: removed=true
-                // reInitAllGroups();  // EXTREME
-
-                computeTargetCloseness(); // in case no bots remain and sim ends
-
-                if (ComputeLargestSitckyGroupForFirstRound){
-                    if (firstRound){
-                        computeLargestStickyGroupSize();
-                        firstRound = false;
-                    }
-                } else{
-                    computeLargestStickyGroupSize();
-                }
-                
-                convertMatIfSmallBody(1, 0, 2);   // convert small mat1 bodies>1 to mat0; flags material as not yet removed
-                removeVoxels();  // remove bots and newly converted small mat 0 bodies
+                removeVoxels();  // remove mat0 bots
                 // pushPilesToFloor();  // turn on gravity for piles during transition  // this smushes them too much during detach, results in expanding cilia bots
                 InitialPositionReinitialized = false; // false = transition period
             }
@@ -495,41 +482,42 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
             // Transition period
             if (!InitialPositionReinitialized) {
                 // do stuff here (multiple times) before next round
+                // stop detach just before end of settle time
                 if (currentTime >= nextReplicationTime + SettleTimeBeforeNextRoundOfReplication - nonStickyTimeAfterStringyBodyDetach) {
                     readyToDetach = false;
-                    SandDownPiles(); // removes nubs
+                    // SandDownPiles(); // removes nubs
                 }
             }
 
             // Step 2: Transform piles into organisms (mat1->mat0)
             if (currentTime >= nextReplicationTime + SettleTimeBeforeNextRoundOfReplication) {
-
-                // in case sanding down body made it too small, do this again
-                convertMatIfSmallBody(1, 0, 2);   // convert small mat1 bodies>1 to mat0; flags material as not yet removed
-                removeVoxels();  // remove bots and newly converted small mat 0 bodies
                 
+                // in case no bots remain and sim ends
+                // if (ComputeLargestSitckyGroupForFirstRound){
+                if (firstRound){
+                    computeTargetCloseness();
+                    computeLargestStickyGroupSize();     
+                }
+                // } else{
+                //     computeLargestStickyGroupSize();
+                // }
+                firstRound = false;
+                
+                convertMatIfSmallBody(1, 0, 2);   // convert small mat1 bodies>1 to mat0; flags material as not yet removed
+                removeVoxels();  // remove newly converted small mat 0 bodies
+
                 // replenish just before new filial generation
                 if (ReplenishDebrisEvery == 0) {
-                    replenishMaterial(2, WorldSize, SpaceBetweenDebris+1, DebrisMat-1, DebrisHeight-1, HighDebrisConcentration); 
+                    replenishMaterial(2, WorldSize-1, SpaceBetweenDebris+1, DebrisMat-1, DebrisHeight-1, DebrisConcentration); 
                 }
                 convertMatIfLargeBody(1, 0); // finally, convert large mat1 bodies>MinimumBotSize to mat0 [new organisms]
 
-                // now update...
+                // now reinit everything
                 regenerateSurfaceVoxels();  // who's on the surface? collisions and cilia
-
-                // clear detachment forces
-                for (int i=0;i<num_d_voxels;i++) {
-                    d_voxels[i].targetPos.clear();
-                    d_voxels[i].settleForceZ = 0;
-                    d_voxels[i].weakLink = false;
-                    d_voxels[i].nonStickTimer = 0;
-                    d_voxels[i].baseCiliaForce = VX3_Vec3D<>(0.0, 0.0, 0.0);
-                }
-                // update cilia
-                updateBrownianMotion();
-                lastBrownianUpdateTime = currentTime;
-
-                // and reinit everything
+                clearAllForces();  // for all all voxels
+                updateAttach(CollisionMode, true);  // force rebuild of collision system here
+                updateBrownianMotion(); // update cilia now
+                nextBrownianUpdateTime = currentTime + RandomizeCiliaEvery;  // reset timer
                 InitializeCenterOfMass();  // in case fitness is a function of x,y,z
                 saveInitialPosition();
                 InitialPositionReinitialized = true;  // switch that allows settle time between removing voxels and next round
@@ -568,9 +556,22 @@ __device__ void VX3_VoxelyzeKernel::SandDownPiles() {
             d_voxels_to_detach.push_back(d_surface_voxels[i]);
             d_surface_voxels[i]->targetPos.clear();
             d_surface_voxels[i]->nonStickTimer = nextReplicationTime + SettleTimeBeforeNextRoundOfReplication;
-        } else { // let everything else reattach
-            d_surface_voxels[i]->nonStickTimer = 0;
-        }
+        } 
+        // else { // let everything else reattach
+        //     d_surface_voxels[i]->nonStickTimer = 0;
+        // }
+    }
+}
+
+
+// sam
+__device__ void VX3_VoxelyzeKernel::clearAllForces() {
+    for (int i=0;i<num_d_voxels;i++) {
+        d_voxels[i].targetPos.clear();
+        d_voxels[i].settleForceZ = 0;
+        d_voxels[i].weakLink = false;
+        d_voxels[i].nonStickTimer = 0;
+        d_voxels[i].baseCiliaForce = VX3_Vec3D<>(0.0, 0.0, 0.0);
     }
 }
 
@@ -617,24 +618,38 @@ __device__ void VX3_VoxelyzeKernel::BreakWeakLinks() {
     int blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
     gpu_break_weak_links<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, this);
     CUDA_CHECK_AFTER_CALL();
-    VcudaDeviceSynchronize();   
+    VcudaDeviceSynchronize();
+    // if (isSurfaceChanged) {
+    //     lastRegenerateSurfaceTime = currentTime + 0.05;
+    //     isSurfaceChanged = false;
+    //     regenerateSurfaceVoxels();
+    //     updateGroups();
+    //     updateAttach(CollisionMode);
+    // }
 }
 
 
 // sam:
 __device__ void VX3_VoxelyzeKernel::computeLargestStickyGroupSize() {
     largestStickyGroupSize = 0;
-    for (int i = 0; i < d_voxelgroups.size(); i++) {
+    // for (int i = 0; i < d_voxelgroups.size(); i++) {
 
-        if (d_voxelgroups[i]->removed)
-            continue;
+    //     if (d_voxelgroups[i]->removed)
+    //         continue;
         
-        int thisSize = d_voxelgroups[i]->d_voxels.size();
-        bool sticky = d_voxelgroups[i]->d_voxels[0]->mat->sticky;
+    //     int thisSize = d_voxelgroups[i]->d_voxels.size();
+    //     bool sticky = d_voxelgroups[i]->d_voxels[0]->mat->sticky;
 
-        if ( (sticky) && (thisSize > largestStickyGroupSize) )
+    //     if ( (sticky) && (thisSize > largestStickyGroupSize) )
+    //         largestStickyGroupSize = thisSize;
+
+    // }
+    for (int i=0;i<num_d_voxels;i++) {
+        if (d_voxels[i].removed) continue;
+        if (!d_voxels[i].mat->sticky) continue;
+        int thisSize = d_voxels[i].d_group->d_voxels.size();
+        if (thisSize > largestStickyGroupSize)
             largestStickyGroupSize = thisSize;
-
     }
 }
 
@@ -680,11 +695,17 @@ __device__ bool VX3_VoxelyzeKernel::EarlyStopIfNoBotsRemain() {
 }
 
 // sam:
-__device__ void VX3_VoxelyzeKernel::replenishMaterial(int start, int end, int step, int mat, int height, bool secondLevel) {
+__device__ void VX3_VoxelyzeKernel::replenishMaterial(int start, int end, int step, int mat, int height, int numLevels) {
     // TODO: make this a material attribute, replenish at initialized position.
     for (int x = start; x < end; x+=step) {
         for (int y = start; y < end; y+=step) {
-            if (secondLevel){ 
+            if (numLevels>3){ 
+                addVoxel(x+step/2+1, y+step/2+1, height+1, mat);
+            }
+            if (numLevels>2){ 
+                addVoxel(x+step/2+1, y+step/2+1, 0, mat);
+            }
+            if (numLevels>1){ 
                 addVoxel(x+step/2, y+step/2, height/2, mat);
             }
             addVoxel(x, y, height, mat);

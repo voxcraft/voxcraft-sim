@@ -483,6 +483,7 @@ public:
 	int sticky=0;
 	double Cilia=0;
 	int LockZ = 0;  // sam
+	double SlowDampingFrac = 1; // sam
 	double WaterLevel = 0; // sam
 	double Buoyancy = 0;  // sam
 	int EndSimIfCompletelyRemoved = 0; // sam

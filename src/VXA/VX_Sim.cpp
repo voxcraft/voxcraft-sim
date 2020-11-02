@@ -386,6 +386,7 @@ void CVX_Sim::CopyMat(CVXC_Material *pOld, CVX_Material *pNew) // copies paramet
     pNew->Cilia = pOld->Cilia;
 
     pNew->LockZ = (bool)pOld->LockZ;  // sam
+    pNew->SlowDampingFrac = (double)pOld->SlowDampingFrac; // sam
     pNew->WaterLevel = (double)pOld->WaterLevel;  // sam
     pNew->Buoyancy = (double)pOld->Buoyancy;  // sam
     pNew->EndSimIfCompletelyRemoved = (bool)pOld->EndSimIfCompletelyRemoved;  // sam

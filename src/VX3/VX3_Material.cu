@@ -9,6 +9,7 @@ VX3_Material::VX3_Material(CVX_Material *p, VX3_VoxelyzeKernel *k)
       signalValueDecay(p->signalValueDecay), signalTimeDelay(p->signalTimeDelay), inactivePeriod(p->inactivePeriod), isMeasured(p->isMeasured), isElectricalActive(p->isElectricalActive),
       matid(p->matid), fixed(p->fixed), sticky(p->sticky), Cilia(p->Cilia), 
       LockZ(p->LockZ), // sam
+      SlowDampingFrac(p->SlowDampingFrac), // sam
       WaterLevel(p->WaterLevel), // sam
       Buoyancy(p->Buoyancy), //sam
       EndSimIfCompletelyRemoved(p->EndSimIfCompletelyRemoved), // sam
@@ -51,6 +52,7 @@ __device__ VX3_Material &VX3_Material::operator=(const VX3_Material &vIn) {
     Cilia = vIn.Cilia;
 
     LockZ = vIn.LockZ;  // sam
+    SlowDampingFrac = vIn.SlowDampingFrac; // sam
     WaterLevel = vIn.WaterLevel;  // sam
     Buoyancy = vIn.Buoyancy; // sam
     EndSimIfCompletelyRemoved = vIn.EndSimIfCompletelyRemoved; // sam

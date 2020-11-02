@@ -70,6 +70,9 @@ __device__ void VX3_Voxel::deviceInit(VX3_VoxelyzeKernel* k) {
     // curand_init(k->RandomSeed + k->currentTime, randIndex, 0, &randomState);
     curand_init(k->RandomSeed, randIndex, 0, &randomState);
 
+    WallRadius = (k->WorldSize - 1) * k->voxSize;
+    WallForce = k->WallForce;
+
     // init linkdir
     for (int i=0;i<6;i++) {
         if (links[i]) {
@@ -426,7 +429,10 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
     // other forces
     if (externalExists())
         totalForce += external()->force();                     // external forces
-    totalForce -= velocity() * mat->globalDampingTranslateC(); // global damping f-cv
+        
+    // totalForce -= velocity() * mat->globalDampingTranslateC(); // global damping f-cv
+    totalForce -= velocity() * mat->globalDampingTranslateC() * mat->SlowDampingFrac; // sam
+
     totalForce.z += mat->gravityForce();                       // gravity, according to f=mg
 
     // no collision yet
@@ -436,6 +442,13 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
     // }
     totalForce -= contactForce;
     contactForce.clear();
+
+    // sam:
+    if (mat->LockZ) {
+        CiliaForce.z = 0;
+    }
+
+    CiliaForce *= d_group->d_voxels.size(); // sam
 
     totalForce += CiliaForce * mat->Cilia;
     CiliaForce.clear();
@@ -454,6 +467,24 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
         totalForce.z += adjustment*adjustment * mat->gravityForce(); 
     }
 
+    // sam: let's test a square first
+    if (WallForce > 0 && WallRadius > 0) {
+        double adjustX = 0;
+        double adjustY = 0;
+        if (pos.x >= WallRadius) {
+            adjustX = -1 * (WallRadius - pos.x) * (WallRadius - pos.x);
+        } else if (pos.x <= 0) {
+            adjustX = pos.x*pos.x;
+        }
+        if (pos.y >= WallRadius) {
+            adjustY = -1 * (WallRadius - pos.y) * (WallRadius - pos.y);
+        } else if (pos.y <= 0) {
+            adjustY = pos.y*pos.y;
+        }
+        totalForce.x += adjustX * WallForce;
+        totalForce.y += adjustY * WallForce;
+    }
+
     // sam
     // totalForce.z += mat->Buoyancy * mat->mass();  // sam: lift bodies without simulating light stiff material
     if (mat->Buoyancy > 0) {
@@ -461,8 +492,7 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
     }
 
     // sam
-    if (mat->LockZ) { 
-        totalForce += velocity() * 0.9*mat->globalDampingTranslateC(); // todo: tag
+    if (mat->LockZ) {
         totalForce.z = 0;
     }
 
@@ -482,11 +512,11 @@ __device__ VX3_Vec3D<double> VX3_Voxel::moment() {
     // other moments
     if (externalExists())
         totalMoment += external()->moment();                        // external moments
-    totalMoment -= angularVelocity() * mat->globalDampingRotateC(); // global damping
+    // totalMoment -= angularVelocity() * mat->globalDampingRotateC(); // global damping
+    totalMoment -= angularVelocity() * mat->globalDampingRotateC() * mat->SlowDampingFrac; // sam
 
     // sam
     if (mat->LockZ) { 
-        totalMoment -= angularVelocity() * 0.9 * mat->globalDampingRotateC();  // todo: tag
         totalMoment.x = 0;
         totalMoment.y = 0;
     }
