@@ -465,6 +465,14 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
             readyToDetach = true;
 
+            if (readyToReplenish) {
+                // replenish again here to fill in where the small piles were removed.
+                replenishMaterial(2, WorldSize-1, SpaceBetweenDebris+1, DebrisMat-1, DebrisHeight-1, DebrisConcentration);
+                regenerateSurfaceVoxels();
+                updateAttach(CollisionMode);
+                readyToReplenish = false;
+            }
+
             // debris treadmill
             if ( (ReplenishDebrisEvery > 0) && (currentTime >= lastReplenishDebrisTime + ReplenishDebrisEvery) ) {
                 replenishMaterial(2, WorldSize-1, SpaceBetweenDebris+1, DebrisMat-1, DebrisHeight-1, DebrisConcentration);  // replenish sticky building material along the surface plane
@@ -482,7 +490,8 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
             // Transition period
             if (!InitialPositionReinitialized) {
                 // do stuff here (multiple times) before next round
-                // stop detach just before end of settle time
+                //
+                // do stuff just before end of settle time
                 if (currentTime >= nextReplicationTime + SettleTimeBeforeNextRoundOfReplication - nonStickyTimeAfterStringyBodyDetach) {
                     readyToDetach = false;
                     // SandDownPiles(); // removes nubs
@@ -491,6 +500,8 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
             // Step 2: Transform piles into organisms (mat1->mat0)
             if (currentTime >= nextReplicationTime + SettleTimeBeforeNextRoundOfReplication) {
+
+                // updateGroups();  // this is called every timestep
                 
                 // in case no bots remain and sim ends
                 // if (ComputeLargestSitckyGroupForFirstRound){
@@ -502,6 +513,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
                 //     computeLargestStickyGroupSize();
                 // }
                 firstRound = false;
+                readyToReplenish = true;
                 
                 convertMatIfSmallBody(1, 0, 2);   // convert small mat1 bodies>1 to mat0; flags material as not yet removed
                 removeVoxels();  // remove newly converted small mat 0 bodies
@@ -777,6 +789,11 @@ __device__ bool VX3_VoxelyzeKernel::addVoxel(int x, int y, int z, int mat) {
     if ( (!voxAlreadyThere) && (num_d_voxels - num_d_init_voxels < MaxNewVoxelsAddedMidSim) ) { // memory limitation, refer to pre-allocation.
         d_voxels[num_d_voxels].deviceInit(this); // do this first
         d_voxels[num_d_voxels].pos = VX3_Vec3D<>(float(x)*r, float(y)*r, float(z)*r);
+
+        // init random state here
+        int randIndex = x + WorldSize*y + WorldSize*WorldSize*z;
+        d_voxels[num_d_voxels].initRandState(RandomSeed, randIndex);
+
         d_voxels[num_d_voxels].orient = VX3_Quat3D<>(); // default orientation
         d_voxels[num_d_voxels].mat = &d_voxelMats[mat];
         // d_voxels[num_d_voxels].baseCiliaForce = VX3_Vec3D<>(0.0, 1.0, 0.0);

@@ -219,12 +219,14 @@ class VX3_VoxelyzeKernel {
     double SettleTimeBeforeNextRoundOfReplication = 0.0;  // sam
     bool InitialPositionReinitialized = true;  // sam
     int MinimumBotSize = 2; // sam
+    double CiliaFracAfterFirstRound = 1.0; // sam
     double DetachStringyBodiesEvery = 0; // sam
     double nonStickyTimeAfterStringyBodyDetach = 0; // sam
     double lastDetachStringyBodiesTime = 0.0; // sam
     double DetachProbability = 0.0; // sam
     int detachmentMutex = 0; // push_back one voxel to detach at a time
     bool readyToDetach = true; //sam
+    bool readyToReplenish = false; // sam
 
     double lastReplicationTime = 0.0; // sam
     double nextBrownianUpdateTime = 0.0; // sam

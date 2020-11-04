@@ -446,6 +446,8 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
     // sam:
     if (mat->LockZ) {
         CiliaForce.z = 0;
+        if (!d_kernel->firstRound)
+            CiliaForce *= d_kernel->CiliaFracAfterFirstRound; 
     }
 
     CiliaForce *= d_group->d_voxels.size(); // sam
