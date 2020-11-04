@@ -214,9 +214,6 @@ public:
     __device__ void receiveSignal(double value, double currentTime, bool force);
     __device__ void getSignal(double currentTime);
 
-    //sam:
-    __device__ void initRandState(double RandomSeed, double randIndex) { curand_init(RandomSeed, randIndex, 0, &randomState); }
-
     /* data */
     CVX_Voxel *_voxel;
     VX3_VoxelyzeKernel *d_kernel;

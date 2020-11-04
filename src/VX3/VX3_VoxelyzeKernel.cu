@@ -787,13 +787,11 @@ __device__ bool VX3_VoxelyzeKernel::addVoxel(int x, int y, int z, int mat) {
     bool voxAlreadyThere = d_collision_system->check_collisions_device(float(x)*r, float(y)*r, float(z)*r, r);
 
     if ( (!voxAlreadyThere) && (num_d_voxels - num_d_init_voxels < MaxNewVoxelsAddedMidSim) ) { // memory limitation, refer to pre-allocation.
+        d_voxels[num_d_voxels].ix = x;
+        d_voxels[num_d_voxels].iy = y;
+        d_voxels[num_d_voxels].iz = z;
         d_voxels[num_d_voxels].deviceInit(this); // do this first
         d_voxels[num_d_voxels].pos = VX3_Vec3D<>(float(x)*r, float(y)*r, float(z)*r);
-
-        // init random state here
-        int randIndex = x + WorldSize*y + WorldSize*WorldSize*z;
-        d_voxels[num_d_voxels].initRandState(RandomSeed, randIndex);
-
         d_voxels[num_d_voxels].orient = VX3_Quat3D<>(); // default orientation
         d_voxels[num_d_voxels].mat = &d_voxelMats[mat];
         // d_voxels[num_d_voxels].baseCiliaForce = VX3_Vec3D<>(0.0, 1.0, 0.0);
