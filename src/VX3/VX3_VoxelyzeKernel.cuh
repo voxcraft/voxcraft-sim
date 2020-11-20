@@ -212,6 +212,8 @@ class VX3_VoxelyzeKernel {
     int WorldSize = 1;
     double WallForce = 0;
     int SpaceBetweenDebris = 2;
+    int BotMat = 1;
+    int RemoveMat = 1;
     int DebrisMat = 2;
     int DebrisHeight = 1;
     int DebrisConcentration = 2;

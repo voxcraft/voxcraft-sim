@@ -76,6 +76,9 @@ __device__ void VX3_Voxel::deviceInit(VX3_VoxelyzeKernel* k) {
     // init linkdir
     for (int i=0;i<6;i++) {
         if (links[i]) {
+            
+            unbreakable = true; // sam: don't break voxels that are initialized with links
+
             if (links[i]->pVNeg==this) {
                 links[i]->linkdirNeg = (linkDirection)i;
             } else if (links[i]->pVPos==this) {
@@ -328,7 +331,8 @@ __device__ void VX3_Voxel::timeStep(double dt, double currentTime, VX3_VoxelyzeK
         // printf("%f) before propagateSignal. this=%p.\n",currentTime, this);
         propagateSignal(currentTime);
         packMaker(currentTime);
-        localSignalDecay(currentTime);
+        if (mat->signalValueDecay <= 1.0) // sam: hack to keep material lit (set decay > 1)
+            localSignalDecay(currentTime);
     }
 
 

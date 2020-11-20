@@ -256,6 +256,8 @@ public:
 
     bool enableAttach = true;
 
+    bool unbreakable = false; // sam
+
     double nonStickTimer = 0.0;  // sam
 
     VX3_Vec3D<double> free_slots[6]; // sam

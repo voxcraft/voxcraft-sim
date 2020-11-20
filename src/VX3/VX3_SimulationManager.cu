@@ -224,7 +224,7 @@ __device__ void _CUDA_Simulation(VX3_VoxelyzeKernel *k, int thread_index, int de
         d_v3->computeFitness();
         // d_v3->computeTargetCloseness();
         // d_v3->computeNumRealLinks();
-        printf(COLORCODE_BLUE "%d) Simulation %d ends: %s Time: %f, pairs: %d, largestStickyGroup: %d.\n" COLORCODE_RESET, device_index, thread_index, d_v3->vxa_filename, d_v3->currentTime, d_v3->numClosePairs, d_v3->largestStickyGroupSize); // sam
+        printf(COLORCODE_BLUE "%d) Simulation %d ends: %s Time: %f, PileSize: %d.\n" COLORCODE_RESET, device_index, thread_index, d_v3->vxa_filename, d_v3->currentTime, d_v3->largestStickyGroupSize); // sam
     }
 }
 
@@ -499,8 +499,10 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         h_d_tmp.SelfReplication = pt_merged.get<int>("VXA.Simulator.SelfReplication", 0);  // sam
         h_d_tmp.WorldSize = pt_merged.get<int>("VXA.Simulator.WorldSize", 1);  // sam
         h_d_tmp.WallForce = pt_merged.get<double>("VXA.Simulator.WallForce", 0);  // sam
-        h_d_tmp.SpaceBetweenDebris = pt_merged.get<int>("VXA.Simulator.SpaceBetweenDebris", 2);  // sam
+        h_d_tmp.BotMat = pt_merged.get<int>("VXA.Simulator.BotMat", 1);  // sam
+        h_d_tmp.RemoveMat = pt_merged.get<int>("VXA.Simulator.RemoveMat", 1);  // sam
         h_d_tmp.DebrisMat = pt_merged.get<int>("VXA.Simulator.DebrisMat", 2);  // sam
+        h_d_tmp.SpaceBetweenDebris = pt_merged.get<int>("VXA.Simulator.SpaceBetweenDebris", 2);  // sam
         h_d_tmp.DebrisHeight = pt_merged.get<int>("VXA.Simulator.DebrisHeight", 1);  // sam
         h_d_tmp.DebrisConcentration = pt_merged.get<int>("VXA.Simulator.DebrisConcentration", 1);  // sam
         h_d_tmp.DetachStringyBodiesEvery = pt_merged.get<double>("VXA.Simulator.DetachStringyBodiesEvery", 0);  // sam
@@ -591,37 +593,38 @@ void VX3_SimulationManager::collectResults(int num_simulation, int device_index)
         VX3_SimulationResult tmp;
         tmp.currentTime = result_voxelyze_kernel[i].currentTime;
         tmp.fitness_score = result_voxelyze_kernel[i].fitness_score;
-        tmp.x = result_voxelyze_kernel[i].currentCenterOfMass.x;
-        tmp.y = result_voxelyze_kernel[i].currentCenterOfMass.y;
-        tmp.z = result_voxelyze_kernel[i].currentCenterOfMass.z;
-        result_voxelyze_kernel[i].initialCenterOfMass.copyTo(tmp.initialCenterOfMass);
-        result_voxelyze_kernel[i].currentCenterOfMass.copyTo(tmp.currentCenterOfMass);
+        // tmp.x = result_voxelyze_kernel[i].currentCenterOfMass.x;
+        // tmp.y = result_voxelyze_kernel[i].currentCenterOfMass.y;
+        // tmp.z = result_voxelyze_kernel[i].currentCenterOfMass.z;
+        // result_voxelyze_kernel[i].initialCenterOfMass.copyTo(tmp.initialCenterOfMass);
+        // result_voxelyze_kernel[i].currentCenterOfMass.copyTo(tmp.currentCenterOfMass);
 
         tmp.largestStickyGroupSize = result_voxelyze_kernel[i].largestStickyGroupSize;
-        tmp.numRealLinks = result_voxelyze_kernel[i].numRealLinks;
-        tmp.numClosePairs = result_voxelyze_kernel[i].numClosePairs;
-        tmp.voxSize = result_voxelyze_kernel[i].voxSize;
-        tmp.num_voxel = result_voxelyze_kernel[i].num_d_voxels;
+        // tmp.numRealLinks = result_voxelyze_kernel[i].numRealLinks;
+        // tmp.numClosePairs = result_voxelyze_kernel[i].numClosePairs;
+        // tmp.voxSize = result_voxelyze_kernel[i].voxSize;
+        // tmp.num_voxel = result_voxelyze_kernel[i].num_d_voxels;
         tmp.vxa_filename = result_voxelyze_kernel[i].vxa_filename;
-        VX3_Voxel *tmp_v;
-        tmp_v = (VX3_Voxel *)malloc(result_voxelyze_kernel[i].num_d_voxels * sizeof(VX3_Voxel));
-        VcudaMemcpy(tmp_v, result_voxelyze_kernel[i].d_voxels, result_voxelyze_kernel[i].num_d_voxels * sizeof(VX3_Voxel), cudaMemcpyDeviceToHost);
-        tmp.SavePositionOfAllVoxels = result_voxelyze_kernel[i].SavePositionOfAllVoxels;
-        VX3_Vec3D<> *tmp_init;
-        tmp_init = (VX3_Vec3D<> *)malloc(result_voxelyze_kernel[i].num_d_init_voxels * sizeof(VX3_Vec3D<>));
-        VcudaMemcpy(tmp_init, result_voxelyze_kernel[i].d_initialPosition, result_voxelyze_kernel[i].num_d_init_voxels * sizeof(VX3_Vec3D<>), cudaMemcpyDeviceToHost);
-        tmp.num_measured_voxel = 0;
-        tmp.total_distance_of_all_voxels = 0.0;
-        for (int j = 0; j < result_voxelyze_kernel[i].num_d_init_voxels; j++) {
-            tmp.voxel_init_pos.push_back(Vec3D<>(tmp_init[j].x, tmp_init[j].y, tmp_init[j].z));
-            tmp.voxel_position.push_back(Vec3D<>(tmp_v[j].pos.x, tmp_v[j].pos.y, tmp_v[j].pos.z));
-            tmp.voxel_mats.push_back(tmp_v[j].matid);
-            if (tmp_v[j].isMeasured) {
-                tmp.num_measured_voxel++;
-                tmp.total_distance_of_all_voxels += tmp.voxel_position.back().Dist(tmp.voxel_init_pos.back());
-            }
-        }
-        delete tmp_v;
+
+        // VX3_Voxel *tmp_v;
+        // tmp_v = (VX3_Voxel *)malloc(result_voxelyze_kernel[i].num_d_voxels * sizeof(VX3_Voxel));
+        // VcudaMemcpy(tmp_v, result_voxelyze_kernel[i].d_voxels, result_voxelyze_kernel[i].num_d_voxels * sizeof(VX3_Voxel), cudaMemcpyDeviceToHost);
+        // tmp.SavePositionOfAllVoxels = result_voxelyze_kernel[i].SavePositionOfAllVoxels;
+        // VX3_Vec3D<> *tmp_init;
+        // tmp_init = (VX3_Vec3D<> *)malloc(result_voxelyze_kernel[i].num_d_init_voxels * sizeof(VX3_Vec3D<>));
+        // VcudaMemcpy(tmp_init, result_voxelyze_kernel[i].d_initialPosition, result_voxelyze_kernel[i].num_d_init_voxels * sizeof(VX3_Vec3D<>), cudaMemcpyDeviceToHost);
+        // tmp.num_measured_voxel = 0;
+        // tmp.total_distance_of_all_voxels = 0.0;
+        // for (int j = 0; j < result_voxelyze_kernel[i].num_d_init_voxels; j++) {
+        //     tmp.voxel_init_pos.push_back(Vec3D<>(tmp_init[j].x, tmp_init[j].y, tmp_init[j].z));
+        //     tmp.voxel_position.push_back(Vec3D<>(tmp_v[j].pos.x, tmp_v[j].pos.y, tmp_v[j].pos.z));
+        //     tmp.voxel_mats.push_back(tmp_v[j].matid);
+        //     if (tmp_v[j].isMeasured) {
+        //         tmp.num_measured_voxel++;
+        //         tmp.total_distance_of_all_voxels += tmp.voxel_position.back().Dist(tmp.voxel_init_pos.back());
+        //     }
+        // }
+        // delete tmp_v;
 
         // tmp.computeFitness();
         h_results.push_back(tmp);

@@ -247,6 +247,11 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
         }
     }
 
+    // // sam:
+    // if (voxel_host->unbreakable && relativeRotation.w < 0.866)
+    //     return false;
+    // //
+
     if (relativeRotation.w > 0.866 || hasSingleton || d_kernel->ForceAttachment ) // 0.866 is within 30 degree
     {
         VX3_Vec3D<> raw_pos = voxel_remote->position() - voxel_host->position();
@@ -310,9 +315,11 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
             if (voxel_to_detach == voxel_host) {
                 ret = false; // Sida: this is a weird situation, the collision happened, but before this check, another voxel has been attached to this exact position. so this collision should not cause attachment.
             } else {
-                needUpdate = true;
-                PRINT(d_kernel, "While checking compatibility of (%p) group (%p) v.s. (%p) group (%p).\n", voxel_host, voxel_host->d_group, voxel_remote, voxel_remote->d_group );
-                d_kernel->d_voxels_to_detach.push_back(voxel_to_detach);
+                if (!voxel_to_detach->unbreakable) {  // sam: unbreakable voxels
+                    needUpdate = true;
+                    PRINT(d_kernel, "While checking compatibility of (%p) group (%p) v.s. (%p) group (%p).\n", voxel_host, voxel_host->d_group, voxel_remote, voxel_remote->d_group );
+                    d_kernel->d_voxels_to_detach.push_back(voxel_to_detach);
+                }  // sam: unbreakable voxels
             }
         }
     }

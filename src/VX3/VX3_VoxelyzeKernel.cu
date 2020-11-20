@@ -504,25 +504,27 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
                 // updateGroups();  // this is called every timestep
                 
                 // in case no bots remain and sim ends
-                // if (ComputeLargestSitckyGroupForFirstRound){
-                if (firstRound){
+                if (ComputeLargestSitckyGroupForFirstRound){
+                    if (firstRound){
+                        computeTargetCloseness();
+                        computeLargestStickyGroupSize();     
+                    }
+                } 
+                else{
                     computeTargetCloseness();
-                    computeLargestStickyGroupSize();     
+                    computeLargestStickyGroupSize();
                 }
-                // } else{
-                //     computeLargestStickyGroupSize();
-                // }
                 firstRound = false;
                 readyToReplenish = true;
                 
-                convertMatIfSmallBody(1, 0, 2);   // convert small mat1 bodies>1 to mat0; flags material as not yet removed
-                removeVoxels();  // remove newly converted small mat 0 bodies
+                convertMatIfSmallBody(DebrisMat-1, RemoveMat-1, 2);   // tag small debris piles bodies>1 as removable
+                removeVoxels();  // remove removeable mat bodies
 
                 // replenish just before new filial generation
                 if (ReplenishDebrisEvery == 0) {
                     replenishMaterial(2, WorldSize-1, SpaceBetweenDebris+1, DebrisMat-1, DebrisHeight-1, DebrisConcentration); 
                 }
-                convertMatIfLargeBody(1, 0); // finally, convert large mat1 bodies>MinimumBotSize to mat0 [new organisms]
+                convertMatIfLargeBody(DebrisMat-1, BotMat-1); // finally, convert large debris bodies>MinimumBotSize to new organisms
 
                 // now reinit everything
                 regenerateSurfaceVoxels();  // who's on the surface? collisions and cilia
@@ -537,7 +539,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
                 // check for inconsistent voxel groups (bad attach/detach)
                 if (!ThoroughValidationCheck()) {
-                    convertMatIfSmallBody(1, 0, 2);  // so numClosePairs will be 0
+                    convertMatIfSmallBody(DebrisMat-1, RemoveMat-1, 2);  // so numClosePairs will be 0
                     removeVoxels();  // failed the test so remove all the bots (causes sim to end)
                 }
             }
@@ -1506,6 +1508,10 @@ __global__ void gpu_find_weak_links(VX3_Voxel **surface_voxels, int num, double 
         if (v->mat->fixed)
             return;
         if (v->removed)
+            return;
+        // if (v->mat->LockZ)
+        //     return;
+        if (v->unbreakable)
             return;
         if (v->mat->Cilia != 0)
             return;
