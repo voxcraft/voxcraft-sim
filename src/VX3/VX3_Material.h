@@ -121,6 +121,7 @@ public:
 	double Cilia = 0;
 
 	bool LockZ = false;  // sam
+	bool NoSpin = false; // sam
 	double SlowDampingFrac = 1; // sam
 	double WaterLevel = 0;  // sam
 	double Buoyancy = 0; // sam

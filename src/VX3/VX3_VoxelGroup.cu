@@ -247,10 +247,10 @@ __device__ bool VX3_VoxelGroup::isCompatible(VX3_Voxel *voxel_host, VX3_Voxel *v
         }
     }
 
-    // // sam:
-    // if (voxel_host->unbreakable && relativeRotation.w < 0.866)
-    //     return false;
-    // //
+    // sam:
+    if (voxel_host->unbreakable && relativeRotation.w < 0.866)
+        return false;
+    //
 
     if (relativeRotation.w > 0.866 || hasSingleton || d_kernel->ForceAttachment ) // 0.866 is within 30 degree
     {

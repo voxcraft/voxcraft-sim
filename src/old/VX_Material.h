@@ -124,6 +124,7 @@ class CVX_Material {
 	double Cilia = 0; //!< Scale factor of cilia force in VXD.
 
 	bool LockZ = false;  // sam
+	bool NoSpin = false;  // sam
 	double SlowDampingFrac = 1; // sam
 	double WaterLevel = 0;  // sam
 	double Buoyancy = 0; // sam

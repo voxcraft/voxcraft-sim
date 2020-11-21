@@ -450,7 +450,7 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
     // sam:
     if (mat->LockZ) {
         CiliaForce.z = 0;
-        if (!d_kernel->firstRound)
+        if ( (!d_kernel->firstRound)  && (!unbreakable))  // not removeMat
             CiliaForce *= d_kernel->CiliaFracAfterFirstRound; 
     }
 
@@ -525,6 +525,13 @@ __device__ VX3_Vec3D<double> VX3_Voxel::moment() {
     if (mat->LockZ) { 
         totalMoment.x = 0;
         totalMoment.y = 0;
+    }
+
+    // sam
+    if (mat->NoSpin) {
+        totalMoment.x = 0;
+        totalMoment.y = 0; 
+        totalMoment.z = 0;
     }
 
     return totalMoment;
