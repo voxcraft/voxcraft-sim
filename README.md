@@ -12,6 +12,22 @@ Learn more about the voxcraft project, and how to build simulated designs using 
 
 # Installation
 
+## Docker (recommended)
+
+#### Requirements
+When building voxcraft-sim the makefile checks if a GPU is available. Thus it is necessary for docker build to be able to see your GPU. To that end install and configure the [nvidia-container-runtime](https://stackoverflow.com/questions/59691207/docker-build-with-nvidia-runtime).
+
+#### Build
+```bash
+cd voxcraft
+docker build -t voxcraft-sim .
+```
+
+#### Run
+```bash
+docker run -it --gpus all voxcraft-sim
+```
+
 ## On DeepGreen
 
 DeepGreen is UVM’s GPU cluster. We have already compiled everything on DeepGreen, so it will be quite easy to use `voxcraft-sim` on DeepGreen.
