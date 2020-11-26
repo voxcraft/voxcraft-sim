@@ -10,6 +10,12 @@ This repo is one of the three parts of voxcraft software.
 
 Learn more about the voxcraft project, and how to build simulated designs using soft robot blocks, please refer to: https://voxcraft.github.io/
 
+# Reference material
+
+Tag definitions used in the vxa files can be found in the [read the docs](https://gpuvoxels.readthedocs.io/en/docs/vxa-vxd/tags.html).
+
+Although this project uses xml, the [JSON format reference](https://github.com/jonhiller/Voxelyze/wiki/Voxelyze-JSON-format) from the the Voxelyze project can be useful.
+
 # Installation
 
 ## On DeepGreen
