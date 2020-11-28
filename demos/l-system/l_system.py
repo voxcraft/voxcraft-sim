@@ -4,6 +4,11 @@ from vox.utils.tensor_to_cdata import tensor_to_cdata
 
 
 class Voxel():
+    """A voxel of material type, build level and connections.
+
+    IE a graph representation of a voxel.
+
+    """
 
     def __init__(self, material):
         self.material = material
@@ -20,18 +25,21 @@ class ProbabilisticLSystem():
     """Generate patterns given patterns.
 
     Use the local context to decide what pattern to generate next.
+    IE the the configuration of voxels added depend on the proportion
+    of the voxel types.
 
     """
 
-    def __init__(self, axiom, growth_function, growth_iterations,
-                 materials, directions, num_voxels):
+    def __init__(self, growth_function, growth_iterations,
+                 materials, directions, max_voxels, search_radius):
         self.axiom = Voxel(1, 0)
         self.growth_function = growth_function
         self.growth_iterations = growth_iterations
         self.materials = materials
         self.directions = directions
-        self.voxels = num_voxels
+        self.max_voxels = max_voxels
         self.initialize_configurations()
+        self.search_radius = search_radius
 
     def expand(self):
         """Expand the axiom and grow the body.
@@ -92,6 +100,7 @@ class ProbabilisticLSystem():
             body.append(voxels)
 
     def get_function_input(self, voxel):
+        initial_level = voxel.level
         total_voxels = 0
         material_proportions = {}
         for m in self.materials:
@@ -100,6 +109,8 @@ class ProbabilisticLSystem():
         while len(search_voxels) > 0:
             total_voxels += 1
             voxel = search_voxels.pop()
+            if np.abs(initial_level - voxel.level) > self.search_radius:
+                break
             material_proportions[voxel.material] += 1
             if voxel.negative_x:
                 search_voxels.appendleft(voxel.negative_x)
@@ -131,7 +142,7 @@ class ProbabilisticLSystem():
         i = 0
         for m in self.materials:
             for d in self.directions:
-                for v in range(1, self.num_voxels + 1):
+                for v in range(1, self.max_voxels + 1):
                     voxels = []
                     for _ in v:
                         voxels.appendleft((d, Voxel(m)))
