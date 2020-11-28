@@ -22,8 +22,8 @@
         <Material>
             <Name>Default</Name>
             <Display>
-                <Red>1</Red>
-                <Green>0</Green>
+                <Red>.5</Red>
+                <Green>.5</Green>
                 <Blue>0</Blue>
                 <Alpha>1</Alpha>
             </Display>
