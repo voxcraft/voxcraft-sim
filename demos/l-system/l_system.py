@@ -3,7 +3,7 @@ import numpy as np
 from vox.utils.tensor_to_cdata import tensor_to_cdata
 
 
-class Voxel():
+class Voxel:
     """A voxel of material type, build level and connections.
 
     IE a graph representation of a voxel.
@@ -21,7 +21,7 @@ class Voxel():
         self.level = None
 
 
-class ProbabilisticLSystem():
+class ProbabilisticLSystem:
     """Generate patterns given patterns.
 
     Use the local context to decide what pattern to generate next.
@@ -30,10 +30,22 @@ class ProbabilisticLSystem():
 
     """
 
-    def __init__(self, growth_function, growth_iterations,
-                 materials, directions, max_voxels, search_radius):
+    def __init__(
+        self,
+        materials=(0, 1),
+        directions=(
+            "negative_x",
+            "positive_x",
+            "negative_y",
+            "positive_y",
+            "negative_z",
+            "positive_z",
+        ),
+        growth_iterations=3,
+        max_voxels=5,
+        search_radius=1,
+    ):
         self.axiom = Voxel(1, 0)
-        self.growth_function = growth_function
         self.growth_iterations = growth_iterations
         self.materials = materials
         self.directions = directions
@@ -41,7 +53,7 @@ class ProbabilisticLSystem():
         self.initialize_configurations()
         self.search_radius = search_radius
 
-    def expand(self):
+    def expand(self, growth_function):
         """Expand the axiom and grow the body.
 
         Expand out the axiom given the condtional probability of
@@ -52,8 +64,8 @@ class ProbabilisticLSystem():
         def attach_voxels(configuration, current_voxel):
             """Attach a configuration of voxels to the current voxel.
 
-            Attach a configuration of voxels (IE a 
-            combination of voxels of a given material and placements) 
+            Attach a configuration of voxels (IE a
+            combination of voxels of a given material and placements)
             to to the current voxel.
 
             """
@@ -64,10 +76,10 @@ class ProbabilisticLSystem():
                 voxel = c[1]
                 if direction == "negative_x":
                     current_voxel.negative_x = voxel
-                    voxel.positive_x = current_voxel 
+                    voxel.positive_x = current_voxel
                 elif direction == "positive_x":
                     current_voxel.positive_x = voxel
-                    voxel.negative_x = current_voxel 
+                    voxel.negative_x = current_voxel
                 elif direction == "negative_y":
                     current_voxel.negative_y = voxel
                     voxel.positive_y = current_voxel
@@ -89,17 +101,18 @@ class ProbabilisticLSystem():
         self.axiom.level = 0
         body = deque([self.axiom])
         while len(body) > 0:
-            voxel = body.pop() 
+            voxel = body.pop()
             if voxel.level > self.growth_iterations:
                 break
-            # Just look at v_i IE the material of the voxel.
             X = self.get_function_input(voxel)
-            configuration_number = self.growth_function(X)
+            configuration_number = growth_function(X)
             configuration = self.configuration[configuration_number]
             voxels = attach_voxels(configuration)
             body.append(voxels)
 
     def get_function_input(self, voxel):
+        """Get the material proportions of nearby voxels"""
+
         initial_level = voxel.level
         total_voxels = 0
         material_proportions = {}
@@ -107,7 +120,6 @@ class ProbabilisticLSystem():
             material_proportions[m] = 0
         search_voxels = deque([voxel])
         while len(search_voxels) > 0:
-            total_voxels += 1
             voxel = search_voxels.pop()
             if np.abs(initial_level - voxel.level) > self.search_radius:
                 break
@@ -124,6 +136,7 @@ class ProbabilisticLSystem():
                 search_voxels.appendleft(voxel.negative_z)
             elif voxel.positive_z:
                 search_voxels.appendleft(voxel.positive_z)
+            total_voxels += 1
         for m in material_proportions:
             material_proportions[m] /= total_voxels
         return material_proportions.values()
@@ -132,9 +145,9 @@ class ProbabilisticLSystem():
         """Map every possible configuration.
 
         Create a map from i = 0 to n of every possible way in which
-        voxels with materials m could be placed on three-dimensional
+        voxels with materials could be placed on three-dimensional
         surfaces.
-            
+
         """
 
         self.configuration_map = {}
@@ -148,9 +161,6 @@ class ProbabilisticLSystem():
                         voxels.appendleft((d, Voxel(m)))
                     self.configuration_map[i] = voxels
                     i += 1
-        # Assumes six voxel surfaces and two material types
-        # plus no voxels.
-        assert len(self.configuration_map) == 2510
 
     def to_tensor(self):
         """Convert the graph representation of the body to a tensor.
@@ -161,13 +171,12 @@ class ProbabilisticLSystem():
 
         """
 
-        X = np.zeros(((2 * self.growth_iterations) + 1, 
-                      (2 * self.growth_iterations) + 1, 
-                      (2 * self.growth_iterations) + 1))
-        middle = int(np.floor(self.growth_iterations / 2))
+        extent = (2 * self.growth_iterations) + 1
+        X = np.zeros((extent, extent, extent))
+        middle = int(np.floor(extent / 2))
         x, y, z = middle, middle, middle
         to_process = deque([(x, y, z, self.axiom)])
-        while len(to_process) > 0: 
+        while len(to_process) > 0:
             x, y, z, voxel = to_process.pop()
             X[x, y, z] = voxel.material
             if voxel.negative_x:
@@ -189,6 +198,3 @@ class ProbabilisticLSystem():
                 z += 1
                 to_process.appendleft((x, y, z, voxel.positive_z))
         return X
-
-    def to_cdata(self):
-        return self.tensor(tensor_to_cdata()) 
