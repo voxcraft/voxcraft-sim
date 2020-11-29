@@ -4,14 +4,16 @@ from vox.utils.tensor_to_cdata import tensor_to_cdata, add_cdata_to_xml
 
 l_system = ProbabilisticLSystem(growth_iterations=7, 
                                 search_radius=2,
-                                max_voxels=2)
+                                max_voxels=3)
 
 # The output size for the growth function is the
 # number of possible configurations that can be grown.
 input_size = len(l_system.materials)
 output_size = len(l_system.configuration_map)
+# for k in l_system.configuration_map:
+#     print(l_system.configuration_map[k])
 
-growth_function = PytorchGrowthFunction(input_size, output_size)
+growth_function = PytorchGrowthFunction(input_size, output_size, sample=True)
 
 # Grow the creature.
 l_system.expand(growth_function)

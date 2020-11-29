@@ -28,17 +28,17 @@ class Voxel:
         return f"Voxel with material: {self.material} and level: {self.level}"
 
 
-class PytorchGrowthFunction():
-
-    def __init__(self, input_size, output_size):
+class PytorchGrowthFunction:
+    def __init__(self, input_size, output_size, sample=False):
         self.growth_function = MLP(input_size, output_size)
-        
+        self.sample = sample
+
     def predict(self, X):
         """Predict the configuration index based on nearby voxels.
 
         Attributes:
             X: List of material proportions.
-            
+
         Returns:
             index of configuration as an int.
 
@@ -46,12 +46,23 @@ class PytorchGrowthFunction():
 
         X = torch.tensor([X])
         probabilities = self.growth_function(X).squeeze()
-        max_value = 0
-        index = 0
-        for i in range(probabilities.shape[0]):
-            if probabilities[i] > max_value:
-                max_value = probabilities[i]
-                index = i
+
+        if self.sample:
+            index = np.random.choice(
+                [i for i in range(probabilities.shape[0])],
+                size=1,
+                replace=False,
+                p=probabilities.detach().numpy(),
+            )[0]
+            print(index)
+        else:
+            max_value = 0
+            index = 0
+            for i in range(probabilities.shape[0]):
+                if probabilities[i] > max_value:
+                    max_value = probabilities[i]
+                    index = i
+
         return int(index)
 
 
@@ -104,31 +115,46 @@ class ProbabilisticLSystem:
 
             """
 
+            if configuration is None:
+                return []
+
             voxels = []
             for c in configuration:
                 material = c[0]
                 direction = c[1]
                 voxel = Voxel(material)
-                if direction == "negative_x":
+
+                if direction == "negative_x" and not current_voxel.negative_x:
                     current_voxel.negative_x = voxel
                     voxel.positive_x = current_voxel
-                if direction == "positive_x":
+                    voxel.level = current_voxel.level + 1
+                    voxels.append(voxel)
+                if direction == "positive_x" and not current_voxel.positive_x:
                     current_voxel.positive_x = voxel
                     voxel.negative_x = current_voxel
-                if direction == "negative_y":
+                    voxel.level = current_voxel.level + 1
+                    voxels.append(voxel)
+                if direction == "negative_y" and not current_voxel.negative_y:
                     current_voxel.negative_y = voxel
                     voxel.positive_y = current_voxel
-                if direction == "positive_y":
+                    voxel.level = current_voxel.level + 1
+                    voxels.append(voxel)
+                if direction == "positive_y" and not current_voxel.positive_y:
                     current_voxel.positive_y = voxel
                     voxel.negative_y = current_voxel
-                if direction == "negative_z":
+                    voxel.level = current_voxel.level + 1
+                    voxels.append(voxel)
+                if direction == "negative_z" and not current_voxel.negative_z:
                     current_voxel.negative_z = voxel
                     voxel.positive_z = current_voxel
-                if direction == "positive_z":
+                    voxel.level = current_voxel.level + 1
+                    voxels.append(voxel)
+                if direction == "positive_z" and not current_voxel.positive_z:
                     current_voxel.positive_z = voxel
                     voxel.negative_z = current_voxel
-                voxel.level = current_voxel.level + 1
-                voxels.append(voxel)
+                    voxel.level = current_voxel.level + 1
+                    voxels.append(voxel)
+
             print("Added voxels:")
             for v in voxels:
                 print(v)
@@ -142,6 +168,7 @@ class ProbabilisticLSystem:
                 break
             X = self.get_function_input(voxel)
             configuration_index = growth_function.predict(X)
+            print(f"Configuration index: {configuration_index}")
             configuration = self.configuration_map[configuration_index]
             voxels = attach_voxels(configuration, voxel)
             for v in voxels:
@@ -200,11 +227,12 @@ class ProbabilisticLSystem:
 
         self.configuration_map = {}
         self.configuration_map[0] = None
-        i = 0
+        i = 1
         for num_voxels in range(1, self.max_voxels + 1):
             for subset in itertools.combinations(possible_voxels, num_voxels):
                 self.configuration_map[i] = subset
                 i += 1
+        print(f"Initialized {len(self.configuration_map)} configurations.")
 
     def to_tensor(self):
         """Convert the graph representation of the body to a tensor.
