@@ -1,4 +1,4 @@
-import lxml as etree
+from lxml import etree
 
 
 def tensor_to_cdata(X):
@@ -34,12 +34,12 @@ def add_cdata_to_xml(C, x_size, y_size, z_size, file_path):
     etree.SubElement(Structure, "Z_Voxels").text = f"{z_size}"
     
     Data = etree.SubElement(Structure, "Data")
-    for i in range(x_size):
-        string = "".join([f"{c}" for c in C[:, i]])
+    for i in range(z_size):
+        string = "".join([f"{int(c)}" for c in C[i, :]])
         etree.SubElement(Data, "Layer").text = etree.CDATA(string)
 
     file_content = etree.tostring(VXD, pretty_print=True).decode("utf-8")
-    with open("robot.vxd", "w") as f:
+    with open(file_path, "w") as f:
         print(file_content, file=f)
 
     # PhaseOffset = etree.SubElement(Structure, "PhaseOffset")

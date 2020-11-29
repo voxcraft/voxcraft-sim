@@ -19,12 +19,32 @@
         <Lattice_Dim>0.01</Lattice_Dim>
     </Lattice>
     <Palette>
-        <Material>
-            <Name>Default</Name>
+        <Material ID="1">
+            <Name>Red</Name>
             <Display>
-                <Red>.5</Red>
-                <Green>.5</Green>
+                <Red>1</Red>
+                <Green>0</Green>
                 <Blue>0</Blue>
+                <Alpha>1</Alpha>
+            </Display>
+            <Mechanical>
+                <MatModel>0</MatModel>
+                <Elastic_Mod>1e+05</Elastic_Mod>
+                <Fail_Stress>0</Fail_Stress>
+                <Density>1e+3</Density>
+                <Poissons_Ratio>0.35</Poissons_Ratio>
+                <CTE>0</CTE>
+                <MaterialTempPhase>0</MaterialTempPhase>
+                <uStatic>1</uStatic>
+                <uDynamic>0.8</uDynamic>
+            </Mechanical>
+        </Material>
+        <Material ID="1">
+            <Name>Blue</Name>
+            <Display>
+                <Red>0</Red>
+                <Green>0</Green>
+                <Blue>1</Blue>
                 <Alpha>1</Alpha>
             </Display>
             <Mechanical>
