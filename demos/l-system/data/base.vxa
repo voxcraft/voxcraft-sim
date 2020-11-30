@@ -39,7 +39,7 @@
                 <uDynamic>0.8</uDynamic>
             </Mechanical>
         </Material>
-        <Material ID="1">
+        <Material ID="2">
             <Name>Blue</Name>
             <Display>
                 <Red>0</Red>

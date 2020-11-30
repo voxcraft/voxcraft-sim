@@ -1,17 +1,27 @@
 from l_system import ProbabilisticLSystem, PytorchGrowthFunction
 from vox.utils.tensor_to_cdata import tensor_to_cdata, add_cdata_to_xml
+import argparse
 
 
-l_system = ProbabilisticLSystem(growth_iterations=7, 
-                                search_radius=2,
-                                max_voxels=3)
+parser = argparse.ArgumentParser(
+    description="Generate a VXD file for the voxcraft simulation."
+)
+parser.add_argument("--growth_iterations", type=int)
+parser.add_argument("--search_radius", type=int)
+parser.add_argument("--max_voxels", type=int)
+
+args = parser.parse_args()
+
+l_system = ProbabilisticLSystem(
+    growth_iterations=args.growth_iterations,
+    search_radius=args.search_radius,
+    max_voxels=args.max_voxels,
+)
 
 # The output size for the growth function is the
 # number of possible configurations that can be grown.
 input_size = len(l_system.materials)
 output_size = len(l_system.configuration_map)
-# for k in l_system.configuration_map:
-#     print(l_system.configuration_map[k])
 
 growth_function = PytorchGrowthFunction(input_size, output_size, sample=True)
 
