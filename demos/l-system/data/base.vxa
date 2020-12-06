@@ -1,64 +1,92 @@
 <VXA Version="1.1">
-<Simulator>
-    <RecordHistory>
-        <RecordStepSize>100</RecordStepSize>
-        <RecordVoxel>1</RecordVoxel>
-        <RecordLink>0</RecordLink>
-    </RecordHistory>
-    <StopCondition>
-        <StopConditionFormula>
-            <mtSUB>
-            <mtVAR>t</mtVAR>
-            <mtCONST>1</mtCONST>
-            </mtSUB>
-        </StopConditionFormula>
-    </StopCondition>
-</Simulator>
+    <GPU>
+        <HeapSize>0.5</HeapSize>
+    </GPU>
+	<Simulator>
+		<EnableExpansion>1</EnableExpansion>
+        <FitnessFunction>
+            <mtADD>
+                <mtMUL>
+                <mtVAR>x</mtVAR>
+                <mtVAR>x</mtVAR>
+                </mtMUL>
+                <mtMUL>
+                <mtVAR>y</mtVAR>
+                <mtVAR>y</mtVAR>
+                </mtMUL>
+            </mtADD>
+        </FitnessFunction>
+        <Integration>
+            <DtFrac>0.9</DtFrac>
+        </Integration>
+		<StopCondition>
+			<StopConditionFormula>
+				<mtSUB>
+				<mtVAR>t</mtVAR>
+				<mtCONST>5</mtCONST>
+				</mtSUB>
+			</StopConditionFormula>
+		</StopCondition>
+	    <Damping>
+            <BondDampingZ>1</BondDampingZ>
+            <ColDampingZ>0.8</ColDampingZ>
+            <SlowDampingZ>0.01</SlowDampingZ>
+        </Damping>
+	</Simulator>
+	<Environment>
+        <Thermal>
+            <TempEnabled>1</TempEnabled>
+            <TempAmplitude>14.4714</TempAmplitude>
+            <TempBase>25</TempBase>
+            <VaryTempEnabled>1</VaryTempEnabled>
+            <TempPeriod>0.2</TempPeriod>
+        </Thermal>
+    </Environment>
 <VXC Version="0.94">
     <Lattice>
         <Lattice_Dim>0.01</Lattice_Dim>
     </Lattice>
     <Palette>
-        <Material ID="1">
-            <Name>Red</Name>
-            <Display>
-                <Red>1</Red>
-                <Green>0</Green>
-                <Blue>0</Blue>
-                <Alpha>1</Alpha>
-            </Display>
-            <Mechanical>
-                <MatModel>0</MatModel>
-                <Elastic_Mod>1e+05</Elastic_Mod>
-                <Fail_Stress>0</Fail_Stress>
-                <Density>1e+3</Density>
-                <Poissons_Ratio>0.35</Poissons_Ratio>
-                <CTE>0</CTE>
-                <MaterialTempPhase>0</MaterialTempPhase>
-                <uStatic>1</uStatic>
-                <uDynamic>0.8</uDynamic>
-            </Mechanical>
-        </Material>
-        <Material ID="2">
-            <Name>Blue</Name>
-            <Display>
-                <Red>0</Red>
-                <Green>0</Green>
-                <Blue>1</Blue>
-                <Alpha>1</Alpha>
-            </Display>
-            <Mechanical>
-                <MatModel>0</MatModel>
-                <Elastic_Mod>1e+05</Elastic_Mod>
-                <Fail_Stress>0</Fail_Stress>
-                <Density>1e+3</Density>
-                <Poissons_Ratio>0.35</Poissons_Ratio>
-                <CTE>0</CTE>
-                <MaterialTempPhase>0</MaterialTempPhase>
-                <uStatic>1</uStatic>
-                <uDynamic>0.8</uDynamic>
-            </Mechanical>
-        </Material>
+    	<Material ID="1">
+            <Name>Motor1</Name>
+                <Display>
+                    <Red>1</Red>
+                    <Green>0</Green>
+                    <Blue>0</Blue>
+                    <Alpha>0.75</Alpha>
+                </Display>
+                <Mechanical>
+                    <MatModel>0</MatModel><!--0 = no failing-->
+                    <Elastic_Mod>10000</Elastic_Mod>
+                    <Fail_Stress>0</Fail_Stress>
+                    <Density>10</Density>
+                    <Poissons_Ratio>0.5</Poissons_Ratio>
+                    <CTE>0.01</CTE>
+                    <MaterialTempPhase>0</MaterialTempPhase>
+                    <uStatic>1</uStatic>
+                    <uDynamic>0.5</uDynamic>
+                </Mechanical>
+            </Material>
+            <Material ID="2">
+                <Name>Motor2</Name>
+                <Display>
+                    <Red>0</Red>
+                    <Green>1</Green>
+                    <Blue>1</Blue>
+                    <Alpha>0.75</Alpha>
+                </Display>
+                <Mechanical>
+                    <MatModel>0</MatModel><!--0 = no failing-->
+                    <Elastic_Mod>10000</Elastic_Mod>
+                    <Fail_Stress>0</Fail_Stress>
+                    <Density>10</Density>
+                    <Poissons_Ratio>0.5</Poissons_Ratio>
+                    <CTE>0.01</CTE>
+                    <MaterialTempPhase>0</MaterialTempPhase>
+                    <uStatic>1</uStatic>
+                    <uDynamic>0.5</uDynamic>
+                </Mechanical>
+            </Material> 
     </Palette>
     <Structure Compression="ASCII_READABLE">
         <X_Voxels>2</X_Voxels>
