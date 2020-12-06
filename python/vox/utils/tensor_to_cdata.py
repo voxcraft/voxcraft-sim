@@ -41,7 +41,7 @@ def add_cdata_to_xml(C, x_size, y_size, z_size, file_path, record_history=True):
     if record_history:
         history = etree.SubElement(VXD, "RecordHistory")
         history.set("replace", "VXA.Simulator.RecordHistory")
-        etree.SubElement(history, "RecordStepSize").text = "100"
+        etree.SubElement(history, "RecordStepSize").text = "250"
         etree.SubElement(history, "RecordVoxel").text = "1"
         etree.SubElement(history, "RecordLink").text = "1"
         etree.SubElement(history, "RecordFixedVoxels").text = "0"

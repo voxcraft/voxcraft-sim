@@ -17,7 +17,7 @@
             </mtADD>
         </FitnessFunction>
         <Integration>
-            <DtFrac>0.9</DtFrac>
+            <DtFrac>1</DtFrac>
         </Integration>
 		<StopCondition>
 			<StopConditionFormula>
@@ -36,11 +36,16 @@
 	<Environment>
         <Thermal>
             <TempEnabled>1</TempEnabled>
-            <TempAmplitude>14.4714</TempAmplitude>
+            <TempAmplitude>7</TempAmplitude>
             <TempBase>25</TempBase>
             <VaryTempEnabled>1</VaryTempEnabled>
-            <TempPeriod>0.2</TempPeriod>
+            <TempPeriod>.5</TempPeriod>
         </Thermal>
+        <Gravity>
+            <GravEnabled>1</GravEnabled>
+            <GravAcc>-9.81</GravAcc>
+            <FloorEnabled>1</FloorEnabled>
+        </Gravity>
     </Environment>
 <VXC Version="0.94">
     <Lattice>
