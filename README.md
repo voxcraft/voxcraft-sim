@@ -19,7 +19,7 @@ When building voxcraft-sim the makefile checks if a GPU is available. Thus it is
 
 #### Build
 ```bash
-cd voxcraft
+cd voxcraft-sim
 docker build -t voxcraft-sim .
 ```
 
