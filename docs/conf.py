@@ -17,8 +17,8 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'gpuVoxels'
-copyright = '2020, Sida Liu'
+project = 'voxcraft'
+copyright = '2020, Morphology, Evolution & Cognition Laboratory'
 author = 'Sida Liu'
 
 # The full version, including alpha/beta/rc tags
