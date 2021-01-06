@@ -1,0 +1,108 @@
+Basic
+=====
+
+Video
+-----
+
+.. raw:: html
+
+    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
+        <iframe src="https://www.youtube.com/embed/LGgMuP2EU3c" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+    </div>
+
+If you can't see a YouTube video? `click here <https://www.youtube.com/LGgMuP2EU3c>`_ instead.
+
+
+How to make this demo?
+----------------------
+
+Put two files into a folder `data`.
+
+base.vxa
+^^^^^^^^
+
+.. code-block:: XML
+
+    <VXA Version="1.1">
+    <Simulator>
+        <RecordHistory>
+            <RecordStepSize>100</RecordStepSize>
+            <RecordVoxel>1</RecordVoxel>
+            <RecordLink>0</RecordLink>
+        </RecordHistory>
+        <StopCondition>
+            <StopConditionFormula>
+                <mtSUB>
+                <mtVAR>t</mtVAR>
+                <mtCONST>1</mtCONST>
+                </mtSUB>
+            </StopConditionFormula>
+        </StopCondition>
+    </Simulator>
+    <VXC Version="0.94">
+        <Lattice>
+            <Lattice_Dim>0.01</Lattice_Dim>
+        </Lattice>
+        <Palette>
+            <Material>
+                <Name>Default</Name>
+                <Display>
+                    <Red>1</Red>
+                    <Green>0</Green>
+                    <Blue>0</Blue>
+                    <Alpha>1</Alpha>
+                </Display>
+                <Mechanical>
+                    <MatModel>0</MatModel>
+                    <Elastic_Mod>1e+05</Elastic_Mod>
+                    <Fail_Stress>0</Fail_Stress>
+                    <Density>1e+3</Density>
+                    <Poissons_Ratio>0.35</Poissons_Ratio>
+                    <CTE>0</CTE>
+                    <MaterialTempPhase>0</MaterialTempPhase>
+                    <uStatic>1</uStatic>
+                    <uDynamic>0.8</uDynamic>
+                </Mechanical>
+            </Material>
+        </Palette>
+        <Structure Compression="ASCII_READABLE">
+            <X_Voxels>1</X_Voxels>
+            <Y_Voxels>1</Y_Voxels>
+            <Z_Voxels>2</Z_Voxels>
+            <Data>
+                <Layer><![CDATA[0]]></Layer>
+                <Layer><![CDATA[1]]></Layer>
+            </Data>
+        </Structure>
+    </VXC>
+    </VXA>
+
+.. note:: **Short Explanation**
+
+    There are two layers: the 1st one has no element, and the 2nd one has a voxel made of the 1st material, so when the simulation starts, the voxel falls and bounces without any damping.
+
+robot.vxd
+^^^^^^^^^
+
+.. code-block:: XML
+
+    <VXD>
+    </VXD>
+
+.. note:: **Short Explanation**
+
+    Here we only need one robot, so nothing to customize.
+
+For the meanings of the tags, please refer to `VXA Tags <../vxa-vxd/tags.html>`_.
+
+Linux Command
+^^^^^^^^^^^^^
+
+After we prepared the `data/` folder, we can run the program to get the visualization.
+
+.. code-block:: bash
+
+    ./Voxelyze3 -i data > a.history
+    ./VoxCAD a.history
+
+For the meanings of the executables, please refer to `Run <../get-started/run.html>`_.
