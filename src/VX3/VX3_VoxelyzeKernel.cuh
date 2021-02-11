@@ -65,6 +65,10 @@ class VX3_VoxelyzeKernel {
     __device__ void computeNumRealLinks(); // sam
 
     __device__ void computeLargestStickyGroupSize(); // sam
+    __device__ void recordPileSizes(int mat1, int mat2);  // sam
+
+    __device__ void countLightsOn(); // sam
+    __device__ void clearGroupCheckMark(); // sam
 
     __device__ void SandDownPiles(); // sam
     __device__ void pushPilesToFloor(); // sam
@@ -191,6 +195,28 @@ class VX3_VoxelyzeKernel {
 
     bool ComputeLargestSitckyGroupForFirstRound = false; // sam
     bool firstRound = true; // sam
+
+    int numLightsOn = 0; // sam
+
+    // sam: 
+    int pileSize01 = 0;
+    int pileSize02 = 0;
+    int pileSize03 = 0;
+    int pileSize04 = 0;
+    int pileSize05 = 0;
+    int pileSize06 = 0;
+    int pileSize07 = 0;
+    int pileSize08 = 0;
+    int pileSize09 = 0;
+    int pileSize10 = 0;
+    int pileSize11 = 0;
+    int pileSize12 = 0;
+    int pileSize13 = 0;
+    int pileSize14 = 0;
+    int pileSize15 = 0;
+    int pileSize16 = 0;
+    int pileSize17 = 0;
+    int pileSize18 = 0;
 
     //Spatial Hash
     //index all surface voxels into grid, so we only need to compare neighbor grids for detecting collision

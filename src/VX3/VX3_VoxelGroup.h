@@ -25,6 +25,8 @@ public:
     int hasNewLink; // how many new links in this group.
     int needUpdate; // avoid multiple attachments before update the group
 
+    bool checked = false; // sam
+
     __device__ VX3_VoxelGroup(VX3_VoxelyzeKernel *k);
     __device__ void deviceInit(VX3_VoxelyzeKernel *k);
     __device__ void switchAllVoxelsTo(VX3_VoxelGroup* group);

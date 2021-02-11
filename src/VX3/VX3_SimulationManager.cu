@@ -605,7 +605,29 @@ void VX3_SimulationManager::collectResults(int num_simulation, int device_index)
         // tmp.voxSize = result_voxelyze_kernel[i].voxSize;
         // tmp.num_voxel = result_voxelyze_kernel[i].num_d_voxels;
         tmp.vxa_filename = result_voxelyze_kernel[i].vxa_filename;
-
+        
+        if (true) {
+            tmp.numLightsOn = result_voxelyze_kernel[i].numLightsOn;
+            tmp.pileSize01 = result_voxelyze_kernel[i].pileSize01;
+            tmp.pileSize02 = result_voxelyze_kernel[i].pileSize02;
+            tmp.pileSize03 = result_voxelyze_kernel[i].pileSize03;
+            tmp.pileSize04 = result_voxelyze_kernel[i].pileSize04;
+            tmp.pileSize05 = result_voxelyze_kernel[i].pileSize05;
+            tmp.pileSize06 = result_voxelyze_kernel[i].pileSize06;
+            tmp.pileSize07 = result_voxelyze_kernel[i].pileSize07;
+            tmp.pileSize08 = result_voxelyze_kernel[i].pileSize08;
+            tmp.pileSize09 = result_voxelyze_kernel[i].pileSize09;
+            tmp.pileSize10 = result_voxelyze_kernel[i].pileSize10;
+            tmp.pileSize11 = result_voxelyze_kernel[i].pileSize11;
+            tmp.pileSize12 = result_voxelyze_kernel[i].pileSize12;
+            tmp.pileSize13 = result_voxelyze_kernel[i].pileSize13;
+            tmp.pileSize14 = result_voxelyze_kernel[i].pileSize14;
+            tmp.pileSize15 = result_voxelyze_kernel[i].pileSize15;
+            tmp.pileSize16 = result_voxelyze_kernel[i].pileSize16;
+            tmp.pileSize17 = result_voxelyze_kernel[i].pileSize17;
+            tmp.pileSize18 = result_voxelyze_kernel[i].pileSize18;
+        }
+        
         // VX3_Voxel *tmp_v;
         // tmp_v = (VX3_Voxel *)malloc(result_voxelyze_kernel[i].num_d_voxels * sizeof(VX3_Voxel));
         // VcudaMemcpy(tmp_v, result_voxelyze_kernel[i].d_voxels, result_voxelyze_kernel[i].num_d_voxels * sizeof(VX3_Voxel), cudaMemcpyDeviceToHost);

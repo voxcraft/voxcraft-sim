@@ -514,6 +514,8 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
                     computeTargetCloseness();
                     computeLargestStickyGroupSize();
                 }
+                recordPileSizes(BotMat-1, DebrisMat-1);
+                countLightsOn();
                 firstRound = false;
                 readyToReplenish = true;
                 
@@ -640,6 +642,98 @@ __device__ void VX3_VoxelyzeKernel::BreakWeakLinks() {
     //     updateGroups();
     //     updateAttach(CollisionMode);
     // }
+}
+
+
+// sam:
+__device__ void VX3_VoxelyzeKernel::clearGroupCheckMark() {
+    for (int i=0;i<num_d_voxels;i++) {
+        if (d_voxels[i].removed) 
+            continue;
+        d_voxels[i].d_group->checked = false;       
+    }
+}
+
+
+// sam:
+__device__ void VX3_VoxelyzeKernel::countLightsOn() {
+    // clearGroupCheckMark();
+    numLightsOn = 0;
+    for (int i=0;i<num_d_voxels;i++) {
+        if (d_voxels[i].removed) 
+            continue;
+        // if (d_voxels[i].d_group->checked) 
+        //     continue;
+        
+        // d_voxels[i].d_group->checked = true;
+
+        if ((d_voxels[i].mat->signalValueDecay > 1.0) && (d_voxels[i].localSignal > 0.0))
+            numLightsOn++;        
+    }
+}
+
+
+// sam:
+__device__ void VX3_VoxelyzeKernel::recordPileSizes(int mat1, int mat2) {
+    clearGroupCheckMark();
+    int numOfPiles = 0;
+
+    for (int i=0;i<num_d_voxels;i++) {
+        if (d_voxels[i].removed) 
+            continue;
+        if (d_voxels[i].unbreakable) 
+            continue;
+        if (d_voxels[i].d_group->checked) 
+            continue;
+            
+        if ( (d_voxels[i].mat != &d_voxelMats[mat1]) && (d_voxels[i].mat != &d_voxelMats[mat2]) )
+            continue;
+
+        d_voxels[i].d_group->checked = true;
+
+        int thisSize = d_voxels[i].d_group->d_voxels.size();
+
+        if (thisSize > MinimumBotSize) {
+            numOfPiles++;
+            if (numOfPiles == 1)
+                pileSize01 = thisSize;
+            if (numOfPiles == 2)
+                pileSize02 = thisSize;
+            if (numOfPiles == 3)
+                pileSize03 = thisSize;
+            if (numOfPiles == 4)
+                pileSize04 = thisSize;
+            if (numOfPiles == 5)
+                pileSize05 = thisSize;
+            if (numOfPiles == 6)
+                pileSize06 = thisSize;
+            if (numOfPiles == 7)
+                pileSize07 = thisSize;
+            if (numOfPiles == 8)
+                pileSize08 = thisSize;
+            if (numOfPiles == 9)
+                pileSize09 = thisSize;
+            if (numOfPiles == 10)
+                pileSize10 = thisSize;
+            if (numOfPiles == 11)
+                pileSize11 = thisSize;
+            if (numOfPiles == 12)
+                pileSize12 = thisSize;
+            if (numOfPiles == 13)
+                pileSize13 = thisSize;
+            if (numOfPiles == 14)
+                pileSize14 = thisSize;
+            if (numOfPiles == 15)
+                pileSize15 = thisSize;
+            if (numOfPiles == 16)
+                pileSize16 = thisSize;
+            if (numOfPiles == 17)
+                pileSize17 = thisSize;
+            if (numOfPiles == 18)
+                pileSize18 = thisSize;
+
+        }
+    }
 }
 
 
