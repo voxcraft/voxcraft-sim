@@ -1,14 +1,11 @@
-# Voxcraft
+# voxcraft-sim
 
-This repo is one of the three parts of voxcraft software.
+_A GPU accelerated voxel-based physics engine._
 
-1. [**voxcraft-sim**](https://github.com/voxcraft/voxcraft-sim): A highly parallelized physics engine that can simulate the voxel-based soft robots. This part utilizes CUDA and GPU.
+**Documentation:** https://voxcraft.readthedocs.io/en/latest/
 
-2. [**voxcraft-evo**](https://github.com/voxcraft/voxcraft-evo): An evolutionary design package for automatically designing voxel-based soft robots.
+**More information:** https://voxcraft.github.io/design
 
-3. [**voxcraft-viz**](https://github.com/voxcraft/voxcraft-viz): A visualization tool that can playback a history file produced by voxcraft-sim. Voxcraft-viz was originally forked from [voxcad](https://github.com/jonhiller/VoxCAD) and can also be used to manually design soft robots using voxcad's original CPU-based physics engine.
-
-Learn more about the voxcraft project, and how to build simulated designs using soft robot blocks, please refer to: https://voxcraft.github.io/
 
 # Installation
 
@@ -39,13 +36,8 @@ docker build -t voxcraft-sim .
 docker run -it --gpus all voxcraft-sim
 ```
 
-## On DeepGreen
 
-DeepGreen is UVM’s GPU cluster. We have already compiled everything on DeepGreen, so it will be quite easy to use `voxcraft-sim` on DeepGreen.
-
-Follow a five-minute instruction here: https://github.com/liusida/gpuVoxels-dg-installation (Sorry about the old name there, since we recently renamed our project.)
-
-## On Google Colab
+## Google Colab
 
 [Google Colab](https://colab.research.google.com/) provides a free online GPU environment.
 
@@ -73,7 +65,7 @@ files.download('a.history')
 
 Here is a [readonly example notebook](https://colab.research.google.com/drive/1yiqw7Uq3W3CgYCinXq4t808M2l7uuLv1?usp=sharing)
 
-## On Your Desktop/Laptop
+## Local install
 
 The most difficult part of compiling this project from scratch is installing the CUDA environment. First, make sure you have NVidia Graphic Cards, then [download CUDA 10.1](https://developer.nvidia.com/cuda-10.1-download-archive-base) and install it.
 
