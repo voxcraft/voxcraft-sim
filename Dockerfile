@@ -1,4 +1,9 @@
-FROM nvcr.io/nvidia/cuda:10.2-devel-ubuntu18.04
+FROM nvcr.io/nvidia/cuda:10.2-devel-ubuntu18.04 AS cuda
+
+ARG GID
+ARG UID
+ENV GID=${GID:-2000}
+ENV UID=${UID:-2000}
 
 WORKDIR "/root"
 
@@ -18,5 +23,14 @@ RUN wget \
 
 # Build voxcraft-sim
 RUN conda install -c anaconda cmake
-RUN git clone https://github.com/voxcraft/voxcraft-sim.git \
-    && cd voxcraft-sim && mkdir build && cd build && cmake .. && make -j 10
+
+# Add a user that aligned to the outer system
+RUN addgroup -S app --gid $GID \
+    && adduser -S -G app -u $UID -h /home/app -D app
+# Switch to that user
+USER app
+RUN mkdir /home/app/voxcraft-sim
+VOLUME ["/home/app/voxcraft-sim"]
+WORKDIR /home/app
+# Compile the source code for the outer system
+RUN cd voxcraft-sim && mkdir build && cd build && cmake .. && make -j 10
