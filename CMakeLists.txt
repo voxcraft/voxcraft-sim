@@ -27,7 +27,7 @@ file( GLOB OLD_SRC src/old/*.c* )
 add_library(voxelyze.3.0 ${UTILS_SRC_cu} ${VX3_SRC_cu} ${VX3_SRC_cpp} ${VXA_SRC_cpp} ${OLD_SRC})
 add_executable(voxcraft-sim src/Executables/voxcraft-sim.cpp)
 add_executable(vx3_node_worker src/Executables/vx3_node_worker.cu)
-add_executable(vx3_node_daemon src/Executables/vx3_node_daemon.cu)
+# add_executable(vx3_node_daemon src/Executables/vx3_node_daemon.cu)
 add_executable(vx3_test src/Executables/vx3_test.cu)
 
 target_link_libraries(vx3_node_worker PUBLIC voxelyze.3.0)
@@ -38,7 +38,7 @@ find_package(Boost REQUIRED COMPONENTS filesystem thread chrono program_options)
 target_link_libraries(voxelyze.3.0 PUBLIC ${Boost_LIBRARIES})
 target_link_libraries(voxcraft-sim PUBLIC ${Boost_LIBRARIES})
 target_link_libraries(vx3_node_worker PUBLIC ${Boost_LIBRARIES})
-target_link_libraries(vx3_node_daemon PUBLIC ${Boost_LIBRARIES})
+# target_link_libraries(vx3_node_daemon PUBLIC ${Boost_LIBRARIES})
 
 
 # CUDA options
@@ -62,6 +62,11 @@ list(APPEND CMAKE_CUDA_FLAGS -gencode=${CUDA_ARCH})
 set_target_properties(voxelyze.3.0 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(vx3_node_worker PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(vx3_test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+
+# Pass this to avoid the warning of https://cmake.org/cmake/help/latest/policy/CMP0104.html
+set_property(TARGET voxelyze.3.0 PROPERTY CUDA_ARCHITECTURES OFF)
+set_property(TARGET vx3_node_worker PROPERTY CUDA_ARCHITECTURES OFF)
+set_property(TARGET vx3_test PROPERTY CUDA_ARCHITECTURES OFF)
 
 string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
 if(uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
