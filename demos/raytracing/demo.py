@@ -27,7 +27,7 @@ BASE_CILIA_FORCE[:, :, :, :2] = 2 * np.random.rand(wx, wy, wz, 2) - 1  # initial
 BODY_PLAN = np.ones(BODY_SIZE, dtype=np.int)
 
 # light source
-LIGHT_BULB = np.ones((bx/2, by/2, wz), dtype=np.int)*3  # materials: cilia, no cilia, lightbulb
+LIGHT_BULB = np.ones((bx//2, by//2, wz), dtype=np.int)*3  # materials: cilia, no cilia, lightbulb
 
 # create data folder if it doesn't already exist
 sub.call("mkdir data{}".format(SEED), shell=True)
