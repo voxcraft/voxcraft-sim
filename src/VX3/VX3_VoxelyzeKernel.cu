@@ -872,8 +872,10 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
     int index = threadIdx.x + blockIdx.x * blockDim.x;
     VX3_Voxel *v = surface_voxels[index];
     v->inShade = false;
+    v->localSignal = 0;
     if (index < 10 && k->currentTime > 0.25) {  // drawing test: random update after 1/4 sec put in shade
         v->inShade = true;
+        v->localSignal = 100;
     }
 }
 
