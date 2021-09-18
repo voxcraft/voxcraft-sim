@@ -32,7 +32,7 @@
             <StopConditionFormula>
                 <mtSUB>
                     <mtVAR>t</mtVAR>
-                    <mtCONST>2</mtCONST>
+                    <mtCONST>1</mtCONST>
                 </mtSUB>
             </StopConditionFormula>
         </StopCondition>
@@ -63,7 +63,7 @@
                     <Red>1</Red>
                     <Green>0</Green>
                     <Blue>1</Blue>
-                    <Alpha>0.75</Alpha>
+                    <Alpha>0.85</Alpha>
                 </Display>
                 <Mechanical>
                     <isMeasured>1</isMeasured>
@@ -89,7 +89,7 @@
                     <Red>0</Red>
                     <Green>1</Green>
                     <Blue>0</Blue>
-                    <Alpha>0.75</Alpha>
+                    <Alpha>0.85</Alpha>
                 </Display>
                 <Mechanical>
                     <isMeasured>1</isMeasured>
@@ -112,10 +112,10 @@
             <Material ID="3">
                 <Name>Light</Name>
                 <Display>
-                    <Red>0</Red>
+                    <Red>0.75</Red>
                     <Green>1</Green>
                     <Blue>1</Blue>
-                    <Alpha>0.75</Alpha>
+                    <Alpha>0.85</Alpha>
                 </Display>
                 <Mechanical>
                     <Fixed>1</Fixed>

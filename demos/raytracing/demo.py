@@ -7,14 +7,14 @@ np.random.seed(SEED)
 
 RECORD_HISTORY = True
 
-WORLD_SIZE = 20  # 100
+WORLD_SIZE = 100  # line 156 in VX3_VoxelyzeKernel.cuh
 BODY_SIZE = (6, 6, 5)  # (8, 8, 7)
 # if body size changes, or if the stiffness/density of body material changes, 
 # then the cilia force of the material will need to be recalibrated
 bx, by, bz = BODY_SIZE
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, bz)
 
-EVAL_PERIOD = 2  # 4
+EVAL_PERIOD = 1  # 4
 SETTLE_TIME = 0  # 0.5
 
 RANDMONIZE_CILIA_EVERY = 0.25 # 5

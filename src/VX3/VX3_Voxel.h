@@ -299,6 +299,8 @@ class VX3_Voxel {
     VX3_Vec3D<> shiftCiliaForce;
     VX3_Vec3D<> CiliaForce;
 
+    bool inShade = false; // sam
+
     bool enableAttach = true;
 
     VX3_dQueue<VX3_Signal *> d_signals;
