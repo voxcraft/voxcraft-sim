@@ -81,9 +81,9 @@ etree.SubElement(structure, "Z_Voxels").text = str(wz)
 
 world = np.zeros((wx, wy, wz), dtype=np.int8)
 
-world[wx/2-bx/2:wx/2+bx/2, wy/2-by/2:wy/2+by/2, :] = BODY_PLAN
+world[wx//2-bx//2:wx//2+bx//2, wy//2-by//2:wy//2+by//2, :] = BODY_PLAN
 
-world[wx-bx/2:, wy-by/2:, :] = LIGHT_BULB #
+world[wx-bx//2:, wy-by//2:, :] = LIGHT_BULB #
 
 world = np.swapaxes(world, 0,2)
 # world = world.reshape([wz,-1])
