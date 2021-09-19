@@ -378,6 +378,11 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
         CiliaForce.z = 0;
     }
 
+    // sam:
+    if (!inShade) {
+        CiliaForce *= 0;
+    }
+
     totalForce += CiliaForce * mat->Cilia;
     CiliaForce.clear();
 
