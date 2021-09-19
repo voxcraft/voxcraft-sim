@@ -904,16 +904,16 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
 
             // but, since the bodies are spinning around, this needs to be updated
             std::list<voxelCorner> LowerCorners;
-            // LowerCorners.push_back(NNN)
-            LowerCorners.push_back(PNN)
-            LowerCorners.push_back(NPN)
-            LowerCorners.push_back(PPN)
+            // LowerCorners.push_back(NNN);
+            LowerCorners.push_back(PNN);
+            LowerCorners.push_back(NPN);
+            LowerCorners.push_back(PPN);
 
             std::list<voxelCorner> UpperCorners;
-            UpperCorners.push_back(NNP)
-            UpperCorners.push_back(PNP)
-            UpperCorners.push_back(NPP)
-            // UpperCorners.push_back(PPP)
+            UpperCorners.push_back(NNP);
+            UpperCorners.push_back(PNP);
+            UpperCorners.push_back(NPP);
+            // UpperCorners.push_back(PPP);
 
             for (int c = 0; c < 4; c++) {
                 VX3_Vec3D<float> thisLowerCorner = otherVox->cornerPosition(LowerCorners[c]);
