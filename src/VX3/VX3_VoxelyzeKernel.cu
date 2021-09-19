@@ -886,7 +886,7 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
         thisVox->inShade = false;
         thisVox->localSignal = 0;
 
-        VX3_Vec3D<float> ray_origin = position();
+        VX3_Vec3D<double> ray_origin = position();
 
         for (int j = 0; j < num; j++) {
 
@@ -902,7 +902,7 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
             // todo: if the body spins around then this needs to be flipped
 
             // unit direction vector of ray
-            VX3_Vec3D<float> unitdir = ((float)k->LightPos - ray_origin) ;  // ray_origin ---> k->LightPos
+            VX3_Vec3D<float> unitdir = (float)(k->LightPos - ray_origin) ;  // ray_origin ---> k->LightPos
             unitdir = unitdir.Normalized();
 
             VX3_Vec3D<float> dirfrac;
