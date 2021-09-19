@@ -64,7 +64,7 @@ for (bx, by, bz) in BODY_SIZES:
     while True:
         attepts += 1
         corners = np.random.randint(l_size+1, wx-bx, 2)
-        if np.sum(world[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz]) = 0:
+        if np.sum(world[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz]) == 0:
             world[world[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz] = body
             break
         if attepts > 500:
