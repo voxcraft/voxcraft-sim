@@ -373,6 +373,11 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
     totalForce -= contactForce;
     contactForce.clear();
 
+    // sam:
+    if (mat->LockZ) {
+        CiliaForce.z = 0;
+    }
+
     totalForce += CiliaForce * mat->Cilia;
     CiliaForce.clear();
 
