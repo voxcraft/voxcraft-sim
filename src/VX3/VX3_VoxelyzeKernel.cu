@@ -899,25 +899,27 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
             VX3_Voxel *otherVox = surface_voxels[j];
 
             // lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
-            VX3_Vec3D<float> lb = otherVox->cornerPosition(NNN);
-            VX3_Vec3D<float> rt = otherVox->cornerPosition(PPP);
+            VX3_Vec3D<float> lb = otherVox->pos + otherVox->cornerOffset(NNN);
+            VX3_Vec3D<float> rt = otherVox->pos + otherVox->cornerOffset(PPP);
 
-            // but, since the bodies are spinning around in the horizontal plane, these need to be updated
-            // TODO: if the bodies can also flip over on their backs, then we need to check against all 7 other corners
-            // update the min corner:
-            if (otherVox->cornerPosition(PNN).x + otherVox->cornerPosition(PNN).y < lb.x + lb.y)
-                lb = otherVox->cornerPosition(PNN);
-            if (otherVox->cornerPosition(NPN).x + otherVox->cornerPosition(NPN).y < lb.x + lb.y)
-                lb = otherVox->cornerPosition(NPN);
-            if (otherVox->cornerPosition(PPN).x + otherVox->cornerPosition(PPN).y < lb.x + lb.y)
-                lb = otherVox->cornerPosition(PPN);
-            // same for the max corner:
-            if (otherVox->cornerPosition(NNP).x + otherVox->cornerPosition(NNP).y > rt.x + rt.y) 
-                rt = otherVox->cornerPosition(NNP);
-            if (otherVox->cornerPosition(PNP).x + otherVox->cornerPosition(PNP).y > rt.x + rt.y) 
-                rt = otherVox->cornerPosition(PNP);
-            if (otherVox->cornerPosition(NPP).x + otherVox->cornerPosition(NPP).y > rt.x + rt.y) 
-                rt = otherVox->cornerPosition(NPP);
+            // VX3_Vec3D<float> lb = otherVox->cornerPosition(NNN);
+            // VX3_Vec3D<float> rt = otherVox->cornerPosition(PPP);
+            // // but, since the bodies are spinning around in the horizontal plane, these need to be updated
+            // // TODO: if the bodies can also flip over on their backs, then we need to check against all 7 other corners
+            // // update the min corner:
+            // if (otherVox->cornerPosition(PNN).x + otherVox->cornerPosition(PNN).y < lb.x + lb.y)
+            //     lb = otherVox->cornerPosition(PNN);
+            // if (otherVox->cornerPosition(NPN).x + otherVox->cornerPosition(NPN).y < lb.x + lb.y)
+            //     lb = otherVox->cornerPosition(NPN);
+            // if (otherVox->cornerPosition(PPN).x + otherVox->cornerPosition(PPN).y < lb.x + lb.y)
+            //     lb = otherVox->cornerPosition(PPN);
+            // // same for the max corner:
+            // if (otherVox->cornerPosition(NNP).x + otherVox->cornerPosition(NNP).y > rt.x + rt.y) 
+            //     rt = otherVox->cornerPosition(NNP);
+            // if (otherVox->cornerPosition(PNP).x + otherVox->cornerPosition(PNP).y > rt.x + rt.y) 
+            //     rt = otherVox->cornerPosition(PNP);
+            // if (otherVox->cornerPosition(NPP).x + otherVox->cornerPosition(NPP).y > rt.x + rt.y) 
+            //     rt = otherVox->cornerPosition(NPP);
 
             // unit direction vector of ray
             VX3_Vec3D<double> unitdir = k->LightPos - ray_origin ;  // ray_origin ---> k->LightPos
