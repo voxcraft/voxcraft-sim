@@ -14,7 +14,7 @@ BODY_SIZES = [(7, 7, 5),]*12 # (6, 6, 5)  # (8, 8, 7)
 # then the cilia force of the material will need to be recalibrated
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
 
-EVAL_PERIOD = 1  # 4
+EVAL_PERIOD = 2  # 4
 SETTLE_TIME = 0  # 0.5
 
 RANDMONIZE_CILIA_EVERY = 0.25 # 5
@@ -26,7 +26,7 @@ BASE_CILIA_FORCE[:, :, :, :2] = 2 * np.random.rand(wx, wy, wz, 2) - 1  # initial
 # light source corner
 lx = 0
 ly = 0
-lz = 3
+lz = 2
 l_size = 2
 LIGHT_BULB = np.ones((l_size,)*3, dtype=np.int)*3  # materials: cilia, no cilia, lightbulb
 
@@ -121,9 +121,9 @@ if RECORD_HISTORY:
     # sub.call("rm a{0}_gen{1}.hist".format(seed, pop.gen), shell=True)
     history = etree.SubElement(root, "RecordHistory")
     history.set('replace', 'VXA.Simulator.RecordHistory')
-    etree.SubElement(history, "RecordStepSize").text = '100'
+    etree.SubElement(history, "RecordStepSize").text = '50'
     etree.SubElement(history, "RecordVoxel").text = '1'
-    etree.SubElement(history, "RecordLink").text = '1'
+    etree.SubElement(history, "RecordLink").text = '0'
     etree.SubElement(history, "RecordFixedVoxels").text = '1'
     etree.SubElement(history, "RecordCoMTraceOfEachVoxelGroupfOfThisMaterial").text = '0'  # draw CoM trace
     
