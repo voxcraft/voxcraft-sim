@@ -902,15 +902,28 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
             VX3_Vec3D<float> lb = otherVox->cornerPosition(NNN);
             VX3_Vec3D<float> rt = otherVox->cornerPosition(PPP);
 
-            // since the bodies are spinning around, this needs to be updated
-            for (int c = 0; c < 8; c++) {
-                VX3_Vec3D<float> thisCorner = otherVox->cornerPosition(c);
-                if (thisCorner.x < lb.x && thisCorner.y < lb.y && thisCorner.z < lb.z) {
-                    lb = thisCorner;
+            // but, since the bodies are spinning around, this needs to be updated
+            std::list<voxelCorner> LowerCorners;
+            // LowerCorners.push_back(NNN)
+            LowerCorners.push_back(PNN)
+            LowerCorners.push_back(NPN)
+            LowerCorners.push_back(PPN)
+
+            std::list<voxelCorner> UpperCorners;
+            UpperCorners.push_back(NNP)
+            UpperCorners.push_back(PNP)
+            UpperCorners.push_back(NPP)
+            // UpperCorners.push_back(PPP)
+
+            for (int c = 0; c < 4; c++) {
+                VX3_Vec3D<float> thisLowerCorner = otherVox->cornerPosition(LowerCorners[c]);
+                if (thisLowerCorner.x + thisLowerCorner.y < lb.x + lb.y) {
+                    lb = thisLowerCorner;
                 }
-                if (thisCorner.x > rt.x && thisCorner.y > rt.y && thisCorner.z > rt.z) {
-                    rt = thisCorner;
-                }
+                VX3_Vec3D<float> thisUpperCorner = otherVox->cornerPosition(UpperCorners[c]);
+                if (thisUpperCorner.x + thisUpperCorner.y > rt.x + rt.y) {
+                    rt = thisUpperCorner;
+                }  
             }
 
             // unit direction vector of ray
