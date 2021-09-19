@@ -376,6 +376,11 @@ __device__ VX3_Vec3D<double> VX3_Voxel::force() {
     totalForce += CiliaForce * mat->Cilia;
     CiliaForce.clear();
 
+    // sam
+    if (mat->LockZ) {
+        totalForce.z = 0;
+    }
+
     return totalForce;
 }
 
@@ -393,6 +398,13 @@ __device__ VX3_Vec3D<double> VX3_Voxel::moment() {
     if (externalExists())
         totalMoment += external()->moment();                        // external moments
     totalMoment -= angularVelocity() * mat->globalDampingRotateC(); // global damping
+
+    // sam
+    if (mat->LockZ) { 
+        totalMoment.x = 0;
+        totalMoment.y = 0;
+    }
+
     return totalMoment;
 }
 

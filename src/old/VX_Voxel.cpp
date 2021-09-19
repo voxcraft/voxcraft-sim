@@ -247,12 +247,6 @@ Vec3D<double> CVX_Voxel::force()
 			totalForce -= (*it)->contactForce(this);
 		}
 	}
-
-	// sam
-    if (mat->LockZ) {
-        totalForce.z = 0;
-    }
-
 	return totalForce;
 }
 
@@ -271,13 +265,6 @@ Vec3D<double> CVX_Voxel::moment()
 	//other moments
 	if (externalExists()) totalMoment += external()->moment(); //external moments
 	totalMoment -= angularVelocity()*mat->globalDampingRotateC(); //global damping
-
-	// sam
-    if (mat->LockZ) { 
-        totalMoment.x = 0;
-        totalMoment.y = 0;
-    }
-
 	return totalMoment;
 }
 
