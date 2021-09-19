@@ -902,29 +902,22 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
             VX3_Vec3D<float> lb = otherVox->cornerPosition(NNN);
             VX3_Vec3D<float> rt = otherVox->cornerPosition(PPP);
 
-            // but, since the bodies are spinning around, this needs to be updated
-            std::list<voxelCorner> LowerCorners;
-            // LowerCorners.push_back(NNN);
-            LowerCorners.push_back(PNN);
-            LowerCorners.push_back(NPN);
-            LowerCorners.push_back(PPN);
-
-            std::list<voxelCorner> UpperCorners;
-            UpperCorners.push_back(NNP);
-            UpperCorners.push_back(PNP);
-            UpperCorners.push_back(NPP);
-            // UpperCorners.push_back(PPP);
-
-            for (int c = 0; c < 4; c++) {
-                VX3_Vec3D<float> thisLowerCorner = otherVox->cornerPosition(LowerCorners[c]);
-                if (thisLowerCorner.x + thisLowerCorner.y < lb.x + lb.y) {
-                    lb = thisLowerCorner;
-                }
-                VX3_Vec3D<float> thisUpperCorner = otherVox->cornerPosition(UpperCorners[c]);
-                if (thisUpperCorner.x + thisUpperCorner.y > rt.x + rt.y) {
-                    rt = thisUpperCorner;
-                }  
-            }
+            // but, since the bodies are spinning around in the horizontal plane, these need to be updated
+            // TODO: if the bodies can also flip over on their backs, then we need to check against all 7 other corners
+            // update the min corner:
+            if (otherVox->cornerPosition(PNN).x + otherVox->cornerPosition(PNN).y < lb.x + lb.y)
+                lb = otherVox->cornerPosition(PNN);
+            if (otherVox->cornerPosition(NPN).x + otherVox->cornerPosition(NPN).y < lb.x + lb.y)
+                lb = otherVox->cornerPosition(NPN);
+            if (otherVox->cornerPosition(PPN).x + otherVox->cornerPosition(PPN).y < lb.x + lb.y)
+                lb = otherVox->cornerPosition(PPN);
+            // same for the max corner:
+            if (otherVox->cornerPosition(NNP).x + otherVox->cornerPosition(NNP).y > rt.x + rt.y) 
+                rt = otherVox->cornerPosition(NNP);
+            if (otherVox->cornerPosition(PNP).x + otherVox->cornerPosition(PNP).y > rt.x + rt.y) 
+                rt = otherVox->cornerPosition(PNP);
+            if (otherVox->cornerPosition(NPP).x + otherVox->cornerPosition(NPP).y > rt.x + rt.y) 
+                rt = otherVox->cornerPosition(NPP);
 
             // unit direction vector of ray
             VX3_Vec3D<double> unitdir = k->LightPos - ray_origin ;  // ray_origin ---> k->LightPos
