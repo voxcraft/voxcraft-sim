@@ -886,6 +886,7 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
         VX3_Voxel *thisVox = surface_voxels[index];
 
         thisVox->inShade = false;
+        thisVox->localSignal = 100;
 
         VX3_Vec3D<double> ray_origin = thisVox->position();
 
@@ -931,24 +932,17 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
             }
 
             // if tmin > tmax, ray doesn't intersect AABB
-            else if (tmin > tmax)
+            if (tmin > tmax)
             {
                 // t = tmax;
                 continue;
             }
-            
-            else {
-                // t = tmin;
-                thisVox->inShade = true;
-                break;
-            }
-            
-        }
 
-        if (thisVox->inShade)
+            // t = tmin;
+            thisVox->inShade = true;
             thisVox->localSignal = 0;
-        else 
-            thisVox->localSignal = 100;
+            break;
+        }
     }
 }
 
