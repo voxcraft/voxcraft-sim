@@ -28,7 +28,7 @@ lx = 0
 ly = 0
 lz = 2
 l_size = 2
-LIGHT_BULB = np.ones((lx+0.5, ly+0.5, lz+0.5), dtype=np.int)*3  # materials: cilia, no cilia, lightbulb
+LIGHT_BULB = np.ones((l_size,)*3, dtype=np.int)*3  # materials: cilia, no cilia, lightbulb
 
 # data
 world = np.zeros((wx, wy, wz), dtype=np.int8)
