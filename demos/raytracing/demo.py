@@ -8,10 +8,11 @@ np.random.seed(SEED)
 RECORD_HISTORY = True
 
 WORLD_SIZE = 80
+WORLD_HEIGHT = 9
 BODY_SIZES = [(9, 9, 5), (7, 7, 5), (5, 5, 4)] # (6, 6, 5)  # (8, 8, 7)
 # if body size changes, or if the stiffness/density of body material changes, 
 # then the cilia force of the material will need to be recalibrated
-wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, bz)
+wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
 
 EVAL_PERIOD = 1  # 4
 SETTLE_TIME = 0  # 0.5
@@ -60,7 +61,7 @@ for (bx, by, bz) in BODY_SIZES:
             break
 
     corner = np.random.randint(l_size+1, wx-bx, 1)[0]
-    world[corner:corner+bx, corner:corner+by, :] = body
+    world[corner:corner+bx, corner:corner+by, :bz] = body
 
 
 world = np.swapaxes(world, 0,2)
