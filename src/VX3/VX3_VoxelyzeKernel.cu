@@ -901,16 +901,26 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
             // lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
             VX3_Vec3D<float> lb = otherVox->cornerPosition(NNN);
             VX3_Vec3D<float> rt = otherVox->cornerPosition(PPP);
-            // todo: if the body spins around then this needs to be flipped
+
+            // since the bodies are spinning around, this needs to be updated
+            for (int c = 0; c < 8; c++) {
+                VX3_Vec3D<float> thisCorner = otherVox->cornerPosition(c);
+                if (thisCorner.x < lb.x && thisCorner.y < lb.y && thisCorner.z < lb.z) {
+                    lb = thisCorner;
+                }
+                if (thisCorner.x > rt.x && thisCorner.y > rt.y && thisCorner.z > rt.z) {
+                    rt = thisCorner;
+                }
+            }
 
             // unit direction vector of ray
             VX3_Vec3D<double> unitdir = k->LightPos - ray_origin ;  // ray_origin ---> k->LightPos
             unitdir = unitdir.Normalized();
             
-            // add a tiny bit so we don't divide by zero in the next step
-            unitdir.x = unitdir.x == 0 ? 1e-10 : unitdir.x;
-            unitdir.y = unitdir.y == 0 ? 1e-10 : unitdir.y;
-            unitdir.z = unitdir.z == 0 ? 1e-10 : unitdir.z;
+            // // add a tiny bit so we don't divide by zero in the next step // does this ever happen?
+            // unitdir.x = unitdir.x == 0 ? 1e-10 : unitdir.x;
+            // unitdir.y = unitdir.y == 0 ? 1e-10 : unitdir.y;
+            // unitdir.z = unitdir.z == 0 ? 1e-10 : unitdir.z;
 
             VX3_Vec3D<float> dirfrac;
             dirfrac.x = 1.0f / unitdir.x;
