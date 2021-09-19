@@ -899,8 +899,8 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
             VX3_Voxel *otherVox = surface_voxels[j];
 
             // lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
-            VX3_Vec3D<float> lb = otherVox->pos + otherVox->cornerOffset(NNN);
-            VX3_Vec3D<float> rt = otherVox->pos + otherVox->cornerOffset(PPP);
+            VX3_Vec3D<double> lb = otherVox->pos + otherVox->cornerOffset(NNN);
+            VX3_Vec3D<double> rt = otherVox->pos + otherVox->cornerOffset(PPP);
 
             // VX3_Vec3D<float> lb = otherVox->cornerPosition(NNN);
             // VX3_Vec3D<float> rt = otherVox->cornerPosition(PPP);
