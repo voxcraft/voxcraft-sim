@@ -154,8 +154,12 @@ class VX3_VoxelyzeKernel {
     VX3_dVector<VX3_Voxel*>* d_collisionLookupGrid;
 
     VX3_Vec3D<>* d_initialPosition = NULL;
-
-    VX3_Vec3D<> LightPos = VX3_Vec3D<>(100, 100, 0); // sam 
+    
+    // sam:
+    double LightPosX = 0;
+    double LightPosY = 0;
+    double LightPosZ = 0;
+    VX3_Vec3D<> LightPos = VX3_Vec3D<>(LightPosX, LightPosY, LightPosZ);
 
     //for Secondary Experiment
     int SecondaryExperiment = 0;

@@ -7,11 +7,10 @@ np.random.seed(SEED)
 
 RECORD_HISTORY = True
 
-WORLD_SIZE = 50  # line 156 in VX3_VoxelyzeKernel.cuh
-BODY_SIZE = (6, 6, 5)  # (8, 8, 7)
+WORLD_SIZE = 80
+BODY_SIZES = [(9, 9, 5), (7, 7, 5), (5, 5, 4)] # (6, 6, 5)  # (8, 8, 7)
 # if body size changes, or if the stiffness/density of body material changes, 
 # then the cilia force of the material will need to be recalibrated
-bx, by, bz = BODY_SIZE
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, bz)
 
 EVAL_PERIOD = 1  # 4
@@ -23,11 +22,50 @@ RANDMONIZE_CILIA_EVERY = 0.25 # 5
 BASE_CILIA_FORCE = np.ones((wx, wy, wz, 3))  * -1  # pointing downward
 BASE_CILIA_FORCE[:, :, :, :2] = 2 * np.random.rand(wx, wy, wz, 2) - 1  # initial forces
 
-# morphology
-BODY_PLAN = np.ones(BODY_SIZE, dtype=np.int)
-
 # light source
-LIGHT_BULB = np.ones((bx//2, by//2, wz), dtype=np.int)*3  # materials: cilia, no cilia, lightbulb
+lx = -0.5
+ly = -0.5
+lz = 3.5
+l_size = 2
+LIGHT_BULB = np.ones((l_size,)*3, dtype=np.int)*3  # materials: cilia, no cilia, lightbulb
+
+# data
+world = np.zeros((wx, wy, wz), dtype=np.int8)
+
+world[lx-l_size//2:lx+l_size//2, ly-l_size:ly+l_size, l_size:2*l_size] = LIGHT_BULB 
+
+for (bx, by, bz) in BODY_SIZES:
+    body = np.ones((bx, by, bz), dtype=np.int8)
+
+    sphere = np.zeros((by+2,)*3, dtype=np.int8) 
+    radius = by//2+1
+    r2 = np.arange(-radius, radius+1)**2
+    dist2 = r2[:, None, None] + r2[:, None] + r2
+    sphere[dist2 <= radius**2] = 1
+
+    # max_size = 0
+    for layer in range(bz):
+        if layer > bz//2:
+            pad = (bz-1) - (by-bz)//2
+        else:
+            pad = (by-bz)//2
+        body[:, :, layer] *= sphere[1:bx+1, 1:by+1, layer+pad]
+        # max_size += np.sum(sphere[1:bx+1, 1:by+1, layer+pad])
+
+    while True:  # shift down until in contact with surface plane
+        if np.sum(body[:, :, 0]) == 0:
+            body[:, :, :-1] = body[:, :, 1:]
+            body[:, :, -1] = np.zeros_like(body[:, :, -1])
+        else:
+            break
+
+    corner = np.random.randint(l_size+1, wx-bx, 1)[0]
+    world[corner:corner+bx, corner:corner+by, :] = body
+
+
+world = np.swapaxes(world, 0,2)
+# world = world.reshape([wz,-1])
+world = world.reshape(wz, wx*wy)
 
 # create data folder if it doesn't already exist
 sub.call("mkdir data{}".format(SEED), shell=True)
@@ -45,6 +83,16 @@ if not RECORD_HISTORY:
 
 # start vxd file
 root = etree.Element("VXD")
+
+vxa_world_size = etree.SubElement(root, "LightPosX")
+vxa_world_size.set('replace', 'VXA.Simulator.LightPosX')
+vxa_world_size.text = str(lx)
+vxa_world_size = etree.SubElement(root, "LightPosY")
+vxa_world_size.set('replace', 'VXA.Simulator.LightPosX')
+vxa_world_size.text = str(ly)
+vxa_world_size = etree.SubElement(root, "LightPosZ")
+vxa_world_size.set('replace', 'VXA.Simulator.LightPosX')
+vxa_world_size.text = str(lz)
 
 vxa_world_size = etree.SubElement(root, "WorldSize")
 vxa_world_size.set('replace', 'VXA.Simulator.WorldSize')
@@ -77,17 +125,6 @@ structure.set('Compression', 'ASCII_READABLE')
 etree.SubElement(structure, "X_Voxels").text = str(wx)
 etree.SubElement(structure, "Y_Voxels").text = str(wy)
 etree.SubElement(structure, "Z_Voxels").text = str(wz)
-
-
-world = np.zeros((wx, wy, wz), dtype=np.int8)
-
-world[wx//2-bx//2:wx//2+bx//2, wy//2-by//2:wy//2+by//2, :] = BODY_PLAN
-
-world[wx-bx//2:, wy-by//2:, :] = LIGHT_BULB #
-
-world = np.swapaxes(world, 0,2)
-# world = world.reshape([wz,-1])
-world = world.reshape(wz, wx*wy)
 
 data = etree.SubElement(structure, "Data")
 for i in range(world.shape[0]):

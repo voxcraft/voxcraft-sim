@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <VXA Version="1.1">
     <Simulator>
+        <LightPosX>0</LightPosX>
+        <LightPosY>0</LightPosY>
+        <LightPosZ>3</LightPosZ>
         <WorldSize>100</WorldSize>
         <WallForce>10</WallForce>
         <EnableCilia>1</EnableCilia>

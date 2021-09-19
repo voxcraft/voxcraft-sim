@@ -875,7 +875,7 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
     }
 }
 
-// sam: cornerPosition
+// sam:
 __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k) {
     // https://gamedev.stackexchange.com/questions/18436/most-efficient-aabb-vs-ray-collision-algorithms
 
