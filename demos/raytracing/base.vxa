@@ -63,7 +63,7 @@
             <Material ID="1">
                 <Name>Cilia</Name>
                 <Display>
-                    <Red>1</Red>
+                    <Red>0</Red>
                     <Green>0</Green>
                     <Blue>1</Blue>
                     <Alpha>0.9</Alpha>

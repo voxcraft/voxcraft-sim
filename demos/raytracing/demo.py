@@ -8,8 +8,8 @@ np.random.seed(SEED)
 RECORD_HISTORY = True
 
 WORLD_SIZE = 80
-WORLD_HEIGHT = 9
-BODY_SIZES = [(9, 9, 5), (7, 7, 5), (5, 5, 4)]*3 # (6, 6, 5)  # (8, 8, 7)
+WORLD_HEIGHT = 5
+BODY_SIZES = [(7, 7, 5),]*6 # (6, 6, 5)  # (8, 8, 7)
 # if body size changes, or if the stiffness/density of body material changes, 
 # then the cilia force of the material will need to be recalibrated
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
@@ -60,8 +60,15 @@ for (bx, by, bz) in BODY_SIZES:
         else:
             break
 
-    corner = np.random.randint(l_size+1, wx-bx, 1)[0]
-    world[corner:corner+bx, corner:corner+by, :bz] = body
+    attepts = 0
+    while True:
+        attepts += 1
+        corners = np.random.randint(l_size+1, wx-bx, 2)
+        if np.sum(world[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz]) = 0:
+            world[world[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz] = body
+            break
+        if attepts > 500:
+            break
 
 
 world = np.swapaxes(world, 0,2)
@@ -87,13 +94,14 @@ root = etree.Element("VXD")
 
 vxa_world_size = etree.SubElement(root, "LightPosX")
 vxa_world_size.set('replace', 'VXA.Simulator.LightPosX')
-vxa_world_size.text = str(lx+0.5)
+vxa_world_size.text = str(lx+l_size//2-0.5)
 vxa_world_size = etree.SubElement(root, "LightPosY")
 vxa_world_size.set('replace', 'VXA.Simulator.LightPosX')
-vxa_world_size.text = str(ly+0.5)
+vxa_world_size.text = str(ly+l_size//2-0.5)
 vxa_world_size = etree.SubElement(root, "LightPosZ")
 vxa_world_size.set('replace', 'VXA.Simulator.LightPosX')
-vxa_world_size.text = str(lz+0.5)
+vxa_world_size.text = str(lz+l_size//2-0.5)
+print("light pos: " + str(lx+l_size//2-0.5) + ", " + str(ly+l_size//2-0.5) + ", " + str(lz+l_size//2-0.5))
 
 vxa_world_size = etree.SubElement(root, "WorldSize")
 vxa_world_size.set('replace', 'VXA.Simulator.WorldSize')
