@@ -880,10 +880,10 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
     // https://gamedev.stackexchange.com/questions/18436/most-efficient-aabb-vs-ray-collision-algorithms
 
     int index = threadIdx.x + blockIdx.x * blockDim.x;
-
-    VX3_Voxel *thisVox = surface_voxels[index];
     
     if (index < num) {
+
+        VX3_Voxel *thisVox = surface_voxels[index];
 
         thisVox->inShade = false;
         thisVox->localSignal = 100;
