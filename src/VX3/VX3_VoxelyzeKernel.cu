@@ -302,14 +302,11 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
         gpu_update_cilia_force<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, this);
         CUDA_CHECK_AFTER_CALL();
         VcudaDeviceSynchronize();
-        
-        // sam:
-        cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_occlusion, 0, num_d_surface_voxels);
-        gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
-        blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
-        gpu_update_occlusion<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, this);
-        CUDA_CHECK_AFTER_CALL();
-        VcudaDeviceSynchronize();
+    }
+
+    // sam:
+    if (true) {
+        updateOcclusion();
     }
 
     cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_voxels, 0,
@@ -481,6 +478,17 @@ __device__ void VX3_VoxelyzeKernel::updateDetach() {
         CUDA_CHECK_AFTER_CALL();
         VcudaDeviceSynchronize();
     }
+}
+
+// sam:
+__device__ void VX3_VoxelyzeKernel::updateOcclusion() {
+    int minGridSize, blockSize;
+    cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_occlusion, 0, num_d_surface_voxels);
+    int gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
+    int blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
+    gpu_update_occlusion<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, this);
+    CUDA_CHECK_AFTER_CALL();
+    VcudaDeviceSynchronize();
 }
 
 __device__ void VX3_VoxelyzeKernel::updateCurrentCenterOfMass() {
@@ -870,12 +878,13 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
 // sam:
 __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k) {
     int index = threadIdx.x + blockIdx.x * blockDim.x;
-    VX3_Voxel *v = surface_voxels[index];
-    v->inShade = false;
-    v->localSignal = 0;
-    if (index < 10 && k->currentTime > 0.25) {  // drawing test: random update after 1/4 sec put in shade
-        v->inShade = true;
-        v->localSignal = 100;
+    if (index < num) {
+        surface_voxels[index]->inShade = false;
+        surface_voxels[index]->localSignal = 0;
+        if (index < 10 && k->currentTime > 0.25) {  // drawing test: random update after 1/4 sec put in shade
+            surface_voxels[index]->inShade = true;
+            surface_voxels[index]->localSignal = 100;
+        }
     }
 }
 

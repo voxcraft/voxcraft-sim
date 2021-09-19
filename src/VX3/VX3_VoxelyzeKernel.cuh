@@ -43,6 +43,8 @@ class VX3_VoxelyzeKernel {
     __device__ void saveInitialPosition();
 
 
+    __device__ void updateOcclusion();
+
     // for Secondary Experiment
     __device__ void removeVoxels();
     __device__ void InitializeCenterOfMass();
