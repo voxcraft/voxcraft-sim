@@ -155,7 +155,7 @@ class VX3_VoxelyzeKernel {
 
     VX3_Vec3D<>* d_initialPosition = NULL;
 
-    VX3_Vec3D<> LightSource = VX3_Vec3D<>(100, 100, 0); // sam 
+    VX3_Vec3D<> LightPos = VX3_Vec3D<>(100, 100, 0); // sam 
 
     //for Secondary Experiment
     int SecondaryExperiment = 0;

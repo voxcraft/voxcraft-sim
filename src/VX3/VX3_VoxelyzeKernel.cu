@@ -875,15 +875,70 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
     }
 }
 
-// sam:
+// sam: cornerPosition
 __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k) {
+    // https://gamedev.stackexchange.com/questions/18436/most-efficient-aabb-vs-ray-collision-algorithms
+
     int index = threadIdx.x + blockIdx.x * blockDim.x;
+    VX3_Voxel *thisVox = surface_voxels[index];
+
     if (index < num) {
-        surface_voxels[index]->inShade = false;
-        surface_voxels[index]->localSignal = 0;
-        if (index < 10 && k->currentTime > 0.25) {  // drawing test: random update after 1/4 sec put in shade
-            surface_voxels[index]->inShade = true;
-            surface_voxels[index]->localSignal = 100;
+        thisVox->inShade = false;
+        thisVox->localSignal = 0;
+
+        VX3_Vec3D<float> ray_origin = position();
+
+        for (int j = 0; j < num; j++) {
+
+            if (j == index)
+                continue;
+            
+            // does the ray from thisVox to k->LightPos intersect with otherVox's bounding box?
+            VX3_Voxel *otherVox = surface_voxels[j];
+
+            // lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
+            VX3_Vec3D<float> lb = otherVox->cornerPosition(NNN);
+            VX3_Vec3D<float> rt = otherVox->cornerPosition(PPP);
+            // todo: if the body spins around then this needs to be flipped
+
+            // unit direction vector of ray
+            VX3_Vec3D<float> unitdir = (k->LightPos - ray_origin) ;  // ray_origin ---> k->LightPos
+            unitdir = unitdir / unitdir.Normalized();
+
+            VX3_Vec3D<float> dirfrac;
+            dirfrac.x = 1.0f / unitdir.x;
+            dirfrac.y = 1.0f / unitdir.y;
+            dirfrac.z = 1.0f / unitdir.z;
+
+            float t1 = (lb.x - ray_origin.x)*dirfrac.x;
+            float t2 = (rt.x - ray_origin.x)*dirfrac.x;
+            float t3 = (lb.y - ray_origin.y)*dirfrac.y;
+            float t4 = (rt.y - ray_origin.y)*dirfrac.y;
+            float t5 = (lb.z - ray_origin.z)*dirfrac.z;
+            float t6 = (rt.z - ray_origin.z)*dirfrac.z;
+
+            float tmin = max(max(min(t1, t2), min(t3, t4)), min(t5, t6));
+            float tmax = min(min(max(t1, t2), max(t3, t4)), max(t5, t6));
+
+            // if tmax < 0, ray (line) is intersecting AABB, but the whole AABB is behind us
+            if (tmax < 0)
+            {
+                t = tmax;
+                continue;
+            }
+
+            // if tmin > tmax, ray doesn't intersect AABB
+            if (tmin > tmax)
+            {
+                t = tmax;
+                continue;
+            }
+
+            t = tmin;
+            thisVox->inShade = true;
+            thisVox->localSignal = 100;
+            break;
+
         }
     }
 }
