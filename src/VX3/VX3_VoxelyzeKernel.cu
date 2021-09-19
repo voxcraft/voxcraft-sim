@@ -906,6 +906,11 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
             // unit direction vector of ray
             VX3_Vec3D<double> unitdir = k->LightPos - ray_origin ;  // ray_origin ---> k->LightPos
             unitdir = unitdir.Normalized();
+            
+            // add a tiny bit so we don't divide by zero in the next step
+            unitdir.x = unitdir.x == 0 ? 1e-10 : unitdir.x;
+            unitdir.y = unitdir.y == 0 ? 1e-10 : unitdir.y;
+            unitdir.z = unitdir.z == 0 ? 1e-10 : unitdir.z;
 
             VX3_Vec3D<float> dirfrac;
             dirfrac.x = 1.0f / unitdir.x;
