@@ -14,8 +14,8 @@ BODY_SIZES = [(7, 7, 5),]*12 # (6, 6, 5)  # (8, 8, 7)
 # then the cilia force of the material will need to be recalibrated
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
 
-EVAL_PERIOD = 2  # 4
-SETTLE_TIME = 0  # 0.5
+# EVAL_PERIOD = 5  # Hard coded in base.vxa
+# SETTLE_TIME = 0  # 0.5
 
 RANDMONIZE_CILIA_EVERY = 0.25 # 5
 
@@ -121,7 +121,7 @@ if RECORD_HISTORY:
     # sub.call("rm a{0}_gen{1}.hist".format(seed, pop.gen), shell=True)
     history = etree.SubElement(root, "RecordHistory")
     history.set('replace', 'VXA.Simulator.RecordHistory')
-    etree.SubElement(history, "RecordStepSize").text = '50'
+    etree.SubElement(history, "RecordStepSize").text = '80'
     etree.SubElement(history, "RecordVoxel").text = '1'
     etree.SubElement(history, "RecordLink").text = '0'
     etree.SubElement(history, "RecordFixedVoxels").text = '1'

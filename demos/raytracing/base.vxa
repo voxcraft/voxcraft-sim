@@ -9,13 +9,13 @@
         <EnableCilia>1</EnableCilia>
         <RandomizeCiliaEvery>0.5</RandomizeCiliaEvery>
         <RandomSeed>1</RandomSeed>
-        <RecordHistory>
+        <!-- <RecordHistory>
             <RecordStepSize>100</RecordStepSize>
             <RecordVoxel>1</RecordVoxel>
             <RecordLink>1</RecordLink>
             <RecordFixedVoxels>1</RecordFixedVoxels>
             <RecordCoMTraceOfEachVoxelGroupfOfThisMaterial>1</RecordCoMTraceOfEachVoxelGroupfOfThisMaterial>
-        </RecordHistory>
+        </RecordHistory> -->
         <ThoroughTest>
             <VerboseMode>0</VerboseMode>
             <SkipTest>1</SkipTest>
@@ -35,7 +35,7 @@
             <StopConditionFormula>
                 <mtSUB>
                     <mtVAR>t</mtVAR>
-                    <mtCONST>2</mtCONST>
+                    <mtCONST>5</mtCONST>
                 </mtSUB>
             </StopConditionFormula>
         </StopCondition>
