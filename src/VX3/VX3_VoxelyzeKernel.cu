@@ -902,7 +902,7 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
             // todo: if the body spins around then this needs to be flipped
 
             // unit direction vector of ray
-            VX3_Vec3D<float> unitdir = (float)(k->LightPos - ray_origin) ;  // ray_origin ---> k->LightPos
+            VX3_Vec3D<float> unitdir = k->LightPos - ray_origin ;  // ray_origin ---> k->LightPos
             unitdir = unitdir.Normalized();
 
             VX3_Vec3D<float> dirfrac;
@@ -920,23 +920,23 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
             float tmin = max(max(min(t1, t2), min(t3, t4)), min(t5, t6));
             float tmax = min(min(max(t1, t2), max(t3, t4)), max(t5, t6));
             
-            float t;
+            // float t;
 
             // if tmax < 0, ray (line) is intersecting AABB, but the whole AABB is behind us
             if (tmax < 0)
             {
-                t = tmax;
+                // t = tmax;
                 continue;
             }
 
             // if tmin > tmax, ray doesn't intersect AABB
             if (tmin > tmax)
             {
-                t = tmax;
+                // t = tmax;
                 continue;
             }
 
-            t = tmin;
+            // t = tmin;
             thisVox->inShade = true;
             thisVox->localSignal = 100;
             break;
