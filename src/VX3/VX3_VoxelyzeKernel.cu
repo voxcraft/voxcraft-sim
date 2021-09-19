@@ -884,7 +884,7 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
 
     if (index < num) {
         thisVox->inShade = false;
-        thisVox->localSignal = 0;
+        thisVox->localSignal = 100;
 
         VX3_Vec3D<double> ray_origin = thisVox->position();
 
@@ -938,7 +938,7 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
 
             // t = tmin;
             thisVox->inShade = true;
-            thisVox->localSignal = 100;
+            thisVox->localSignal = 0;
             break;
 
         }
