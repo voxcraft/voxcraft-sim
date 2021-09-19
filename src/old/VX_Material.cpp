@@ -46,6 +46,9 @@ CVX_Material& CVX_Material::operator=(const CVX_Material& vIn)
 	fixed = vIn.fixed;
 	sticky = vIn.sticky;
 	Cilia = vIn.Cilia;
+
+	LockZ = vIn.LockZ;  // sam
+	
 	linear = vIn.linear;
 	E = vIn.E;
 	sigmaYield = vIn.sigmaYield;

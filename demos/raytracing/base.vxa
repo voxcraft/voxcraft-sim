@@ -71,8 +71,6 @@
                 <Mechanical>
                     <isMeasured>1</isMeasured>
                     <isTarget>0</isTarget>
-                    <WaterLevel>10</WaterLevel>
-                    <Buoyancy>1</Buoyancy>
                     <Cilia>0.15</Cilia>
                     <LockZ>1</LockZ>
                     <MatModel>0</MatModel><!--0 = no failing-->
@@ -97,8 +95,6 @@
                 <Mechanical>
                     <isMeasured>1</isMeasured>
                     <isTarget>0</isTarget>
-                    <WaterLevel>10</WaterLevel>
-                    <Buoyancy>1</Buoyancy>
                     <Cilia>0.0</Cilia>
                     <LockZ>1</LockZ>
                     <MatModel>0</MatModel><!--0 = no failing-->

@@ -115,6 +115,10 @@ public:
 	bool fixed = false;
 	bool sticky = false;
 	double Cilia = 0;
+
+	// sam:
+	bool LockZ = false;
+
 	bool linear; //!< Set to true if this material is specified as linear.
 	float E; //!< Young's modulus (stiffness) in Pa.
 	float sigmaYield; //!< Yield stress in Pa.

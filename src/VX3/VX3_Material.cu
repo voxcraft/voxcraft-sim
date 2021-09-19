@@ -7,7 +7,9 @@ VX3_Material::VX3_Material(CVX_Material *p, VX3_VoxelyzeKernel *k)
       TurnOnThermalExpansionAfterThisManySeconds(p->TurnOnThermalExpansionAfterThisManySeconds),
       TurnOnCiliaAfterThisManySeconds(p->TurnOnCiliaAfterThisManySeconds),
       signalValueDecay(p->signalValueDecay), signalTimeDelay(p->signalTimeDelay), inactivePeriod(p->inactivePeriod), isMeasured(p->isMeasured), isElectricalActive(p->isElectricalActive),
-      matid(p->matid), fixed(p->fixed), sticky(p->sticky), Cilia(p->Cilia), linear(p->linear), E(p->E), sigmaYield(p->sigmaYield),
+      matid(p->matid), fixed(p->fixed), sticky(p->sticky), Cilia(p->Cilia), 
+      LockZ(p->LockZ), // sam
+      linear(p->linear), E(p->E), sigmaYield(p->sigmaYield),
       sigmaFail(p->sigmaFail), epsilonYield(p->epsilonYield), epsilonFail(p->epsilonFail), hd_strainData(p->strainData),
       hd_stressData(
           p->stressData), // hd_vector init in host, used for passing data to kernel. With syncVector() function, we use d_vector in kernel.
@@ -44,6 +46,9 @@ __device__ VX3_Material &VX3_Material::operator=(const VX3_Material &vIn) {
     fixed = vIn.fixed;
     sticky = vIn.sticky;
     Cilia = vIn.Cilia;
+
+    LockZ = vIn.LockZ;  // sam
+    
     linear = vIn.linear;
     E = vIn.E;
     sigmaYield = vIn.sigmaYield;
