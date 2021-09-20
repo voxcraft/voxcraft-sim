@@ -493,7 +493,7 @@ __device__ void VX3_VoxelyzeKernel::updateOcclusion() {
         cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_occlusion, 0, num_d_voxels);
         int gridSize_voxels = (num_d_voxels + blockSize - 1) / blockSize;
         int blockSize_voxels = num_d_voxels < blockSize ? num_d_voxels : blockSize;
-        gpu_update_occlusion<<<gridSize_voxels, blockSize_voxels>>>(d_voxels, num_d_voxels, this);
+        gpu_update_occlusion<<<gridSize_voxels, blockSize_voxels>>>(&d_voxels, num_d_voxels, this);
     }
     CUDA_CHECK_AFTER_CALL();
     VcudaDeviceSynchronize();
