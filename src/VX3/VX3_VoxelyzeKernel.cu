@@ -891,10 +891,9 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
     
     if (index < num) {
 
+        VX3_Voxel *thisVox = &voxels[index];
         if (surfVoxOnly)
-            VX3_Voxel *thisVox = surface_voxels[index];
-        else
-            VX3_Voxel *thisVox = &voxels[index];
+            *thisVox = surface_voxels[index];
 
         if (thisVox->mat->fixed)  // todo: switch this to mat->transparent so we can have fixed opaque voxels
             return;
@@ -912,12 +911,11 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
                 continue;
             
             // does the ray from thisVox to k->LightPos intersect with otherVox's bounding box?
+            VX3_Voxel *otherVox = &voxels[j];
             if (surfVoxOnly)
-                VX3_Voxel *otherVox = surface_voxels[j];
-            else
-                VX3_Voxel *otherVox = &voxels[j];
+                *otherVox = surface_voxels[j];
 
-            if (otherVox->mat->fixed)
+            if (otherVox->mat->fixed)  // mat->transparent
                 continue;
 
             // lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
