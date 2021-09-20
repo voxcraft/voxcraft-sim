@@ -899,9 +899,7 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
             return;
 
         thisVox->inShade = false;
-        thisVox->localSignal = 0;
-        if (k->CiliaInLight)
-            thisVox->localSignal = 100;
+        thisVox->localSignal = 100;
 
         VX3_Vec3D<double> ray_origin = thisVox->position();
 
@@ -924,7 +922,7 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
 
             // vector from this voxel to other voxel 
             VX3_Vec3D<double> thisVoxToOtherVox = otherVox->position() - ray_origin; // ray_origin ---> otherVox origin
-            VX3_Vec3D<double> thisVoxToLight = k->LightPos - ray_origin ;  // ray_origin ---> k->LightPos
+            VX3_Vec3D<double> thisVoxToLight = k->LightPos - ray_origin ;  // ray_origin ---> k->LightPos  // apply inverse square law?
 
             // can't occlude on far side of the light source
             if (thisVoxToOtherVox.Length2() > thisVoxToLight.Length2())
@@ -972,8 +970,6 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
             // t = tmin;
             thisVox->inShade = true;
             thisVox->localSignal = 0;
-            if (k->CiliaInDark)
-                thisVox->localSignal = 100;
             break;
         }
     }

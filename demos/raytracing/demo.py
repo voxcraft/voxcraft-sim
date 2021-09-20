@@ -8,8 +8,8 @@ np.random.seed(SEED)
 RECORD_HISTORY = True
 
 WORLD_SIZE = 50
-WORLD_HEIGHT = 7
-BODY_SIZES = [(11, 11, 7),]*2 # (6, 6, 5)  # (8, 8, 7)
+WORLD_HEIGHT = 9
+BODY_SIZES = [(11, 11, 9),]*2 # (6, 6, 5)  # (8, 8, 7)
 # if body size changes, or if the stiffness/density of body material changes, 
 # then the cilia force of the material will need to be recalibrated
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
@@ -51,9 +51,10 @@ for (bx, by, bz) in BODY_SIZES:
     # remove the min and max layers and as many middle layers as necessary
     for layer in range(bz):
         if layer > bz//2:
-            body[:, :, layer] *= sphere[1:bx+1, 1:by+1, by+2-1 - (layer-bz//2)]
+            pad = 1+by-bz
         else:
-            body[:, :, layer] *= sphere[1:bx+1, 1:by+1, layer+1]
+            pad = 1
+        body[:, :, layer] *= sphere[1:bx+1, 1:by+1, layer+pad]
 
     while True:  # shift down until in contact with surface plane
         if np.sum(body[:, :, 0]) == 0:
