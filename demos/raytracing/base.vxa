@@ -7,8 +7,9 @@
         <WorldSize>100</WorldSize>
         <WallForce>10</WallForce>
         <EnableCilia>1</EnableCilia>
-        <RandomizeCiliaEvery>0.5</RandomizeCiliaEvery>
-        <RandomSeed>1</RandomSeed>
+        <EnableCilia>0</CiliaInLight>
+        <EnableCilia>1</CiliaInDark>
+        <EnableCilia>1</OnlySurfVoxOcclude>
         <!-- <RecordHistory>
             <RecordStepSize>100</RecordStepSize>
             <RecordVoxel>1</RecordVoxel>

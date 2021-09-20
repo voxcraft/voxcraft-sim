@@ -7,9 +7,9 @@ np.random.seed(SEED)
 
 RECORD_HISTORY = True
 
-WORLD_SIZE = 100
-WORLD_HEIGHT = 5
-BODY_SIZES = [(7, 7, 5),]*32 # (6, 6, 5)  # (8, 8, 7)
+WORLD_SIZE = 50
+WORLD_HEIGHT = 7
+BODY_SIZES = [(9, 9, 7),]*2 # (6, 6, 5)  # (8, 8, 7)
 # if body size changes, or if the stiffness/density of body material changes, 
 # then the cilia force of the material will need to be recalibrated
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
@@ -17,7 +17,11 @@ wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
 # EVAL_PERIOD = 5  # Hard coded in base.vxa
 # SETTLE_TIME = 0  # 0.5
 
-RANDMONIZE_CILIA_EVERY = 0.25 # 5
+# RANDMONIZE_CILIA_EVERY = 0.25 # 5
+
+CILIA_IN_LIGHT = False
+CILIA_IN_DARK = True
+ONLY_SURF_VOX_OCCLUDE = False
 
 # controller
 BASE_CILIA_FORCE = np.ones((wx, wy, wz, 3))  * -1  # pointing downward
@@ -107,15 +111,17 @@ vxa_world_size = etree.SubElement(root, "WorldSize")
 vxa_world_size.set('replace', 'VXA.Simulator.WorldSize')
 vxa_world_size.text = str(wx)
 
-vxa_randomize_cilia_every = etree.SubElement(root, "RandomizeCiliaEvery")
-vxa_randomize_cilia_every.set('replace', 'VXA.Simulator.RandomizeCiliaEvery')
-vxa_randomize_cilia_every.text = str(RANDMONIZE_CILIA_EVERY)
+vxa_cilia_in_light = etree.SubElement(root, "CiliaInLight")
+vxa_cilia_in_light.set('replace', 'VXA.Simulator.CiliaInLight')
+vxa_cilia_in_light.text = str(int(CILIA_IN_LIGHT))
 
-# set seed for browain cilia motion
-vxa_seed = etree.SubElement(root, "RandomSeed")
-vxa_seed.set('replace', 'VXA.Simulator.RandomSeed')
-vxa_seed.text = str(SEED)
+vxa_cilia_in_dark = etree.SubElement(root, "CiliaInDark")
+vxa_cilia_in_dark.set('replace', 'VXA.Simulator.CiliaInDark')
+vxa_cilia_in_dark.text = str(int(CILIA_IN_DARK))
 
+vxa_only_surf_vox_occlude = etree.SubElement(root, "OnlySurfVoxOcclude")
+vxa_only_surf_vox_occlude.set('replace', 'VXA.Simulator.OnlySurfVoxOcclude')
+vxa_only_surf_vox_occlude.text = str(int(ONLY_SURF_VOX_OCCLUDE))
 
 if RECORD_HISTORY:
     # sub.call("rm a{0}_gen{1}.hist".format(seed, pop.gen), shell=True)
@@ -125,7 +131,7 @@ if RECORD_HISTORY:
     etree.SubElement(history, "RecordVoxel").text = '1'
     etree.SubElement(history, "RecordLink").text = '0'
     etree.SubElement(history, "RecordFixedVoxels").text = '1'
-    etree.SubElement(history, "RecordCoMTraceOfEachVoxelGroupfOfThisMaterial").text = '1'  # draw CoM trace
+    etree.SubElement(history, "RecordCoMTraceOfEachVoxelGroupfOfThisMaterial").text = '0'  # draw CoM trace
     
 
 structure = etree.SubElement(root, "Structure")

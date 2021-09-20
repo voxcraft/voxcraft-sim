@@ -141,6 +141,11 @@ class VX3_VoxelyzeKernel {
     bool isSurfaceChanged=false;
     double MaxDistInVoxelLengthsToCountAsPair=0.0;
 
+    // sam:
+    int CiliaInLight = 1;
+    int CiliaInDark = 1;
+    int OnlySurfVoxOcclude = 1;
+
     //Spatial Hash
     //index all surface voxels into grid, so we only need to compare neighbor grids for detecting collision
     //dx,dy,dz width height of one single grid. must larger than collision watch distance.
