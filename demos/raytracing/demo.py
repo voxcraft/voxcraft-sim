@@ -121,11 +121,11 @@ if RECORD_HISTORY:
     # sub.call("rm a{0}_gen{1}.hist".format(seed, pop.gen), shell=True)
     history = etree.SubElement(root, "RecordHistory")
     history.set('replace', 'VXA.Simulator.RecordHistory')
-    etree.SubElement(history, "RecordStepSize").text = '80'
+    etree.SubElement(history, "RecordStepSize").text = '100'
     etree.SubElement(history, "RecordVoxel").text = '1'
     etree.SubElement(history, "RecordLink").text = '0'
     etree.SubElement(history, "RecordFixedVoxels").text = '1'
-    etree.SubElement(history, "RecordCoMTraceOfEachVoxelGroupfOfThisMaterial").text = '0'  # draw CoM trace
+    etree.SubElement(history, "RecordCoMTraceOfEachVoxelGroupfOfThisMaterial").text = '1'  # draw CoM trace
     
 
 structure = etree.SubElement(root, "Structure")
