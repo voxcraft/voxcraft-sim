@@ -885,6 +885,9 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
 
         VX3_Voxel *thisVox = surface_voxels[index];
 
+        if (thisVox->mat->fixed)
+                continue;
+
         thisVox->inShade = false;
         thisVox->localSignal = 100;
 
@@ -898,6 +901,9 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
             // does the ray from thisVox to k->LightPos intersect with otherVox's bounding box?
             VX3_Voxel *otherVox = surface_voxels[j];
 
+            if (otherVox->mat->fixed)
+                continue;
+
             // lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
             VX3_Vec3D<double> lb = otherVox->position() + otherVox->cornerOffset(NNN);
             VX3_Vec3D<double> rt = otherVox->position() + otherVox->cornerOffset(PPP);
@@ -906,7 +912,7 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
             VX3_Vec3D<double> thisVoxToOtherVox = otherVox->position() - ray_origin; // ray_origin ---> otherVox origin
             VX3_Vec3D<double> thisVoxToLight = k->LightPos - ray_origin ;  // ray_origin ---> k->LightPos
 
-            // can't occlude on other side of light
+            // can't occlude on far side of the light source
             if (thisVoxToOtherVox.Length2() > thisVoxToLight.Length2())
                 continue;
 
