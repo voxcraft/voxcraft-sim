@@ -893,7 +893,7 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
 
         VX3_Voxel *thisVox = &voxels[index];
         if (surfVoxOnly)
-            *thisVox = surface_voxels[index];
+            thisVox = surface_voxels[index];
 
         if (thisVox->mat->fixed)  // todo: switch this to mat->transparent so we can have fixed opaque voxels
             return;
@@ -913,7 +913,7 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
             // does the ray from thisVox to k->LightPos intersect with otherVox's bounding box?
             VX3_Voxel *otherVox = &voxels[j];
             if (surfVoxOnly)
-                *otherVox = surface_voxels[j];
+                otherVox = surface_voxels[j];
 
             if (otherVox->mat->fixed)  // mat->transparent
                 continue;
