@@ -886,7 +886,7 @@ __global__ void gpu_update_occlusion(VX3_Voxel **surface_voxels, int num, VX3_Vo
         VX3_Voxel *thisVox = surface_voxels[index];
 
         if (thisVox->mat->fixed)
-                continue;
+            return;
 
         thisVox->inShade = false;
         thisVox->localSignal = 100;
