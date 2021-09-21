@@ -105,7 +105,6 @@ def restricted_cilia(body):
                         cilia_x_comp = np.sin(cilia_force_angle)
                         cilia_y_comp = np.cos(cilia_force_angle)
                         cilia_z_comp = 0
-                        cilia[x,y,z,:] = [cilia_x_comp, cilia_y_comp, cilia_z_comp]   
-                        print([cilia_x_comp, cilia_y_comp, cilia_z_comp])                   
+                        cilia[x,y,z,:] = [cilia_x_comp, cilia_y_comp, cilia_z_comp]              
 
     return cilia
