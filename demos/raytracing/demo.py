@@ -25,7 +25,7 @@ BASE_CILIA_FORCE = np.zeros((wx, wy, wz, 3))
 # light source corner
 lx = 0
 ly = 0
-lz = 1
+lz = 0
 l_size = 2
 LIGHT_BULB = np.ones((l_size,)*3, dtype=np.int)*3  # materials: cilia, no cilia, lightbulb
 
