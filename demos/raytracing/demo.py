@@ -112,7 +112,7 @@ vxa_light_pos_z = etree.SubElement(root, "LightPosZ")
 vxa_light_pos_z.set('replace', 'VXA.Simulator.LightPosZ')
 vxa_light_pos_z.text = str(0.1*(lz+l_size/2-0.5))
 
-print("light pos: " + str(0.1*(lx+l_size/2-0.5)) + ", " + str(0.1*(ly+l_size/2-0.5)) + ", " + str(0.1*(lz+l_size/2-0.5))
+print("light pos: " + str(0.1*(lx+l_size/2-0.5)) + ", " + str(0.1*(ly+l_size/2-0.5)) + ", " + str(0.1*(lz+l_size/2-0.5)) )
 
 
 if RECORD_HISTORY:
