@@ -12,7 +12,7 @@ DEBUG = True  # straight cilia vectors, instead of random angles
 
 WORLD_SIZE = 100
 WORLD_HEIGHT = 9
-BODY_SIZES =  [(11, 11, 9),]*2 + [(2,)*3]*25
+BODY_SIZES =  [(11, 11, 9),]*2  + [(7, 7, 5),]*3 + [(5, 5, 4),]*3 + [(2,)*3]*25
 # if body size changes, or if the stiffness/density of body material changes, 
 # then the cilia force of the material will need to be recalibrated
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
@@ -37,6 +37,9 @@ world[lx:lx+l_size, ly:ly+l_size, lz:lz+l_size] = LIGHT_BULB
 for (bx, by, bz) in BODY_SIZES:
     body = np.ones((bx, by, bz), dtype=np.int8)
 
+    if bx < 5:
+        continue
+        
     if np.random.rand() > 0.5:
 
         sphere = np.zeros((by+2,)*3, dtype=np.int8) 
