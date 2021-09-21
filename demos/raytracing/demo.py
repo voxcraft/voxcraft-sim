@@ -1,6 +1,7 @@
 from lxml import etree
 import subprocess as sub
 import numpy as np
+from cilia_utils import restricted_cilia
 
 SEED = 0
 np.random.seed(SEED)
@@ -25,7 +26,7 @@ ONLY_SURF_VOX_OCCLUDE = False
 
 # controller
 BASE_CILIA_FORCE = np.ones((wx, wy, wz, 3))  * -1  # pointing downward
-BASE_CILIA_FORCE[:, :, :, :2] = 2 * np.random.rand(wx, wy, wz, 2) - 1  # initial forces
+# BASE_CILIA_FORCE[:, :, :, :2] = 2 * np.random.rand(wx, wy, wz, 2) - 1  # initial forces
 
 # light source corner
 lx = 0
@@ -69,6 +70,7 @@ for (bx, by, bz) in BODY_SIZES:
         corners = np.random.randint(l_size+1, wx-bx, 2)
         if np.sum(world[corners[0]-1:corners[0]+bx+1, corners[1]-1:corners[1]+by+1, :bz]) == 0:
             world[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz] = body
+            BASE_CILIA_FORCE[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz] = restricted_cilia(body)
             break
         if attepts > 500:
             break
