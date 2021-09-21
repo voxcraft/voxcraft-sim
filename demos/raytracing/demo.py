@@ -8,9 +8,9 @@ np.random.seed(SEED)
 
 RECORD_HISTORY = True
 
-WORLD_SIZE = 25
+WORLD_SIZE = 32
 WORLD_HEIGHT = 5
-BODY_SIZES = [(7, 7, 5),]*5  # [(11, 11, 9),]*5 # (6, 6, 5)  # (8, 8, 7)
+BODY_SIZES = [(2,)*3]*32  # [(7, 7, 5),]*5  # [(11, 11, 9),]*5 # (6, 6, 5)  # (8, 8, 7)
 # if body size changes, or if the stiffness/density of body material changes, 
 # then the cilia force of the material will need to be recalibrated
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
