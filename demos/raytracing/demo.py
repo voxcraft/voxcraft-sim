@@ -102,17 +102,17 @@ root = etree.Element("VXD")
 
 vxa_light_pos_x = etree.SubElement(root, "LightPosX")
 vxa_light_pos_x.set('replace', 'VXA.Simulator.LightPosX')
-vxa_light_pos_x.text = str(-0.1*(lx+l_size/2-0.5))
+vxa_light_pos_x.text = str(0.1*(lx+l_size/2-0.5))
 
 vxa_light_pos_y = etree.SubElement(root, "LightPosY")
-vxa_light_pos_y.set('replace', 'VXA.Simulator.LightPosX')
-vxa_light_pos_y.text = str(-0.1*(ly+l_size/2-0.5))
+vxa_light_pos_y.set('replace', 'VXA.Simulator.LightPosY')
+vxa_light_pos_y.text = str(0.1*(ly+l_size/2-0.5))
 
 vxa_light_pos_z = etree.SubElement(root, "LightPosZ")
-vxa_light_pos_z.set('replace', 'VXA.Simulator.LightPosX')
+vxa_light_pos_z.set('replace', 'VXA.Simulator.LightPosZ')
 vxa_light_pos_z.text = str(0.1*(lz+l_size/2-0.5))
 
-print("light pos: " + str(lx+l_size/2-0.5) + ", " + str(ly+l_size/2-0.5) + ", " + str(lz+l_size/2-0.5))
+print("light pos: " + str(0.1*(lx+l_size/2-0.5)) + ", " + str(0.1*(ly+l_size/2-0.5)) + ", " + str(0.1*(lz+l_size/2-0.5))
 
 
 if RECORD_HISTORY:
