@@ -10,7 +10,7 @@ RECORD_HISTORY = True
 
 WORLD_SIZE = 50
 WORLD_HEIGHT = 5
-BODY_SIZES = [(7, 7, 5),]*3  # [(11, 11, 9),]*5 # (6, 6, 5)  # (8, 8, 7)
+BODY_SIZES = [(7, 7, 5),]*5  # [(11, 11, 9),]*5 # (6, 6, 5)  # (8, 8, 7)
 # if body size changes, or if the stiffness/density of body material changes, 
 # then the cilia force of the material will need to be recalibrated
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
@@ -62,7 +62,7 @@ for (bx, by, bz) in BODY_SIZES:
         corners = np.random.randint(l_size+1, wx-bx, 2)
         if np.sum(world[corners[0]-1:corners[0]+bx+1, corners[1]-1:corners[1]+by+1, :bz]) == 0:
             world[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz] = body
-            BASE_CILIA_FORCE[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz] = restricted_cilia(body) * -1
+            BASE_CILIA_FORCE[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz] = restricted_cilia(body)
             break
         if attepts > 500:
             break

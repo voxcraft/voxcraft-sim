@@ -882,7 +882,7 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
         // sam:
         double gain = surface_voxels[index]->localSignal;
         if (k->UsingLightSource && !surface_voxels[index]->inShade)
-                gain = k->CiliaFactorInLight;
+            gain = k->CiliaFactorInLight;
         surface_voxels[index]->CiliaForce = surface_voxels[index]->orient.RotateVec3D(
             surface_voxels[index]->baseCiliaForce + gain * surface_voxels[index]->shiftCiliaForce);
     }
