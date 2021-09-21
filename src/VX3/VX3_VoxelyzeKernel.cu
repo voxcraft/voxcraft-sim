@@ -306,6 +306,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
     // sam:
     if (UsingLightSource) {
+        LightPos = VX3_Vec3D<>(LightPosX, LightPosY, LightPosZ);
         updateOcclusion();
     }
 
@@ -884,7 +885,7 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
             if (!surface_voxels[index]->inShade)
                 surface_voxels[index]->CiliaForce *= k->CiliaFactorInLight;
         }
-        
+
         else {
             surface_voxels[index]->CiliaForce = surface_voxels[index]->orient.RotateVec3D(
                 surface_voxels[index]->baseCiliaForce + surface_voxels[index]->localSignal * surface_voxels[index]->shiftCiliaForce);
