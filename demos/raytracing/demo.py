@@ -10,7 +10,7 @@ RECORD_HISTORY = True
 
 WORLD_SIZE = 50
 WORLD_HEIGHT = 9
-BODY_SIZES = [(11, 11, 9),]*3 # (6, 6, 5)  # (8, 8, 7)
+BODY_SIZES = [(11, 11, 9),]*5 # (6, 6, 5)  # (8, 8, 7)
 # if body size changes, or if the stiffness/density of body material changes, 
 # then the cilia force of the material will need to be recalibrated
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
