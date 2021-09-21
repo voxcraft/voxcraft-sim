@@ -23,9 +23,9 @@ BASE_CILIA_FORCE = np.zeros((wx, wy, wz, 3))
 # BASE_CILIA_FORCE[:, :, :, :2] = 2 * np.random.rand(wx, wy, wz, 2) - 1  # unrestricted forces
 
 # light source corner
-lx = 0
-ly = 0
-lz = 0
+lx = wx//2-1
+ly = wy//2-1
+lz = wz-2
 l_size = 2
 LIGHT_BULB = np.ones((l_size,)*3, dtype=np.int)*3  # materials: cilia, no cilia, lightbulb
 
@@ -102,15 +102,15 @@ root = etree.Element("VXD")
 
 vxa_light_pos_x = etree.SubElement(root, "LightPosX")
 vxa_light_pos_x.set('replace', 'VXA.Simulator.LightPosX')
-vxa_light_pos_x.text = str(lx+l_size/2-0.5)
+vxa_light_pos_x.text = str(10*lx+l_size/2-0.5)
 
 vxa_light_pos_y = etree.SubElement(root, "LightPosY")
 vxa_light_pos_y.set('replace', 'VXA.Simulator.LightPosX')
-vxa_light_pos_y.text = str(ly+l_size/2-0.5)
+vxa_light_pos_y.text = str(10*ly+l_size/2-0.5)
 
 vxa_light_pos_z = etree.SubElement(root, "LightPosZ")
 vxa_light_pos_z.set('replace', 'VXA.Simulator.LightPosX')
-vxa_light_pos_z.text = str(lz+l_size/2-0.5)
+vxa_light_pos_z.text = str(10*lz+l_size/2-0.5)
 
 print("light pos: " + str(lx+l_size/2-0.5) + ", " + str(ly+l_size/2-0.5) + ", " + str(lz+l_size/2-0.5))
 
