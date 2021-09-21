@@ -8,7 +8,7 @@
         <!-- <WorldSize>100</WorldSize> -->
         <!-- <WallForce>10</WallForce> -->
         <EnableCilia>1</EnableCilia>
-        <CiliaFactorInLight>0</CiliaFactorInLight>
+        <CiliaFactorInLight>-1000</CiliaFactorInLight>
         <OnlySurfVoxOcclude>0</OnlySurfVoxOcclude>
         <!-- <RecordHistory>
             <RecordStepSize>100</RecordStepSize>
