@@ -72,6 +72,10 @@ world = np.swapaxes(world, 0,2)
 # world = world.reshape([wz,-1])
 world = world.reshape(wz, wx*wy)
 
+# get new voxcraft build
+sub.call("cp ../../build/voxcraft-sim .", shell=True)
+sub.call("cp ../../build/vx3_node_worker .", shell=True)
+
 # create data folder if it doesn't already exist
 sub.call("mkdir data{}".format(SEED), shell=True)
 sub.call("cp base.vxa data{}/base.vxa".format(SEED), shell=True)
