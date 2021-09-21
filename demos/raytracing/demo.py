@@ -10,7 +10,7 @@ RECORD_HISTORY = True
 
 DEBUG = True  # straight cilia vectors, instead of random angles
 
-WORLD_SIZE = 100
+WORLD_SIZE = 50
 WORLD_HEIGHT = 9
 BODY_SIZES =  [(11, 11, 9),]*2  + [(7, 7, 5),]*3 + [(5, 5, 4),]*3 + [(2,)*3]*25
 # if body size changes, or if the stiffness/density of body material changes, 
