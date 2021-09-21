@@ -305,7 +305,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
     }
 
     // sam:
-    if (true) {
+    if (UsingLightSource) {
         updateOcclusion();
     }
 
@@ -867,7 +867,6 @@ __global__ void gpu_update_attach(VX3_Voxel **surface_voxels, int num, double wa
     }
 }
 
-// TODO: only need to update after attachment changes.
 __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k) {
     int index = threadIdx.x + blockIdx.x * blockDim.x;
     if (index < num) {
@@ -878,8 +877,14 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
         if (surface_voxels[index]->mat->TurnOnCiliaAfterThisManySeconds > k->currentTime)
             return;
         // rotate base cilia force and update it into voxel.
+        // surface_voxels[index]->CiliaForce = surface_voxels[index]->orient.RotateVec3D(
+        //     surface_voxels[index]->baseCiliaForce + surface_voxels[index]->localSignal * surface_voxels[index]->shiftCiliaForce);
+        // sam:
+        double gain = surface_voxels[index]->localSignal;
+        if (k->UsingLightSource && !surface_voxels[index]->inShade)
+                gain = k->CiliaFactorInLight;
         surface_voxels[index]->CiliaForce = surface_voxels[index]->orient.RotateVec3D(
-            surface_voxels[index]->baseCiliaForce + surface_voxels[index]->localSignal * surface_voxels[index]->shiftCiliaForce);
+            surface_voxels[index]->baseCiliaForce + gain * surface_voxels[index]->shiftCiliaForce);
     }
 }
 

@@ -156,6 +156,8 @@ class VX3_VoxelyzeKernel {
     VX3_Vec3D<>* d_initialPosition = NULL;
     
     // sam:
+    int UsingLightSource = 0;
+    double CiliaFactorInLight = 0;
     int OnlySurfVoxOcclude = 1;
     double LightPosX = 0;
     double LightPosY = 0;

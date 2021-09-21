@@ -15,15 +15,9 @@ BODY_SIZES = [(11, 11, 9),]*5 # (6, 6, 5)  # (8, 8, 7)
 # then the cilia force of the material will need to be recalibrated
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
 
-# EVAL_PERIOD = 5  # Hard coded in base.vxa
-# SETTLE_TIME = 0  # 0.5
-
-# RANDMONIZE_CILIA_EVERY = 0.25 # 5
-
-ONLY_SURF_VOX_OCCLUDE = False
-
 # controller
-BASE_CILIA_FORCE = np.ones((wx, wy, wz, 3))  * -1  # pointing downward
+BASE_CILIA_FORCE = np.zeros((wx, wy, wz, 3))
+# BASE_CILIA_FORCE = np.ones((wx, wy, wz, 3))  * -1  # pointing downward
 # BASE_CILIA_FORCE[:, :, :, :2] = 2 * np.random.rand(wx, wy, wz, 2) - 1  # unrestrcited forces
 
 # light source corner
@@ -95,24 +89,20 @@ if not RECORD_HISTORY:
 # start vxd file
 root = etree.Element("VXD")
 
-vxa_world_size = etree.SubElement(root, "LightPosX")
-vxa_world_size.set('replace', 'VXA.Simulator.LightPosX')
-vxa_world_size.text = str(lx+l_size/2-0.5)
-vxa_world_size = etree.SubElement(root, "LightPosY")
-vxa_world_size.set('replace', 'VXA.Simulator.LightPosX')
-vxa_world_size.text = str(ly+l_size/2-0.5)
-vxa_world_size = etree.SubElement(root, "LightPosZ")
-vxa_world_size.set('replace', 'VXA.Simulator.LightPosX')
-vxa_world_size.text = str(lz+l_size/2-0.5)
+vxa_light_pos_x = etree.SubElement(root, "LightPosX")
+vxa_light_pos_x.set('replace', 'VXA.Simulator.LightPosX')
+vxa_light_pos_x.text = str(lx+l_size/2-0.5)
+
+vxa_light_pos_y = etree.SubElement(root, "LightPosY")
+vxa_light_pos_y.set('replace', 'VXA.Simulator.LightPosX')
+vxa_light_pos_y.text = str(ly+l_size/2-0.5)
+
+vxa_light_pos_z = etree.SubElement(root, "LightPosZ")
+vxa_light_pos_z.set('replace', 'VXA.Simulator.LightPosX')
+vxa_light_pos_z.text = str(lz+l_size/2-0.5)
+
 print("light pos: " + str(lx+l_size/2-0.5) + ", " + str(ly+l_size/2-0.5) + ", " + str(lz+l_size/2-0.5))
 
-vxa_world_size = etree.SubElement(root, "WorldSize")
-vxa_world_size.set('replace', 'VXA.Simulator.WorldSize')
-vxa_world_size.text = str(wx)
-
-vxa_only_surf_vox_occlude = etree.SubElement(root, "OnlySurfVoxOcclude")
-vxa_only_surf_vox_occlude.set('replace', 'VXA.Simulator.OnlySurfVoxOcclude')
-vxa_only_surf_vox_occlude.text = str(int(ONLY_SURF_VOX_OCCLUDE))
 
 if RECORD_HISTORY:
     # sub.call("rm a{0}_gen{1}.hist".format(seed, pop.gen), shell=True)
