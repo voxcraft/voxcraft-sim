@@ -20,13 +20,11 @@ wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
 
 # RANDMONIZE_CILIA_EVERY = 0.25 # 5
 
-CILIA_IN_LIGHT = False
-CILIA_IN_DARK = True
 ONLY_SURF_VOX_OCCLUDE = False
 
 # controller
 BASE_CILIA_FORCE = np.ones((wx, wy, wz, 3))  * -1  # pointing downward
-# BASE_CILIA_FORCE[:, :, :, :2] = 2 * np.random.rand(wx, wy, wz, 2) - 1  # initial forces
+# BASE_CILIA_FORCE[:, :, :, :2] = 2 * np.random.rand(wx, wy, wz, 2) - 1  # unrestrcited forces
 
 # light source corner
 lx = 0
@@ -70,7 +68,7 @@ for (bx, by, bz) in BODY_SIZES:
         corners = np.random.randint(l_size+1, wx-bx, 2)
         if np.sum(world[corners[0]-1:corners[0]+bx+1, corners[1]-1:corners[1]+by+1, :bz]) == 0:
             world[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz] = body
-            BASE_CILIA_FORCE[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz] = restricted_cilia(body)
+            BASE_CILIA_FORCE[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz] = restricted_cilia(body) * -1
             break
         if attepts > 500:
             break
@@ -111,14 +109,6 @@ print("light pos: " + str(lx+l_size/2-0.5) + ", " + str(ly+l_size/2-0.5) + ", " 
 vxa_world_size = etree.SubElement(root, "WorldSize")
 vxa_world_size.set('replace', 'VXA.Simulator.WorldSize')
 vxa_world_size.text = str(wx)
-
-vxa_cilia_in_light = etree.SubElement(root, "CiliaInLight")
-vxa_cilia_in_light.set('replace', 'VXA.Simulator.CiliaInLight')
-vxa_cilia_in_light.text = str(int(CILIA_IN_LIGHT))
-
-vxa_cilia_in_dark = etree.SubElement(root, "CiliaInDark")
-vxa_cilia_in_dark.set('replace', 'VXA.Simulator.CiliaInDark')
-vxa_cilia_in_dark.text = str(int(CILIA_IN_DARK))
 
 vxa_only_surf_vox_occlude = etree.SubElement(root, "OnlySurfVoxOcclude")
 vxa_only_surf_vox_occlude.set('replace', 'VXA.Simulator.OnlySurfVoxOcclude')
