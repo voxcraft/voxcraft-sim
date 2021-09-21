@@ -16,14 +16,14 @@ BODY_SIZES = [(7, 7, 5),]*12  # [(11, 11, 9),]*5 # (6, 6, 5)  # (8, 8, 7)
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
 
 # controller
-BASE_CILIA_FORCE = np.zeros((wx, wy, wz, 3))
-# BASE_CILIA_FORCE = np.ones((wx, wy, wz, 3))  * -1  # pointing downward
-# BASE_CILIA_FORCE[:, :, :, :2] = 2 * np.random.rand(wx, wy, wz, 2) - 1  # unrestrcited forces
+# BASE_CILIA_FORCE = np.zeros((wx, wy, wz, 3))
+BASE_CILIA_FORCE = np.ones((wx, wy, wz, 3))  * -1  # pointing downward
+BASE_CILIA_FORCE[:, :, :, :2] = 2 * np.random.rand(wx, wy, wz, 2) - 1  # unrestricted forces
 
 # light source corner
 lx = 0
 ly = 0
-lz = 2
+lz = 1
 l_size = 2
 LIGHT_BULB = np.ones((l_size,)*3, dtype=np.int)*3  # materials: cilia, no cilia, lightbulb
 
@@ -62,7 +62,7 @@ for (bx, by, bz) in BODY_SIZES:
         corners = np.random.randint(l_size+1, wx-bx, 2)
         if np.sum(world[corners[0]-1:corners[0]+bx+1, corners[1]-1:corners[1]+by+1, :bz]) == 0:
             world[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz] = body
-            BASE_CILIA_FORCE[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz] = restricted_cilia(body)
+            # BASE_CILIA_FORCE[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz] = restricted_cilia(body)
             break
         if attepts > 500:
             break
