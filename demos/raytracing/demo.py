@@ -10,9 +10,9 @@ RECORD_HISTORY = True
 
 DEBUG = True  # straight cilia vectors, instead of random angles
 
-WORLD_SIZE = 50
+WORLD_SIZE = 150
 WORLD_HEIGHT = 9
-BODY_SIZES =  [(2,)*3]*50  # + [(11, 11, 9),]*2  + [(7, 7, 5),]*6 + [(5, 5, 4),]*10
+BODY_SIZES =  [(2,)*3]*200  # + [(11, 11, 9),]*2  + [(7, 7, 5),]*6 + [(5, 5, 4),]*10
 # if body size changes, or if the stiffness/density of body material changes, 
 # then the cilia force of the material will need to be recalibrated
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
@@ -102,17 +102,17 @@ root = etree.Element("VXD")
 
 vxa_light_pos_x = etree.SubElement(root, "LightPosX")
 vxa_light_pos_x.set('replace', 'VXA.Simulator.LightPosX')
-vxa_light_pos_x.text = str(0.01*(lx+l_size/2-0.5))
+vxa_light_pos_x.text = str(lx+l_size/2-0.5)
 
 vxa_light_pos_y = etree.SubElement(root, "LightPosY")
 vxa_light_pos_y.set('replace', 'VXA.Simulator.LightPosY')
-vxa_light_pos_y.text = str(0.01*(ly+l_size/2-0.5))
+vxa_light_pos_y.text = str(ly+l_size/2-0.5)
 
 vxa_light_pos_z = etree.SubElement(root, "LightPosZ")
 vxa_light_pos_z.set('replace', 'VXA.Simulator.LightPosZ')
-vxa_light_pos_z.text = str(0.01*(lz+l_size/2-0.5))
+vxa_light_pos_z.text = str(lz+l_size/2-0.5)
 
-print("light pos: " + str(0.01*(lx+l_size/2-0.5)) + ", " + str(0.01*(ly+l_size/2-0.5)) + ", " + str(0.01*(lz+l_size/2-0.5)) )
+print("light pos: " + str(lx+l_size/2-0.5) + ", " + str(ly+l_size/2-0.5) + ", " + str(lz+l_size/2-0.5) )
 
 
 if RECORD_HISTORY:
