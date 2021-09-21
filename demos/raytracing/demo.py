@@ -37,7 +37,7 @@ world[lx:lx+l_size, ly:ly+l_size, lz:lz+l_size] = LIGHT_BULB
 for (bx, by, bz) in BODY_SIZES:
     body = np.ones((bx, by, bz), dtype=np.int8)
 
-    if np.random.rand > 0.5:
+    if np.random.rand() > 0.5:
 
         sphere = np.zeros((by+2,)*3, dtype=np.int8) 
         radius = by//2+1
