@@ -29,7 +29,7 @@ def get_empty_neighbor_positons(body, pos):
 
     return empty_neigh
 
-def restricted_cilia(body):
+def restricted_cilia(body, DEBUG=False):
     # Assumes voxels do not have cilia forces in the z-direction
 
     cilia = np.zeros((body.shape[0], body.shape[1], body.shape[2], 3))
@@ -59,9 +59,12 @@ def restricted_cilia(body):
                         # by default all of the vectors are unit vectors because the distance between voxels is 1
                         vectors.append([x_comp,y_comp,z_comp])
 
+                    # DEBUG keeps thrusters in the center
+                    if DEBUG:
+                        continue
+
                     # Compute range of angles the cilia force vector can lie in
                     # +/- 45 degrees of the vector to each empty neighboring voxel
-
                     if len(vectors)>0:
                         bounds = []
                         for vector in vectors:

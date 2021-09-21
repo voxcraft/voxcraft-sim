@@ -8,9 +8,11 @@ np.random.seed(SEED)
 
 RECORD_HISTORY = True
 
+DEBUG = True  # straight cilia vectors, instead of random angles
+
 WORLD_SIZE = 100
-WORLD_HEIGHT = 5
-BODY_SIZES = [(2,)*3]*100  # [(7, 7, 5),]*5  # [(11, 11, 9),]*5 # (6, 6, 5)  # (8, 8, 7)
+WORLD_HEIGHT = 9
+BODY_SIZES =  [(11, 11, 9),]*2  + [(7, 7, 5),]*3 + [(5, 5, 4),]*3 + [(2,)*3]*25
 # if body size changes, or if the stiffness/density of body material changes, 
 # then the cilia force of the material will need to be recalibrated
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
@@ -35,26 +37,28 @@ world[lx:lx+l_size, ly:ly+l_size, lz:lz+l_size] = LIGHT_BULB
 for (bx, by, bz) in BODY_SIZES:
     body = np.ones((bx, by, bz), dtype=np.int8)
 
-    # sphere = np.zeros((by+2,)*3, dtype=np.int8) 
-    # radius = by//2+1
-    # r2 = np.arange(-radius, radius+1)**2
-    # dist2 = r2[:, None, None] + r2[:, None] + r2
-    # sphere[dist2 <= radius**2] = 1
+    if np.random.rand > 0.5:
 
-    # # remove the min and max layers and as many middle layers as necessary
-    # for layer in range(bz):
-    #     if layer > bz//2:
-    #         pad = 1+by-bz
-    #     else:
-    #         pad = 1
-    #     body[:, :, layer] *= sphere[1:bx+1, 1:by+1, layer+pad]
+        sphere = np.zeros((by+2,)*3, dtype=np.int8) 
+        radius = by//2+1
+        r2 = np.arange(-radius, radius+1)**2
+        dist2 = r2[:, None, None] + r2[:, None] + r2
+        sphere[dist2 <= radius**2] = 1
 
-    # while True:  # shift down until in contact with surface plane
-    #     if np.sum(body[:, :, 0]) == 0:
-    #         body[:, :, :-1] = body[:, :, 1:]
-    #         body[:, :, -1] = np.zeros_like(body[:, :, -1])
-    #     else:
-    #         break
+        # remove the min and max layers and as many middle layers as necessary
+        for layer in range(bz):
+            if layer > bz//2:
+                pad = 1+by-bz
+            else:
+                pad = 1
+            body[:, :, layer] *= sphere[1:bx+1, 1:by+1, layer+pad]
+
+        while True:  # shift down until in contact with surface plane
+            if np.sum(body[:, :, 0]) == 0:
+                body[:, :, :-1] = body[:, :, 1:]
+                body[:, :, -1] = np.zeros_like(body[:, :, -1])
+            else:
+                break
 
     attepts = 0
     while True:
@@ -62,7 +66,7 @@ for (bx, by, bz) in BODY_SIZES:
         corners = np.random.randint(l_size+1, wx-bx, 2)
         if np.sum(world[corners[0]-1:corners[0]+bx+1, corners[1]-1:corners[1]+by+1, :bz]) == 0:
             world[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz] = body
-            BASE_CILIA_FORCE[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz] = restricted_cilia(body)
+            BASE_CILIA_FORCE[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz] = restricted_cilia(body, DEBUG)
             break
         if attepts > 500:
             break
