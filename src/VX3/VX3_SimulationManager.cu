@@ -361,9 +361,9 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         h_d_tmp.EnableSignals = pt_merged.get<int>("VXA.Simulator.EnableSignals", 0);
 
         // sam:
-        h_d_tmp.CiliaFactorInLight = pt_merged.get<int>("VXA.Simulator.CiliaFactorInLight", 0);
+        h_d_tmp.CiliaFactorInLight = pt_merged.get<double>("VXA.Simulator.CiliaFactorInLight", 0);
         h_d_tmp.UsingLightSource = pt_merged.get<int>("VXA.Simulator.UsingLightSource", 0);
-        h_d_tmp.OnlySurfVoxOcclude = pt_merged.get<int>("VXA.Simulator.OnlySurfVoxOcclude", 1);
+        h_d_tmp.OnlySurfVoxOcclude = pt_merged.get<int>("VXA.Simulator.OnlySurfVoxOcclude", 0);
         h_d_tmp.LightPosX = pt_merged.get<double>("VXA.Simulator.LightPosX", 0);
         h_d_tmp.LightPosY = pt_merged.get<double>("VXA.Simulator.LightPosY", 0);
         h_d_tmp.LightPosZ = pt_merged.get<double>("VXA.Simulator.LightPosZ", 0);

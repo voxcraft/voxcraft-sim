@@ -877,14 +877,19 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
         if (surface_voxels[index]->mat->TurnOnCiliaAfterThisManySeconds > k->currentTime)
             return;
         // rotate base cilia force and update it into voxel.
-        // surface_voxels[index]->CiliaForce = surface_voxels[index]->orient.RotateVec3D(
-        //     surface_voxels[index]->baseCiliaForce + surface_voxels[index]->localSignal * surface_voxels[index]->shiftCiliaForce);
+
         // sam:
-        double gain = surface_voxels[index]->localSignal;
-        if (k->UsingLightSource && !surface_voxels[index]->inShade)
-            gain = k->CiliaFactorInLight;
-        surface_voxels[index]->CiliaForce = surface_voxels[index]->orient.RotateVec3D(
-            surface_voxels[index]->baseCiliaForce + gain * surface_voxels[index]->shiftCiliaForce);
+        if (k->UsingLightSource) {
+            double gain = 1.0;
+            if (!surface_voxels[index]->inShade)
+                gain = k->CiliaFactorInLight;
+            surface_voxels[index]->CiliaForce = surface_voxels[index]->orient.RotateVec3D(gain * surface_voxels[index]->baseCiliaForce);
+        }
+
+        else {
+            surface_voxels[index]->CiliaForce = surface_voxels[index]->orient.RotateVec3D(
+                surface_voxels[index]->baseCiliaForce + surface_voxels[index]->localSignal * surface_voxels[index]->shiftCiliaForce);
+        }
     }
 }
 
