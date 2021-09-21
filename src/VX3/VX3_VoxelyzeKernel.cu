@@ -306,7 +306,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
     // sam:
     if (UsingLightSource) {
-        LightPos = VX3_Vec3D<>(LightPosX, LightPosY, LightPosZ);
+        LightPos = VX3_Vec3D<>(LightPosX*voxSize, LightPosY*voxSize, LightPosZ*voxSize);
         updateOcclusion();
     }
 

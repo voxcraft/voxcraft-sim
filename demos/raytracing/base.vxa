@@ -4,7 +4,7 @@
         <UsingLightSource>1</UsingLightSource>
         <LightPosX>0</LightPosX>
         <LightPosY>0</LightPosY>
-        <LightPosZ>3</LightPosZ>
+        <LightPosZ>0</LightPosZ>
         <!-- <WorldSize>100</WorldSize> -->
         <!-- <WallForce>10</WallForce> -->
         <EnableCilia>1</EnableCilia>
