@@ -61,6 +61,7 @@ def restricted_cilia(body, DEBUG=False):
 
                     # DEBUG keeps thrusters in the center
                     if DEBUG:
+                        cilia[x,y,z,:] = vectors[0] # corner voxels have two, just use the first one
                         continue
 
                     # Compute range of angles the cilia force vector can lie in
