@@ -41,7 +41,7 @@ def restricted_cilia(body):
         for y in range(body.shape[1]):
             for z in range(body.shape[2]):
                 
-                if body[x,y,z]==2:
+                if body[x,y,z]:
                     curr_pos = (x,y,z)
                     # Get neighboring empty voxel locations
                     empty_neigh = get_empty_neighbor_positons(body, curr_pos)

@@ -71,7 +71,6 @@ for (bx, by, bz) in BODY_SIZES:
         if np.sum(world[corners[0]-1:corners[0]+bx+1, corners[1]-1:corners[1]+by+1, :bz]) == 0:
             world[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz] = body
             BASE_CILIA_FORCE[corners[0]:corners[0]+bx, corners[1]:corners[1]+by, :bz] = restricted_cilia(body)
-            print(restricted_cilia(body))
             break
         if attepts > 500:
             break
