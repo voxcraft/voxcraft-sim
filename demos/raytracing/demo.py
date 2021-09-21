@@ -10,7 +10,7 @@ RECORD_HISTORY = True
 
 WORLD_SIZE = 100
 WORLD_HEIGHT = 5
-BODY_SIZES = [(7, 7, 5),]*32  # [(11, 11, 9),]*5 # (6, 6, 5)  # (8, 8, 7)
+BODY_SIZES = [(7, 7, 5),]*12  # [(11, 11, 9),]*5 # (6, 6, 5)  # (8, 8, 7)
 # if body size changes, or if the stiffness/density of body material changes, 
 # then the cilia force of the material will need to be recalibrated
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
@@ -21,8 +21,8 @@ BASE_CILIA_FORCE = np.zeros((wx, wy, wz, 3))
 # BASE_CILIA_FORCE[:, :, :, :2] = 2 * np.random.rand(wx, wy, wz, 2) - 1  # unrestrcited forces
 
 # light source corner
-lx = WORLD_SIZE//2-2
-ly = WORLD_SIZE//2-2
+lx = 0
+ly = 0
 lz = 2
 l_size = 2
 LIGHT_BULB = np.ones((l_size,)*3, dtype=np.int)*3  # materials: cilia, no cilia, lightbulb
