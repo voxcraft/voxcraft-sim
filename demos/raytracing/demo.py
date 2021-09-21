@@ -10,9 +10,9 @@ RECORD_HISTORY = True
 
 DEBUG = True  # straight cilia vectors, instead of random angles
 
-WORLD_SIZE = 150
-WORLD_HEIGHT = 9
-BODY_SIZES =  [(2,)*3]*200  # + [(11, 11, 9),]*2  + [(7, 7, 5),]*6 + [(5, 5, 4),]*10
+WORLD_SIZE = 50
+WORLD_HEIGHT = 10
+BODY_SIZES =  [(7, 7, 5),]*9  # + [(2,)*3]*200  # + [(11, 11, 9),]*2  + [(5, 5, 4),]*10
 # if body size changes, or if the stiffness/density of body material changes, 
 # then the cilia force of the material will need to be recalibrated
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
