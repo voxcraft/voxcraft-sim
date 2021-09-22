@@ -308,7 +308,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
     if (UsingLightSource && TurnOnLightAfterThisManySeconds < currentTime) {
         LightPos = VX3_Vec3D<>(LightPosX*voxSize, LightPosY*voxSize, LightPosZ*voxSize);
         bool lightOn = false;
-        if (VX3_MathTree::eval(0, 0, 0, 0, currentTime, 0, 0, 0, 0, light_function > 0)
+        if (VX3_MathTree::eval(0, 0, 0, 0, currentTime, 0, 0, 0, 0, light_function) > 0 )
             lightOn = true;
         updateOcclusion(lightOn);
     }
