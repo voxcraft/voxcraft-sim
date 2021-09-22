@@ -302,6 +302,8 @@ class VX3_Voxel {
     // sam:
     bool inShade = false;
     double timeInDark = 0;
+    double timeInLight = 0;
+    bool hasSeenTheLight = false;
 
     bool enableAttach = true;
 

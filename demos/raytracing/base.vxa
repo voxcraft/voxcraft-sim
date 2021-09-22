@@ -9,6 +9,7 @@
         <!-- <WallForce>10</WallForce> -->
         <EnableCilia>1</EnableCilia>
         <CiliaFactorInLight>0</CiliaFactorInLight>
+        <CiliaDelayInLight>0</CiliaDelayInLight>
         <CiliaDelayInDark>0</CiliaDelayInDark>
         <OnlySurfVoxOcclude>0</OnlySurfVoxOcclude>
         <!-- <RecordHistory>

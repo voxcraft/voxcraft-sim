@@ -11,6 +11,7 @@ from cilia_utils import restricted_cilia
 # 4: num of bots
 # 5: bot length and width
 # 6: bot height
+# 7: cilia behavior delay when moving from dark to light 
 # 7: cilia behavior delay when moving from light to dark 
 
 SEED = 0
@@ -27,7 +28,8 @@ BODY_SIZES =  int(sys.argv[4]) * [(int(sys.argv[5]), int(sys.argv[5]), int(sys.a
 # then the cilia force of the material will need to be recalibrated
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
 
-CILIA_DELAY_IN_DARK = int(sys.argv[7])
+CILIA_DELAY_IN_LIGHT = int(sys.argv[7])
+CILIA_DELAY_IN_DARK = int(sys.argv[8])
 
 # controller
 BASE_CILIA_FORCE = np.zeros((wx, wy, wz, 3))
@@ -112,9 +114,13 @@ if not RECORD_HISTORY:
 # start vxd file
 root = etree.Element("VXD")
 
-vxa_cilia_delay = etree.SubElement(root, "CiliaDelayInDark")
-vxa_cilia_delay.set('replace', 'VXA.Simulator.CiliaDelayInDark')
-vxa_cilia_delay.text = str(CILIA_DELAY_IN_DARK)
+vxa_cilia_delay_in_light = etree.SubElement(root, "CiliaDelayInLight")
+vxa_cilia_delay_in_light.set('replace', 'VXA.Simulator.CiliaDelayInLight')
+vxa_cilia_delay_in_light.text = str(CILIA_DELAY_IN_LIGHT)
+
+vxa_cilia_delay_in_dark = etree.SubElement(root, "CiliaDelayInDark")
+vxa_cilia_delay_in_dark.set('replace', 'VXA.Simulator.CiliaDelayInDark')
+vxa_cilia_delay_in_dark.text = str(CILIA_DELAY_IN_DARK)
 
 vxa_light_pos_x = etree.SubElement(root, "LightPosX")
 vxa_light_pos_x.set('replace', 'VXA.Simulator.LightPosX')

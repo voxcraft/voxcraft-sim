@@ -882,12 +882,15 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
         // sam:
         if (k->UsingLightSource) {
             surface_voxels[index]->CiliaForce = surface_voxels[index]->orient.RotateVec3D(surface_voxels[index]->baseCiliaForce);
-            
-            if (!surface_voxels[index]->inShade)  // in light now
-                surface_voxels[index]->CiliaForce *= k->CiliaFactorInLight;
 
-            else if ( (surface_voxels[index]->timeInDark > 0) && (surface_voxels[index]->timeInDark < k->CiliaDelayInDark) )
-                surface_voxels[index]->CiliaForce *= k->CiliaFactorInLight;  // recently moved from light to dark
+            if (!surface_voxels[index]->inShade) {  // in light
+                if (surface_voxels[index]->timeInLight > k->CiliaDelayInLight) // been in light for long enough
+                    surface_voxels[index]->CiliaForce *= k->CiliaFactorInLight;
+            }
+            else if (surface_voxels[index]->hasSeenTheLight) {
+                if (surface_voxels[index]->timeInDark < k->CiliaDelayInDark)  // recently moved from light to shade
+                    surface_voxels[index]->CiliaForce *= k->CiliaFactorInLight; // still gets the effect of light
+            }
         }
 
         else {
@@ -990,6 +993,8 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
             thisVox->timeInDark = 1 + prevTimeInDark;
             break;
         }
+        // if we get to here, this voxel is in the light
+        thisVox->hasSeenTheLight = true;
     }
 }
 
