@@ -882,8 +882,12 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
         // sam:
         if (k->UsingLightSource) {
             surface_voxels[index]->CiliaForce = surface_voxels[index]->orient.RotateVec3D(surface_voxels[index]->baseCiliaForce);
-            if (!surface_voxels[index]->inShade || surface_voxels[index]->timeInDark < k->CiliaDelayInDark)
+            
+            if (!surface_voxels[index]->inShade)  // in light now
                 surface_voxels[index]->CiliaForce *= k->CiliaFactorInLight;
+
+            else if ( (surface_voxels[index]->timeInDark > 0) && (surface_voxels[index]->timeInDark < k->CiliaDelayInDark) )
+                surface_voxels[index]->CiliaForce *= k->CiliaFactorInLight;  // recently moved from light to dark
         }
 
         else {
