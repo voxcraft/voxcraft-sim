@@ -12,7 +12,8 @@ from cilia_utils import restricted_cilia
 # 5: bot length and width
 # 6: bot height
 # 7: cilia time delay until full effect of light 
-# 8: cilia factor when fully charged 
+# 8: cilia decay % of 1 to remove from charge each step
+# 9: cilia factor when fully charged 
 
 SEED = 0
 np.random.seed(SEED)
@@ -29,8 +30,8 @@ BODY_SIZES =  int(sys.argv[4]) * [(int(sys.argv[5]), int(sys.argv[5]), int(sys.a
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
 
 CILIA_DELAY_IN_LIGHT = int(sys.argv[7])
-
-CILIA_FACTOR_IN_LIGHT = int(sys.argv[8])
+CILIA_DECAY_IN_DARK = float(sys.argv[8])/100
+CILIA_FACTOR_IN_LIGHT = int(sys.argv[9])
 
 # controller
 BASE_CILIA_FORCE = np.zeros((wx, wy, wz, 3))
@@ -118,6 +119,10 @@ root = etree.Element("VXD")
 vxa_cilia_delay = etree.SubElement(root, "CiliaDelayInLight")
 vxa_cilia_delay.set('replace', 'VXA.Simulator.CiliaDelayInLight')
 vxa_cilia_delay.text = str(CILIA_DELAY_IN_LIGHT)
+
+vxa_cilia_decay = etree.SubElement(root, "CiliaDecayInDark")
+vxa_cilia_decay.set('replace', 'VXA.Simulator.CiliaDecayInDark')
+vxa_cilia_decay.text = str(CILIA_DECAY_IN_DARK)
 
 vxa_cilia_factor = etree.SubElement(root, "CiliaFactorInLight")
 vxa_cilia_factor.set('replace', 'VXA.Simulator.CiliaFactorInLight')

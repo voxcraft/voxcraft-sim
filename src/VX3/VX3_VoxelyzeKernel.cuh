@@ -160,6 +160,7 @@ class VX3_VoxelyzeKernel {
     double TurnOnLightAfterThisManySeconds = 0;
     double CiliaFactorInLight = 0;
     double CiliaDelayInLight = 0;
+    double CiliaDecayInDark = 0;
     int OnlySurfVoxOcclude = 0;
     double LightPosX = 0;
     double LightPosY = 0;

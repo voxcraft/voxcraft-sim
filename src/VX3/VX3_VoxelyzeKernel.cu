@@ -991,7 +991,7 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
             // thisVox->timeInDark = 1 + prevTimeInDark;
             // thisVox->timeInLight = 0;
             if (thisVox->lightStored > 0)
-                thisVox->lightStored -= 1;
+                thisVox->lightStored -= k->CiliaDecayInDark;
             break;
         }
         // done checking for occlusion here

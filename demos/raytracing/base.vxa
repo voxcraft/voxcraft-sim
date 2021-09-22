@@ -11,6 +11,7 @@
         <EnableCilia>1</EnableCilia>
         <CiliaFactorInLight>0</CiliaFactorInLight>
         <CiliaDelayInLight>0</CiliaDelayInLight>
+        <CiliaDecayInDark>0</CiliaDecayInDark>
         <OnlySurfVoxOcclude>0</OnlySurfVoxOcclude>
         <!-- <RecordHistory>
             <RecordStepSize>100</RecordStepSize>
