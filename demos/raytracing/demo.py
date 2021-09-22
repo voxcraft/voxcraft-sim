@@ -12,6 +12,7 @@ from cilia_utils import restricted_cilia
 # 5: bot length and width
 # 6: bot height
 # 7: cilia time delay until full effect of light 
+# 8: cilia factor when fully charged 
 
 SEED = 0
 np.random.seed(SEED)
@@ -28,6 +29,8 @@ BODY_SIZES =  int(sys.argv[4]) * [(int(sys.argv[5]), int(sys.argv[5]), int(sys.a
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
 
 CILIA_DELAY_IN_LIGHT = int(sys.argv[7])
+
+CILIA_FACTOR_IN_LIGHT = int(sys.argv[8])
 
 # controller
 BASE_CILIA_FORCE = np.zeros((wx, wy, wz, 3))
@@ -112,9 +115,13 @@ if not RECORD_HISTORY:
 # start vxd file
 root = etree.Element("VXD")
 
-vxa_cilia_delay_in_light = etree.SubElement(root, "CiliaDelayInLight")
-vxa_cilia_delay_in_light.set('replace', 'VXA.Simulator.CiliaDelayInLight')
-vxa_cilia_delay_in_light.text = str(CILIA_DELAY_IN_LIGHT)
+vxa_cilia_delay = etree.SubElement(root, "CiliaDelayInLight")
+vxa_cilia_delay.set('replace', 'VXA.Simulator.CiliaDelayInLight')
+vxa_cilia_delay.text = str(CILIA_DELAY_IN_LIGHT)
+
+vxa_cilia_factor = etree.SubElement(root, "CiliaFactorInLight")
+vxa_cilia_factor.set('replace', 'VXA.Simulator.CiliaFactorInLight')
+vxa_cilia_factor.text = str(CILIA_FACTOR_IN_LIGHT)
 
 vxa_light_pos_x = etree.SubElement(root, "LightPosX")
 vxa_light_pos_x.set('replace', 'VXA.Simulator.LightPosX')
