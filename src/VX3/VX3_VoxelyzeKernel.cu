@@ -912,8 +912,8 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
         if (thisVox->mat->fixed)
             return;
         
-        double prevTimeInDark = thisVox->timeInDark;
-        double prevTimeInLight = thisVox->timeInLight;
+        // double prevTimeInDark = thisVox->timeInDark;
+        // double prevTimeInLight = thisVox->timeInLight;
 
         thisVox->inShade = false;
 
