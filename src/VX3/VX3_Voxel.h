@@ -300,10 +300,11 @@ class VX3_Voxel {
     VX3_Vec3D<> CiliaForce;
 
     // sam:
+    double lightStored = 0;
     bool inShade = false;
-    double timeInDark = 0;
-    double timeInLight = 0;
-    bool hasSeenTheLight = false;
+    // double timeInDark = 0;
+    // double timeInLight = 0;
+    // bool hasSeenTheLight = false;
 
     bool enableAttach = true;
 

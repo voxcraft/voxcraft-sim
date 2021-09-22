@@ -883,25 +883,11 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
         if (k->UsingLightSource) {
             surface_voxels[index]->CiliaForce = surface_voxels[index]->orient.RotateVec3D(surface_voxels[index]->baseCiliaForce);
 
-            VX3_Vec3D<double> c = surface_voxels[index]->CiliaForce;
-            double tl = surface_voxels[index]->timeInLight;
-            double td = surface_voxels[index]->timeInDark;
-            double dl = k->CiliaDelayInLight;
-            double dd = k->CiliaDelayInDark;
-            double fl = k->CiliaFactorInLight;
-            // double fd = k->CiliaFactorInDark;  // todo
-
-            if (!surface_voxels[index]->inShade) {
-                if (tl < dl) // recently moved from dark to light
-                    surface_voxels[index]->CiliaForce += tl/dl * (c*fl - c);  // add delayed effect of light
-                else // in light for long enough
-                    surface_voxels[index]->CiliaForce *= fl;
-            }
-            else if (surface_voxels[index]->hasSeenTheLight) {
-                if (td < dd) // recently moved from light to shade
-                    surface_voxels[index]->CiliaForce -= td/dd * (c*fl - c); // subtract delayed effect of light
-                // else
-                //     surface_voxels[index]->CiliaForce = c;
+            VX3_Vec3D<double> force = surface_voxels[index]->CiliaForce;
+            double light = surface_voxels[index]->lightStored / k->CiliaDelayInLight;  // in [0,1]
+            double effect = k->CiliaFactorInLight;
+            
+            surface_voxels[index]->CiliaForce += light * (force*effect - force);  // add accumulated light effect to cilia force
             }
         }
 
@@ -1000,19 +986,24 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
 
             // t = tmin;
             thisVox->inShade = true;
-            thisVox->localSignal = 0;
-            thisVox->timeInDark = 1 + prevTimeInDark;
-            thisVox->timeInLight = 0;
+            // thisVox->localSignal = 0;
+            // thisVox->timeInDark = 1 + prevTimeInDark;
+            // thisVox->timeInLight = 0;
+            if (thisVox->lightStored > 0)
+                thisVox->lightStored -= 1;
             break;
         }
         // done checking for occlusion here
         if (!thisVox->inShade) {
-            thisVox->localSignal = 100;
-            thisVox->timeInDark = 0;
-            thisVox->timeInLight = 1 + prevTimeInLight;
-            thisVox->hasSeenTheLight = true;
+            // thisVox->localSignal = 100;
+            // thisVox->timeInDark = 0;
+            // thisVox->timeInLight = 1 + prevTimeInLight;
+            // thisVox->hasSeenTheLight = true;
+            if (thisVox->lightStored < k->CiliaDelayInLight)
+                thisVox->lightStored += 1;
         }
-        
+        // for drawing
+        thisVox->localSignal = thisVox->lightStored / k->CiliaDelayInLight;
     }
 }
 
