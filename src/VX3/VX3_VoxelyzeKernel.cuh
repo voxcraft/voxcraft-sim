@@ -43,7 +43,7 @@ class VX3_VoxelyzeKernel {
     __device__ void saveInitialPosition();
 
 
-    __device__ void updateOcclusion();
+    __device__ void updateOcclusion(bool lightOn);
 
     // for Secondary Experiment
     __device__ void removeVoxels();
@@ -156,6 +156,7 @@ class VX3_VoxelyzeKernel {
     VX3_Vec3D<>* d_initialPosition = NULL;
     
     // sam:
+    VX3_MathTreeToken light_function[1024];
     int UsingLightSource = 0;
     double TurnOnLightAfterThisManySeconds = 0;
     double CiliaFactorInLight = 0;

@@ -11,8 +11,8 @@ from cilia_utils import restricted_cilia
 # 4: num of bots
 # 5: bot length and width
 # 6: bot height
-# 7: cilia time delay until full effect of light 
-# 8: cilia decay % of 1 to remove from charge each step
+# 7: cilia time delay in time steps when in light until full "charge" (100% of cilia factor is applied)
+# 8: cilia decay % of 1 to remove from charge each time step when in dark
 # 9: cilia factor when fully charged 
 
 SEED = 0

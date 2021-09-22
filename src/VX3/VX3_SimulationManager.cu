@@ -361,6 +361,7 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         h_d_tmp.EnableSignals = pt_merged.get<int>("VXA.Simulator.EnableSignals", 0);
 
         // sam:
+        ParseMathTree(h_d_tmp.light_function, sizeof(h_d_tmp.light_function), "VXA.Simulator.LightFunction", pt_merged);
         h_d_tmp.CiliaFactorInLight = pt_merged.get<double>("VXA.Simulator.CiliaFactorInLight", 0);
         h_d_tmp.CiliaDelayInLight = pt_merged.get<double>("VXA.Simulator.CiliaDelayInLight", 0);
         h_d_tmp.CiliaDecayInDark = pt_merged.get<double>("VXA.Simulator.CiliaDecayInDark", 0);

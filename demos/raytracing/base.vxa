@@ -6,6 +6,11 @@
         <LightPosX>0</LightPosX>
         <LightPosY>0</LightPosY>
         <LightPosZ>0</LightPosZ>
+        <LightFunction>
+            <mtSIN>
+                <mtVAR>t</mtVAR>
+            </mtSIN>
+        </LightFunction>
         <!-- <WorldSize>100</WorldSize> -->
         <!-- <WallForce>10</WallForce> -->
         <EnableCilia>1</EnableCilia>

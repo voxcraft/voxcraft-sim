@@ -16,7 +16,7 @@ __global__ void gpu_update_voxels(VX3_Voxel *voxels, int num, double dt, double 
 __global__ void gpu_update_temperature(VX3_Voxel *voxels, int num, double TempAmplitude, double TempPeriod, double currentTime, VX3_VoxelyzeKernel* k);
 __global__ void gpu_update_attach(VX3_Voxel **surface_voxels, int num, double watchDistance, VX3_VoxelyzeKernel *k);
 __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k);
-__global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k, bool surfVoxOnly);  // sam
+__global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k, bool surfVoxOnly, bool lightOn);  // sam
 __global__ void gpu_clear_lookupgrid(VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid, int num);
 __global__ void gpu_insert_lookupgrid(VX3_Voxel **d_surface_voxels, int num, VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid,
                                       VX3_Vec3D<> *gridLowerBound, VX3_Vec3D<> *gridDelta, int lookupGrid_n);
@@ -307,7 +307,10 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
     // sam:
     if (UsingLightSource && TurnOnLightAfterThisManySeconds < currentTime) {
         LightPos = VX3_Vec3D<>(LightPosX*voxSize, LightPosY*voxSize, LightPosZ*voxSize);
-        updateOcclusion();
+        bool lightOn = false;
+        if (VX3_MathTree::eval(0, 0, 0, 0, currentTime, 0, 0, 0, 0, light_function > 0)
+            lightOn = true;
+        updateOcclusion(lightOn);
     }
 
     cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_voxels, 0,
@@ -482,19 +485,19 @@ __device__ void VX3_VoxelyzeKernel::updateDetach() {
 }
 
 // sam:
-__device__ void VX3_VoxelyzeKernel::updateOcclusion() {
+__device__ void VX3_VoxelyzeKernel::updateOcclusion(bool lightOn) {
     int minGridSize, blockSize;
     if (OnlySurfVoxOcclude) {
         cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_occlusion, 0, num_d_surface_voxels);
         int gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
         int blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
-        gpu_update_occlusion<<<gridSize_voxels, blockSize_voxels>>>(d_voxels, d_surface_voxels, num_d_surface_voxels, this, true);
+        gpu_update_occlusion<<<gridSize_voxels, blockSize_voxels>>>(d_voxels, d_surface_voxels, num_d_surface_voxels, this, true, lightOn);
     }
     else {
         cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_occlusion, 0, num_d_voxels);
         int gridSize_voxels = (num_d_voxels + blockSize - 1) / blockSize;
         int blockSize_voxels = num_d_voxels < blockSize ? num_d_voxels : blockSize;
-        gpu_update_occlusion<<<gridSize_voxels, blockSize_voxels>>>(d_voxels, d_surface_voxels, num_d_voxels, this, false);
+        gpu_update_occlusion<<<gridSize_voxels, blockSize_voxels>>>(d_voxels, d_surface_voxels, num_d_voxels, this, false, lightOn);
     }
     CUDA_CHECK_AFTER_CALL();
     VcudaDeviceSynchronize();
@@ -898,7 +901,7 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
 }
 
 // sam:
-__global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k, bool surfVoxOnly) {
+__global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k, bool surfVoxOnly, bool lightOn) {
     // https://gamedev.stackexchange.com/questions/18436/most-efficient-aabb-vs-ray-collision-algorithms
 
     int index = threadIdx.x + blockIdx.x * blockDim.x;
@@ -908,6 +911,15 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
         VX3_Voxel *thisVox = &voxels[index];
         if (surfVoxOnly)
             thisVox = surface_voxels[index];
+
+        if (!lightOn) { // then everything is in the dark
+            thisVox->inShade = true;
+            if (thisVox->lightStored > 0)
+                thisVox->lightStored -= k->CiliaDecayInDark;
+            if (thisVox->mat->fixed)
+                thisVox->localSignal = 0; // todo: light bulb material tag
+            return;
+        }
 
         if (thisVox->mat->fixed) {
             thisVox->localSignal = 1;  // todo: light bulb material tag
