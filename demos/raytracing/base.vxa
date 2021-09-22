@@ -2,6 +2,7 @@
 <VXA Version="1.1">
     <Simulator>
         <UsingLightSource>1</UsingLightSource>
+        <TurnOnLightAfterThisManySeconds>1</TurnOnLightAfterThisManySeconds>
         <LightPosX>0</LightPosX>
         <LightPosY>0</LightPosY>
         <LightPosZ>0</LightPosZ>

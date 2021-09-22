@@ -157,6 +157,7 @@ class VX3_VoxelyzeKernel {
     
     // sam:
     int UsingLightSource = 0;
+    double TurnOnLightAfterThisManySeconds = 0;
     double CiliaFactorInLight = 0;
     double CiliaDelayInDark = 0;
     double CiliaDelayInLight = 0;
