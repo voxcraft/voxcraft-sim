@@ -883,13 +883,25 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
         if (k->UsingLightSource) {
             surface_voxels[index]->CiliaForce = surface_voxels[index]->orient.RotateVec3D(surface_voxels[index]->baseCiliaForce);
 
-            if (!surface_voxels[index]->inShade) {  // in light
-                if (surface_voxels[index]->timeInLight > k->CiliaDelayInLight) // been in light for long enough
-                    surface_voxels[index]->CiliaForce *= k->CiliaFactorInLight;
+            double c = surface_voxels[index]->CiliaForce;
+            double tl = surface_voxels[index]->timeInLight;
+            double td = surface_voxels[index]->timeInDark;
+            double dl = k->CiliaDelayInLight;
+            double dd = k->CiliaDelayInDark;
+            double fl = k->CiliaFactorInLight;
+            // double fd = k->CiliaFactorInDark;  // todo
+
+            if (!surface_voxels[index]->inShade) {
+                if (tl < dl) // recently moved from dark to light
+                    surface_voxels[index]->CiliaForce += tl/dl * (c*fl - c);  // add delayed effect of light
+                else // in light for long enough
+                    surface_voxels[index]->CiliaForce *= fl;
             }
             else if (surface_voxels[index]->hasSeenTheLight) {
-                if (surface_voxels[index]->timeInDark < k->CiliaDelayInDark)  // recently moved from light to shade
-                    surface_voxels[index]->CiliaForce *= k->CiliaFactorInLight; // still gets the effect of light
+                if (td < dd) // recently moved from light to shade
+                    surface_voxels[index]->CiliaForce -= td/dd * (c*fl - c); // subtract delayed effect of light
+                // else
+                //     surface_voxels[index]->CiliaForce = c;
             }
         }
 
