@@ -886,9 +886,8 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
             VX3_Vec3D<double> force = surface_voxels[index]->CiliaForce;
             double light = surface_voxels[index]->lightStored / k->CiliaDelayInLight;  // in [0,1]
             double effect = k->CiliaFactorInLight;
-            
+
             surface_voxels[index]->CiliaForce += light * (force*effect - force);  // add accumulated light effect to cilia force
-            }
         }
 
         else {
