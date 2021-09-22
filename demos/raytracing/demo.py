@@ -1,7 +1,13 @@
 from lxml import etree
 import subprocess as sub
 import numpy as np
+import sys
 from cilia_utils import restricted_cilia
+
+# inputs
+# 1: world size
+# 2: num of bots
+# 3: cilia behavior delay when moving from light to dark 
 
 SEED = 0
 np.random.seed(SEED)
@@ -11,11 +17,13 @@ RECORD_HISTORY = True
 DEBUG = True  # straight cilia vectors, instead of random angles
 
 WORLD_SIZE = 50
-WORLD_HEIGHT = 10
-BODY_SIZES =  [(7, 7, 5),]*4  # + [(2,)*3]*200  # + [(11, 11, 9),]*2  + [(5, 5, 4),]*10
+WORLD_HEIGHT = int(sys.argv[1])
+BODY_SIZES =  [(7, 7, 5),]*int(sys.argv[2])  # + [(2,)*3]*200  # + [(11, 11, 9),]*2  + [(5, 5, 4),]*10
 # if body size changes, or if the stiffness/density of body material changes, 
 # then the cilia force of the material will need to be recalibrated
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
+
+CILIA_DELAY_IN_DARK = int(sys.argv[3])
 
 # controller
 BASE_CILIA_FORCE = np.zeros((wx, wy, wz, 3))
@@ -99,6 +107,10 @@ if not RECORD_HISTORY:
 
 # start vxd file
 root = etree.Element("VXD")
+
+vxa_cilia_delay = etree.SubElement(root, "CiliaDelayInDark")
+vxa_cilia_delay.set('replace', 'VXA.Simulator.CiliaDelayInDark')
+vxa_cilia_delay.text = str(CILIA_DELAY_IN_DARK)
 
 vxa_light_pos_x = etree.SubElement(root, "LightPosX")
 vxa_light_pos_x.set('replace', 'VXA.Simulator.LightPosX')
