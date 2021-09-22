@@ -116,8 +116,8 @@
                 <Display>
                     <Red>1</Red>
                     <Green>1</Green>
-                    <Blue>0</Blue>
-                    <Alpha>0.9</Alpha>
+                    <Blue>1</Blue>
+                    <Alpha>0.7</Alpha>
                 </Display>
                 <Mechanical>
                     <Fixed>1</Fixed>
