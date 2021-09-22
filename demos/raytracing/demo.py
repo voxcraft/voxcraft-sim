@@ -5,7 +5,7 @@ import sys
 from cilia_utils import restricted_cilia
 
 # inputs
-# 1: world size
+# 1: world height
 # 2: num of bots
 # 3: cilia behavior delay when moving from light to dark 
 
