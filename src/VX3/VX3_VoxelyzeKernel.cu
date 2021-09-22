@@ -893,13 +893,13 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
 
             if (!surface_voxels[index]->inShade) {
                 if (tl < dl) // recently moved from dark to light
-                    surface_voxels[index]->CiliaForce += tl/dl * (c*fl - c);  // add delayed effect of light
+                    surface_voxels[index]->CiliaForce *= 1 + tl/dl * (c*fl - c);  // add delayed effect of light
                 else // in light for long enough
                     surface_voxels[index]->CiliaForce *= fl;
             }
             else if (surface_voxels[index]->hasSeenTheLight) {
                 if (td < dd) // recently moved from light to shade
-                    surface_voxels[index]->CiliaForce -= td/dd * (c*fl - c); // subtract delayed effect of light
+                    surface_voxels[index]->CiliaForce *= 1 - td/dd * (c*fl - c); // subtract delayed effect of light
                 // else
                 //     surface_voxels[index]->CiliaForce = c;
             }
