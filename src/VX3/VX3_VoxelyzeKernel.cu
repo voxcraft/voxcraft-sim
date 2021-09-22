@@ -916,10 +916,9 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
             return;
         
         double prevTimeInDark = thisVox->timeInDark;
+        double prevTimeInLight = thisVox->timeInLight;
 
-        thisVox->timeInDark = 0;
         thisVox->inShade = false;
-        thisVox->localSignal = 100;
 
         VX3_Vec3D<double> ray_origin = thisVox->position();
 
@@ -991,10 +990,17 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
             thisVox->inShade = true;
             thisVox->localSignal = 0;
             thisVox->timeInDark = 1 + prevTimeInDark;
+            thisVox->timeInLight = 0;
             break;
         }
-        // if we get to here, this voxel is in the light
-        thisVox->hasSeenTheLight = true;
+        // done checking for occlusion here
+        if (!thisVox->inShade) {
+            thisVox->localSignal = 100;
+            thisVox->timeInDark = 0;
+            thisVox->timeInLight = 1 + prevTimeInLight;
+            thisVox->hasSeenTheLight = true;
+        }
+        
     }
 }
 

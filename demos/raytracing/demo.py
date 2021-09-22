@@ -12,7 +12,7 @@ from cilia_utils import restricted_cilia
 # 5: bot length and width
 # 6: bot height
 # 7: cilia behavior delay when moving from dark to light 
-# 7: cilia behavior delay when moving from light to dark 
+# 8: cilia behavior delay when moving from light to dark 
 
 SEED = 0
 np.random.seed(SEED)
