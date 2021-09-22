@@ -908,6 +908,9 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
         if (thisVox->mat->fixed)
             return;
         
+        double prevTimeInDark = thisVox->timeInDark;
+
+        thisVox->timeInDark = 0;
         thisVox->inShade = false;
         thisVox->localSignal = 100;
 
@@ -980,6 +983,7 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
             // t = tmin;
             thisVox->inShade = true;
             thisVox->localSignal = 0;
+            thisVox->timeInDark = 1 + prevTimeInDark;
             break;
         }
     }
