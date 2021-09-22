@@ -5,25 +5,26 @@ import sys
 from cilia_utils import restricted_cilia
 
 # inputs
-# 1: world height
-# 2: num of bots
-# 3: cilia behavior delay when moving from light to dark 
+# 1: DEBUG cilia: 0=random push angle, 1=exactly perpendicular
+# 2: world height
+# 3: num of bots
+# 4: cilia behavior delay when moving from light to dark 
 
 SEED = 0
 np.random.seed(SEED)
 
 RECORD_HISTORY = True
 
-DEBUG = True  # straight cilia vectors, instead of random angles
+DEBUG = int(sys.argv[1])  # straight cilia vectors, instead of random angles
 
 WORLD_SIZE = 50
-WORLD_HEIGHT = int(sys.argv[1])
-BODY_SIZES =  [(7, 7, 5),]*int(sys.argv[2])  # + [(2,)*3]*200  # + [(11, 11, 9),]*2  + [(5, 5, 4),]*10
+WORLD_HEIGHT = int(sys.argv[2])
+BODY_SIZES =  [(7, 7, 5),]*int(sys.argv[3])  # + [(2,)*3]*200  # + [(11, 11, 9),]*2  + [(5, 5, 4),]*10
 # if body size changes, or if the stiffness/density of body material changes, 
 # then the cilia force of the material will need to be recalibrated
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
 
-CILIA_DELAY_IN_DARK = int(sys.argv[3])
+CILIA_DELAY_IN_DARK = int(sys.argv[4])
 
 # controller
 BASE_CILIA_FORCE = np.zeros((wx, wy, wz, 3))
