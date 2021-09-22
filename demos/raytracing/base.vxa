@@ -9,6 +9,7 @@
         <!-- <WallForce>10</WallForce> -->
         <EnableCilia>1</EnableCilia>
         <CiliaFactorInLight>0</CiliaFactorInLight>
+        <CiliaDelayInDark>0</CiliaDelayInDark>
         <OnlySurfVoxOcclude>0</OnlySurfVoxOcclude>
         <!-- <RecordHistory>
             <RecordStepSize>100</RecordStepSize>
@@ -119,6 +120,7 @@
                 </Display>
                 <Mechanical>
                     <Fixed>1</Fixed>
+                    <Transparent>1<Transparent>
                     <MatModel>0</MatModel>
                     <Elastic_Mod>1e+05</Elastic_Mod>
                     <Fail_Stress>0</Fail_Stress>

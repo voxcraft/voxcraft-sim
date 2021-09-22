@@ -299,7 +299,9 @@ class VX3_Voxel {
     VX3_Vec3D<> shiftCiliaForce;
     VX3_Vec3D<> CiliaForce;
 
-    bool inShade = false; // sam
+    // sam:
+    bool inShade = false;
+    double timeInDark = 0;
 
     bool enableAttach = true;
 

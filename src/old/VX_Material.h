@@ -123,7 +123,9 @@ class CVX_Material {
 	bool sticky = false;
 	double Cilia = 0; //!< Scale factor of cilia force in VXD.
 
-	bool LockZ = false;  // sam
+	// sam:
+	bool LockZ = false;
+	bool transparent = false;
 
 	bool linear; //!< Set to true if this material is specified as linear.
 	float E; //!< Young's modulus (stiffness) in Pa.

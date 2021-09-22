@@ -47,7 +47,9 @@ CVX_Material& CVX_Material::operator=(const CVX_Material& vIn)
 	sticky = vIn.sticky;
 	Cilia = vIn.Cilia;
 
-	LockZ = vIn.LockZ;  // sam
+	// sam:
+	LockZ = vIn.LockZ;
+	transparent = vIn.transparent;
 	
 	linear = vIn.linear;
 	E = vIn.E;

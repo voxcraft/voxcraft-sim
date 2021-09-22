@@ -12,7 +12,7 @@ DEBUG = True  # straight cilia vectors, instead of random angles
 
 WORLD_SIZE = 50
 WORLD_HEIGHT = 10
-BODY_SIZES =  [(7, 7, 5),]*9  # + [(2,)*3]*200  # + [(11, 11, 9),]*2  + [(5, 5, 4),]*10
+BODY_SIZES =  [(7, 7, 5),]*4  # + [(2,)*3]*200  # + [(11, 11, 9),]*2  + [(5, 5, 4),]*10
 # if body size changes, or if the stiffness/density of body material changes, 
 # then the cilia force of the material will need to be recalibrated
 wx, wy, wz = (WORLD_SIZE, WORLD_SIZE, WORLD_HEIGHT)
@@ -23,10 +23,10 @@ BASE_CILIA_FORCE = np.zeros((wx, wy, wz, 3))
 # BASE_CILIA_FORCE[:, :, :, :2] = 2 * np.random.rand(wx, wy, wz, 2) - 1  # unrestricted forces
 
 # light source corner
-l_size = 4
+l_size = 2
 lx = wx//2-1
 ly = wy//2-1
-lz = wz-4
+lz = wz-l_size
 LIGHT_BULB = np.ones((l_size,)*3, dtype=np.int)*3  # materials: cilia, no cilia, lightbulb
 
 # data

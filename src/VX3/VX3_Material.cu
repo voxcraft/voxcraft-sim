@@ -8,7 +8,7 @@ VX3_Material::VX3_Material(CVX_Material *p, VX3_VoxelyzeKernel *k)
       TurnOnCiliaAfterThisManySeconds(p->TurnOnCiliaAfterThisManySeconds),
       signalValueDecay(p->signalValueDecay), signalTimeDelay(p->signalTimeDelay), inactivePeriod(p->inactivePeriod), isMeasured(p->isMeasured), isElectricalActive(p->isElectricalActive),
       matid(p->matid), fixed(p->fixed), sticky(p->sticky), Cilia(p->Cilia), 
-      LockZ(p->LockZ), // sam
+      LockZ(p->LockZ), Transparent(p->Transparent), // sam
       linear(p->linear), E(p->E), sigmaYield(p->sigmaYield),
       sigmaFail(p->sigmaFail), epsilonYield(p->epsilonYield), epsilonFail(p->epsilonFail), hd_strainData(p->strainData),
       hd_stressData(
@@ -47,7 +47,9 @@ __device__ VX3_Material &VX3_Material::operator=(const VX3_Material &vIn) {
     sticky = vIn.sticky;
     Cilia = vIn.Cilia;
 
-    LockZ = vIn.LockZ;  // sam
+    // sam:
+    LockZ = vIn.LockZ;
+    transparent = vIn.transparent;
     
     linear = vIn.linear;
     E = vIn.E;

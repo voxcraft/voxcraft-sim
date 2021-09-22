@@ -1191,7 +1191,9 @@ CVXC_Material& CVXC_Material::operator=(const CVXC_Material& RefMat)
 	sticky = RefMat.sticky;
 	Cilia = RefMat.Cilia;
 
-	LockZ = RefMat.LockZ;  // sam
+	// sam:
+	LockZ = RefMat.LockZ;
+	Transparent = RefMat.Transparent;
 
 	RemoveFromSimulationAfterThisManySeconds = RefMat.RemoveFromSimulationAfterThisManySeconds;
 	TurnOnThermalExpansionAfterThisManySeconds = RefMat.TurnOnThermalExpansionAfterThisManySeconds;

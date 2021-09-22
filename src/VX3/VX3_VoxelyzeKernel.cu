@@ -882,7 +882,7 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
         // sam:
         if (k->UsingLightSource) {
             surface_voxels[index]->CiliaForce = surface_voxels[index]->orient.RotateVec3D(surface_voxels[index]->baseCiliaForce);
-            if (!surface_voxels[index]->inShade)
+            if (!surface_voxels[index]->inShade || surface_voxels[index]->timeInDark < k->CiliaDelayInDark)
                 surface_voxels[index]->CiliaForce *= k->CiliaFactorInLight;
         }
 
@@ -905,9 +905,9 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
         if (surfVoxOnly)
             thisVox = surface_voxels[index];
 
-        if (thisVox->mat->fixed)  // todo: switch this to mat->transparent so we can have fixed opaque voxels
+        if (thisVox->mat->fixed)
             return;
-
+        
         thisVox->inShade = false;
         thisVox->localSignal = 100;
 
@@ -923,7 +923,7 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
             if (surfVoxOnly)
                 otherVox = surface_voxels[j];
 
-            if (otherVox->mat->fixed)  // mat->transparent
+            if (otherVox->mat->transparent)
                 continue;
 
             // lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
