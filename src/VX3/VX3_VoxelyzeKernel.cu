@@ -909,9 +909,11 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
         if (surfVoxOnly)
             thisVox = surface_voxels[index];
 
-        if (thisVox->mat->fixed)
+        if (thisVox->mat->fixed) {
+            thisVox->localSignal = 1;  // todo: light bulb material tag
             return;
-        
+        }
+            
         // double prevTimeInDark = thisVox->timeInDark;
         // double prevTimeInLight = thisVox->timeInLight;
 
