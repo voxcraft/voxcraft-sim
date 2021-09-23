@@ -916,6 +916,7 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
             thisVox->inShade = true;
             if (thisVox->lightStored > 0)
                 thisVox->lightStored -= k->CiliaDecayInDark;
+            thisVox->localSignal = thisVox->lightStored / k->CiliaDelayInLight;
             if (thisVox->mat->fixed)
                 thisVox->localSignal = 0; // todo: light bulb material tag
             return;
