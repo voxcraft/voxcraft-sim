@@ -11,7 +11,7 @@ from shape_utils import make_one_shape_only, make_sphere, make_circle
 SEED = 0
 np.random.seed(int(sys.argv[1]))
 
-N_CUTS = 1
+N_CUTS = 3
 CUT_LEN = 3
 N_PATCHES = 3
 
@@ -78,16 +78,16 @@ for layer in range(bz):
 
 
 # # material distribution
-# for patch in range(N_PATCHES):
-#     circle = make_circle(d)*2
-#     circle = np.repeat(circle[:, :, np.newaxis], bz, axis=2)
-#     cornx = np.random.randint(0, bx)
-#     corny = np.random.randint(0, by)
-#     xpart = min(cornx+d, bx)
-#     ypart = min(corny+d, by)
-#     body_part = body[cornx:xpart, corny:ypart, :]
-#     circle_part = circle[:xpart-cornx, :ypart-corny, :]
-#     body[cornx:xpart, corny:ypart, :] = circle_part*body_part
+for patch in range(N_PATCHES):
+    square = 2 * np.ones(2*(CUT_LEN,), dtype=np.int8)
+    square = np.repeat(square[:, :, np.newaxis], bz, axis=2)
+    cornx = np.random.randint(0, bx)
+    corny = np.random.randint(0, by)
+    xpart = min(cornx+CUT_LEN, bx)
+    ypart = min(corny+CUT_LEN, by)
+    body_part = body[cornx:xpart, corny:ypart, :]
+    square_part = square[:xpart-cornx, :ypart-corny, :]
+    body[cornx:xpart, corny:ypart, :] = square_part*body_part
 
 # carve out random holes
 for cut in range(N_CUTS):
@@ -99,7 +99,7 @@ for cut in range(N_CUTS):
     ypart = min(corny+CUT_LEN, by)
     body_part = body[cornx:xpart, corny:ypart, :]
     square_part = square[:xpart-cornx, :ypart-corny, :]
-    if np.sum(body)-np.sum(body_part) > 25:
+    if np.sum(body)-np.sum(body_part) > 0:
         body[cornx:xpart, corny:ypart, :] -= square_part*body_part
 
 # shift down until in contact with surface plane
