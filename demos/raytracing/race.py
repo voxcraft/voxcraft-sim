@@ -77,15 +77,17 @@ for layer in range(bz):
 #     # body[body > 1] = 2  # only two material types
 
 
+d = CUT_DIAMETER+2
+
 # material distribution
 for patch in range(N_PATCHES):
     circle = make_circle(CUT_DIAMETER)*2
     circle = np.repeat(circle[:, :, np.newaxis], bz, axis=2)
     cornx = np.random.randint(0, bx)
     corny = np.random.randint(0, by)
-    body_part = body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), :]
-    circle_part = circle[:min(bx-cornx, CUT_DIAMETER), :min(by-corny, CUT_DIAMETER), :]
-    body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), :] = circle_part*body_part
+    body_part = body[cornx:min(cornx+d, bx), corny:min(corny+d, by), :]
+    circle_part = circle[:min(bx-cornx, d), :min(by-corny, d), :]
+    body[cornx:min(cornx+d, bx), corny:min(corny+d, by), :] = circle_part*body_part
 
 # carve out random holes
 for cut in range(N_CUTS):
@@ -93,10 +95,10 @@ for cut in range(N_CUTS):
     circle = np.repeat(circle[:, :, np.newaxis], bz, axis=2)
     cornx = np.random.randint(0, bx)
     corny = np.random.randint(0, by)
-    body_part = body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), :]
-    circle_part = circle[:min(bx-cornx, CUT_DIAMETER), :min(by-corny, CUT_DIAMETER), :]
+    body_part = body[cornx:min(cornx+d, bx), corny:min(corny+d, by), :]
+    circle_part = circle[:min(bx-cornx, d), :min(by-corny, d), :]
     if np.sum(body)-np.sum(body_part) > 25:
-        body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), :] -= circle_part*body_part
+        body[cornx:min(cornx+d, bx), corny:min(corny+d, by), :] -= circle_part*body_part
 
 # shift down until in contact with surface plane
 while True:
