@@ -64,8 +64,8 @@ for cut in range(N_CUTS):
         body[cornx:min(cornx+CUT_DIAMETER, bx), 
              corny:min(corny+CUT_DIAMETER, by), 
              cornz:min(cornz+CUT_DIAMETER, bz)] -= sphere[:min(bx-cornx, CUT_DIAMETER), 
-                                                          :min(by-cornx, CUT_DIAMETER), 
-                                                          :min(bz-cornx, CUT_DIAMETER)]
+                                                          :min(by-corny, CUT_DIAMETER), 
+                                                          :min(bz-cornz, CUT_DIAMETER)]
 
 # material distribution
 for patch in range(N_PATCHES):
@@ -76,8 +76,8 @@ for patch in range(N_PATCHES):
     body[cornx:min(cornx+CUT_DIAMETER, bx), 
          corny:min(corny+CUT_DIAMETER, by), 
          cornz:min(cornz+CUT_DIAMETER, bz)] += sphere[:min(bx-cornx, CUT_DIAMETER), 
-                                                      :min(by-cornx, CUT_DIAMETER), 
-                                                      :min(bz-cornx, CUT_DIAMETER)]
+                                                      :min(by-corny, CUT_DIAMETER), 
+                                                      :min(bz-cornz, CUT_DIAMETER)]
     body[body > 1] = 2  # only two material types
 
 # shift down until in contact with surface plane
