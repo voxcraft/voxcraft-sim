@@ -11,7 +11,7 @@ from shape_utils import make_one_shape_only
 SEED = 0
 np.random.seed(int(sys.argv[1]))
 
-N_CUTS = 4
+N_CUTS = 2
 N_PATCHES = 2
 
 RECORD_HISTORY = True
@@ -63,7 +63,8 @@ for cut in range(N_CUTS):
     chunk = make_one_shape_only(noise)
     chunk = chunk.astype(np.int8)
     chunk *= body
-    body -= chunk
+    if np.sum(body) > np.sum(chunk):
+        body -= chunk
 
 # material distribution
 for patch in range(N_PATCHES):
