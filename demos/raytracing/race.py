@@ -12,15 +12,15 @@ SEED = 0
 np.random.seed(int(sys.argv[1]))
 
 N_CUTS = 1
-CUT_DIAMETER = 3
+CUT_DIAMETER = 5
 N_PATCHES = 3
 
 RECORD_HISTORY = True
 
 DEBUG = False  # straight cilia vectors, instead of random angles
 
-bx, by, bz = (9, 9, 7)
-wx, wy, wz = (50, 9, 7)
+bx, by, bz = (11, 11, 7)
+wx, wy, wz = (36, 11, 7)
 
 USING_LIGHT_SOURCE = False
 CILIA_DELAY_IN_LIGHT = 0
@@ -77,11 +77,12 @@ for layer in range(bz):
 #     # body[body > 1] = 2  # only two material types
 
 
-d = CUT_DIAMETER+2
+# for convenience,
+d = CUT_DIAMETER
 
 # # material distribution
 # for patch in range(N_PATCHES):
-#     circle = make_circle(CUT_DIAMETER)*2
+#     circle = make_circle(d)*2
 #     circle = np.repeat(circle[:, :, np.newaxis], bz, axis=2)
 #     cornx = np.random.randint(0, bx)
 #     corny = np.random.randint(0, by)
@@ -93,7 +94,7 @@ d = CUT_DIAMETER+2
 
 # carve out random holes
 for cut in range(N_CUTS):
-    circle = make_circle(CUT_DIAMETER)
+    circle = make_circle(d)
     circle = np.repeat(circle[:, :, np.newaxis], bz, axis=2)
     cornx = np.random.randint(0, bx)
     corny = np.random.randint(0, by)
