@@ -12,7 +12,7 @@ SEED = 0
 np.random.seed(int(sys.argv[1]))
 
 N_CUTS = 1
-CUT_DIAMETER = 3
+CUT_LEN = 3
 N_PATCHES = 3
 
 RECORD_HISTORY = True
@@ -77,8 +77,6 @@ for layer in range(bz):
 #     # body[body > 1] = 2  # only two material types
 
 
-d = CUT_DIAMETER + 2
-
 # # material distribution
 # for patch in range(N_PATCHES):
 #     circle = make_circle(d)*2
@@ -93,16 +91,16 @@ d = CUT_DIAMETER + 2
 
 # carve out random holes
 for cut in range(N_CUTS):
-    circle = make_circle(d)
-    circle = np.repeat(circle[:, :, np.newaxis], bz, axis=2)
+    square = np.ones(CUT_LEN)
+    square = np.repeat(square[:, :, np.newaxis], bz, axis=2)
     cornx = np.random.randint(0, bx)
     corny = np.random.randint(0, by)
-    xpart = min(cornx+d, bx)
-    ypart = min(corny+d, by)
+    xpart = min(cornx+CUT_LEN, bx)
+    ypart = min(corny+CUT_LEN, by)
     body_part = body[cornx:xpart, corny:ypart, :]
-    circle_part = circle[:xpart-cornx, :ypart-corny, :]
+    square_part = square[:xpart-cornx, :ypart-corny, :]
     if np.sum(body)-np.sum(body_part) > 25:
-        body[cornx:xpart, corny:ypart, :] -= circle_part*body_part
+        body[cornx:xpart, corny:ypart, :] -= square_part*body_part
 
 # shift down until in contact with surface plane
 while True:
