@@ -2,6 +2,15 @@ import numpy as np
 from scipy.ndimage.measurements import label
 
 
+def make_sphere(diameter):
+    sphere = np.zeros((diameter,)*3, dtype=np.int8) 
+    radius = diameter//2+1
+    r2 = np.arange(-radius, radius+1)**2
+    dist2 = r2[:, None, None] + r2[:, None] + r2
+    sphere[dist2 <= radius**2] = 1
+    return sphere
+
+
 def make_one_shape_only(output_state):
     """Find the largest continuous arrangement of True elements after applying boolean mask.
     Avoids multiple disconnected softbots in simulation counted as a single individual.

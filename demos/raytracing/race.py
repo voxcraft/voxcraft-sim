@@ -3,7 +3,7 @@ import subprocess as sub
 import numpy as np
 import sys
 from cilia_utils import restricted_cilia
-from shape_utils import make_one_shape_only
+from shape_utils import make_one_shape_only, make_sphere
 
 # inputs
 # 1: seed
@@ -12,6 +12,7 @@ SEED = 0
 np.random.seed(int(sys.argv[1]))
 
 N_CUTS = 1
+CUT_DIAMETER = 5
 N_PATCHES = 1
 
 RECORD_HISTORY = True
@@ -43,11 +44,7 @@ if USING_LIGHT_SOURCE:
 # morpholoy
 body = np.ones((bx, by, bz), dtype=np.int8)
 
-sphere = np.zeros((by+2,)*3, dtype=np.int8) 
-radius = by//2+1
-r2 = np.arange(-radius, radius+1)**2
-dist2 = r2[:, None, None] + r2[:, None] + r2
-sphere[dist2 <= radius**2] = 1
+sphere = make_sphere(by+2)
 
 # remove the min and max layers and as many middle layers as necessary
 for layer in range(bz):
@@ -57,22 +54,23 @@ for layer in range(bz):
         pad = 1
     body[:, :, layer] *= sphere[1:bx+1, 1:by+1, layer+pad]
 
-# carve away random chunks
+# carve out random balls
 for cut in range(N_CUTS):
-    noise = 2*np.random.rand(bx,by,bz)-1
-    chunk = make_one_shape_only(noise)
-    chunk = chunk.astype(np.int8)
-    chunk *= body
-    if np.sum(body-chunk) > 25:
-        body -= chunk
+    sphere = make_sphere(CUT_DIAMETER)
+    cornx = np.random.randint(0, bx)
+    corny = np.random.randint(0, by)
+    cornz = np.random.randint(0, bz)
+    if np.sum(body)-np.sum(sphere) > 25:
+        body[cornx:cornx+CUT_DIAMETER, corny:corny+CUT_DIAMETER, cornz:cornz+bz] -= sphere
 
 # material distribution
 for patch in range(N_PATCHES):
-    noise = 2*np.random.rand(bx,by,bz)-1
-    chunk = make_one_shape_only(noise)
-    chunk = chunk.astype(np.int8)
-    chunk *= body
-    body[chunk > 0] = 2
+    sphere = make_sphere(CUT_DIAMETER)
+    cornx = np.random.randint(0, bx)
+    corny = np.random.randint(0, by)
+    cornz = np.random.randint(0, bz)
+    body[cornx:cornx+CUT_DIAMETER, corny:corny+CUT_DIAMETER, cornz:cornz+bz] += sphere
+    body[body > 1] = 2  # only two material types
 
 # shift down until in contact with surface plane
 while True:
