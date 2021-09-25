@@ -63,7 +63,7 @@ for cut in range(N_CUTS):
     chunk = make_one_shape_only(noise)
     chunk = chunk.astype(np.int8)
     chunk *= body
-    if np.sum(body) > 0:
+    if np.sum(body-chunk) > 25:
         body -= chunk
 
 # material distribution
