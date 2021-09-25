@@ -77,8 +77,7 @@ for layer in range(bz):
 #     # body[body > 1] = 2  # only two material types
 
 
-# for convenience,
-d = CUT_DIAMETER
+d = CUT_DIAMETER + 2
 
 # # material distribution
 # for patch in range(N_PATCHES):
