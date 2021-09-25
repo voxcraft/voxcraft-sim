@@ -12,7 +12,7 @@ SEED = 0
 np.random.seed(int(sys.argv[1]))
 
 N_CUTS = 1
-CUT_DIAMETER = 3
+CUT_DIAMETER = 4
 N_PATCHES = 1
 
 RECORD_HISTORY = True

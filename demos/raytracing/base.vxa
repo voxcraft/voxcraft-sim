@@ -53,9 +53,6 @@
             <ColDampingZ>0.8</ColDampingZ>
             <SlowDampingZ>0.01</SlowDampingZ>
         </Damping>
-        <AttachDetach>
-            <EnableCollision>0</EnableCollision><!--update if simulating swarm-->
-        </AttachDetach>
     </Simulator>
     <Environment>
         <Thermal>
@@ -75,7 +72,7 @@
             <Material ID="1">
                 <Name>Cilia</Name>
                 <Display>
-                    <Red>0</Red>
+                    <Red>1</Red>
                     <Green>0</Green>
                     <Blue>1</Blue>
                     <Alpha>0.8</Alpha>
@@ -99,10 +96,10 @@
             <Material ID="2">
                 <Name>Skin</Name>
                 <Display>
-                    <Red>0</Red>
+                    <Red>1</Red>
                     <Green>1</Green>
                     <Blue>0</Blue>
-                    <Alpha>0.9</Alpha>
+                    <Alpha>0.8</Alpha>
                 </Display>
                 <Mechanical>
                     <isMeasured>1</isMeasured>
