@@ -63,7 +63,7 @@ for cut in range(N_CUTS):
     chunk = make_one_shape_only(noise)
     chunk = chunk.astype(np.int8)
     chunk *= body
-    if np.sum(body) > np.sum(chunk):
+    if np.sum(body) > 0:
         body -= chunk
 
 # material distribution
@@ -72,7 +72,7 @@ for patch in range(N_PATCHES):
     chunk = make_one_shape_only(noise)
     chunk = chunk.astype(np.int8)
     chunk *= body
-    body[chunk > 1] = 2
+    body[chunk > 0] = 2
 
 # shift down until in contact with surface plane
 while True:

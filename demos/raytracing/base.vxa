@@ -53,6 +53,9 @@
             <ColDampingZ>0.8</ColDampingZ>
             <SlowDampingZ>0.01</SlowDampingZ>
         </Damping>
+        <AttachDetach>
+            <EnableCollision>0</EnableCollision><!--update if simulating swarm-->
+        </AttachDetach>
     </Simulator>
     <Environment>
         <Thermal>
