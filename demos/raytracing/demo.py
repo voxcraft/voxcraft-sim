@@ -4,6 +4,8 @@ import numpy as np
 import sys
 from cilia_utils import restricted_cilia
 
+# make sure to turn collisions back on in base.vxa
+
 # inputs
 # 1: DEBUG cilia: 0=random push angle, 1=exactly perpendicular
 # 2: world size
