@@ -3,7 +3,7 @@ from scipy.ndimage.measurements import label
 
 
 def make_sphere(diameter):
-    sphere = np.zeros((diameter,)*3, dtype=np.int8) 
+    sphere = np.zeros((diameter+2,)*3, dtype=np.int8) 
     radius = diameter//2+1
     r2 = np.arange(-radius, radius+1)**2
     dist2 = r2[:, None, None] + r2[:, None] + r2

@@ -12,7 +12,7 @@ SEED = 0
 np.random.seed(int(sys.argv[1]))
 
 N_CUTS = 1
-CUT_DIAMETER = 5
+CUT_DIAMETER = 3
 N_PATCHES = 1
 
 RECORD_HISTORY = True
@@ -44,7 +44,7 @@ if USING_LIGHT_SOURCE:
 # morpholoy
 body = np.ones((bx, by, bz), dtype=np.int8)
 
-sphere = make_sphere(by+2)
+sphere = make_sphere(by)
 
 # remove the min and max layers and as many middle layers as necessary
 for layer in range(bz):
