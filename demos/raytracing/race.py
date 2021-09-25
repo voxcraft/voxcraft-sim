@@ -94,7 +94,7 @@ for patch in range(N_PATCHES):
 
 blob = make_one_shape_only(tmp_body == 2)
 blob = blob.astype(np.int8)
-# body += blob
+body[blob>0] = blob
 
 # carve out random holes
 for cut in range(N_CUTS):
