@@ -11,8 +11,8 @@ from shape_utils import make_one_shape_only
 SEED = 0
 np.random.seed(int(sys.argv[1]))
 
-N_CUTS = 4
-N_PATCHES = 4
+N_CUTS = 1
+N_PATCHES = 1
 
 RECORD_HISTORY = True
 
