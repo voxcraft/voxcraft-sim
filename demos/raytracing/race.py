@@ -93,8 +93,7 @@ for patch in range(N_PATCHES):
     tmp_body[tmp_body > 1] = 2  # only two material types
 
 blob = make_one_shape_only(tmp_body == 2)
-blob_int = blob.astype(np.int8)
-body[blob] = blob_int[blob]
+body[blob] = tmp_body[blob]
 
 # carve out random holes
 for cut in range(N_CUTS):
