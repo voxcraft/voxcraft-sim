@@ -61,7 +61,7 @@ for cut in range(N_CUTS):
     corny = np.random.randint(0, by)
     cornz = np.random.randint(0, bz)
     if np.sum(body)-np.sum(sphere) > 25:
-        body[cornx:cornx+CUT_DIAMETER, corny:corny+CUT_DIAMETER, cornz:cornz+bz] -= sphere
+        body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), min(cornz:cornz+CUT_DIAMETER, bz)] -= sphere[:bx-cornx, :by-corny, :bz-cornz]
 
 # material distribution
 for patch in range(N_PATCHES):
@@ -69,7 +69,7 @@ for patch in range(N_PATCHES):
     cornx = np.random.randint(0, bx)
     corny = np.random.randint(0, by)
     cornz = np.random.randint(0, bz)
-    body[cornx:cornx+CUT_DIAMETER, corny:corny+CUT_DIAMETER, cornz:cornz+bz] += sphere
+    body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), min(cornz:cornz+CUT_DIAMETER, bz)] += sphere[:bx-cornx, :by-corny, :bz-cornz]
     body[body > 1] = 2  # only two material types
 
 # shift down until in contact with surface plane
