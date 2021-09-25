@@ -4,7 +4,7 @@ import numpy as np
 import sys
 from cilia_utils import restricted_cilia
 
-# make sure to turn collisions back on in base.vxa
+# uses base_demo.vxa (line 103)
 
 # inputs
 # 1: DEBUG cilia: 0=random push angle, 1=exactly perpendicular
@@ -100,7 +100,7 @@ sub.call("cp ../../build/vx3_node_worker .", shell=True)
 
 # create data folder if it doesn't already exist
 sub.call("mkdir data{}".format(SEED), shell=True)
-sub.call("cp base.vxa data{}/base.vxa".format(SEED), shell=True)
+sub.call("cp base_demo.vxa data{}/base.vxa".format(SEED), shell=True)
 
 # clear old .vxd robot files from the data directory
 sub.call("rm data{}/*.vxd".format(SEED), shell=True)

@@ -5,6 +5,9 @@ import sys
 from cilia_utils import restricted_cilia
 from shape_utils import make_one_shape_only, make_sphere, make_circle
 
+# python race.py 0 4 3 12
+# uses base_race.vxa (line 142)
+
 # inputs
 # 1: seed
 # 2: n holes
@@ -136,7 +139,7 @@ sub.call("cp ../../build/vx3_node_worker .", shell=True)
 
 # create data folder if it doesn't already exist
 sub.call("mkdir data{}".format(SEED), shell=True)
-sub.call("cp base.vxa data{}/base.vxa".format(SEED), shell=True)
+sub.call("cp base_race.vxa data{}/base.vxa".format(SEED), shell=True)
 
 # clear old .vxd robot files from the data directory
 sub.call("rm data{}/*.vxd".format(SEED), shell=True)

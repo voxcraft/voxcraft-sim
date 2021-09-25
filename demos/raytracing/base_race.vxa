@@ -32,10 +32,7 @@
             <TestStartAt>0</TestStartAt>
         </ThoroughTest>
         <FitnessFunction>
-            <mtADD>
-                <mtVAR>x</mtVAR>
-                <mtVAR>y</mtVAR>
-            </mtADD>
+            <mtVAR>y</mtVAR>
         </FitnessFunction>
         <Integration>
             <DtFrac>0.9</DtFrac>
@@ -44,7 +41,7 @@
             <StopConditionFormula>
                 <mtSUB>
                     <mtVAR>t</mtVAR>
-                    <mtCONST>12.56</mtCONST>
+                    <mtCONST>5</mtCONST>
                 </mtSUB>
             </StopConditionFormula>
         </StopCondition>
@@ -53,6 +50,9 @@
             <ColDampingZ>0.8</ColDampingZ>
             <SlowDampingZ>0.01</SlowDampingZ>
         </Damping>
+        <AttachDetach>
+            <EnableCollision>0</EnableCollision>
+        </AttachDetach>
     </Simulator>
     <Environment>
         <Thermal>
