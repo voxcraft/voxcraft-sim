@@ -91,7 +91,7 @@ for layer in range(bz):
 
 # carve out random holes
 for cut in range(N_CUTS):
-    square = np.ones(CUT_LEN)
+    square = np.ones(2*(CUT_LEN,))
     square = np.repeat(square[:, :, np.newaxis], bz, axis=2)
     cornx = np.random.randint(0, bx)
     corny = np.random.randint(0, by)
