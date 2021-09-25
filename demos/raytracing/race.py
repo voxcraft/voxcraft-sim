@@ -11,8 +11,8 @@ from shape_utils import make_one_shape_only
 SEED = 0
 np.random.seed(int(sys.argv[1]))
 
-N_CUTS = 2
-N_PATCHES = 2
+N_CUTS = 4
+N_PATCHES = 4
 
 RECORD_HISTORY = True
 
@@ -82,7 +82,7 @@ while True:
     else:
         break
 
-for x in range(0, wz, bx+1):
+for x in range(0, wx, bx+1):
     world[x:x+bx, :by, :bz] = body  # same body
     BASE_CILIA_FORCE[x:x+bx, :by, :bz] = restricted_cilia(body, DEBUG)  # different cilia
 
