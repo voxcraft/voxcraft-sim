@@ -118,31 +118,32 @@ vxa_using_light = etree.SubElement(root, "UsingLightSource")
 vxa_using_light.set('replace', 'VXA.Simulator.UsingLightSource')
 vxa_using_light.text = str(int(USING_LIGHT_SOURCE))
 
-vxa_cilia_delay = etree.SubElement(root, "CiliaDelayInLight")
-vxa_cilia_delay.set('replace', 'VXA.Simulator.CiliaDelayInLight')
-vxa_cilia_delay.text = str(CILIA_DELAY_IN_LIGHT)
+if USING_LIGHT_SOURCE:
+    vxa_cilia_delay = etree.SubElement(root, "CiliaDelayInLight")
+    vxa_cilia_delay.set('replace', 'VXA.Simulator.CiliaDelayInLight')
+    vxa_cilia_delay.text = str(CILIA_DELAY_IN_LIGHT)
 
-vxa_cilia_decay = etree.SubElement(root, "CiliaDecayInDark")
-vxa_cilia_decay.set('replace', 'VXA.Simulator.CiliaDecayInDark')
-vxa_cilia_decay.text = str(CILIA_DECAY_IN_DARK)
+    vxa_cilia_decay = etree.SubElement(root, "CiliaDecayInDark")
+    vxa_cilia_decay.set('replace', 'VXA.Simulator.CiliaDecayInDark')
+    vxa_cilia_decay.text = str(CILIA_DECAY_IN_DARK)
 
-vxa_cilia_factor = etree.SubElement(root, "CiliaFactorInLight")
-vxa_cilia_factor.set('replace', 'VXA.Simulator.CiliaFactorInLight')
-vxa_cilia_factor.text = str(CILIA_FACTOR_IN_LIGHT)
+    vxa_cilia_factor = etree.SubElement(root, "CiliaFactorInLight")
+    vxa_cilia_factor.set('replace', 'VXA.Simulator.CiliaFactorInLight')
+    vxa_cilia_factor.text = str(CILIA_FACTOR_IN_LIGHT)
 
-vxa_light_pos_x = etree.SubElement(root, "LightPosX")
-vxa_light_pos_x.set('replace', 'VXA.Simulator.LightPosX')
-vxa_light_pos_x.text = str(lx+l_size/2-0.5)
+    vxa_light_pos_x = etree.SubElement(root, "LightPosX")
+    vxa_light_pos_x.set('replace', 'VXA.Simulator.LightPosX')
+    vxa_light_pos_x.text = str(lx+l_size/2-0.5)
 
-vxa_light_pos_y = etree.SubElement(root, "LightPosY")
-vxa_light_pos_y.set('replace', 'VXA.Simulator.LightPosY')
-vxa_light_pos_y.text = str(ly+l_size/2-0.5)
+    vxa_light_pos_y = etree.SubElement(root, "LightPosY")
+    vxa_light_pos_y.set('replace', 'VXA.Simulator.LightPosY')
+    vxa_light_pos_y.text = str(ly+l_size/2-0.5)
 
-vxa_light_pos_z = etree.SubElement(root, "LightPosZ")
-vxa_light_pos_z.set('replace', 'VXA.Simulator.LightPosZ')
-vxa_light_pos_z.text = str(lz+l_size/2-0.5)
+    vxa_light_pos_z = etree.SubElement(root, "LightPosZ")
+    vxa_light_pos_z.set('replace', 'VXA.Simulator.LightPosZ')
+    vxa_light_pos_z.text = str(lz+l_size/2-0.5)
 
-print("light pos: " + str(lx+l_size/2-0.5) + ", " + str(ly+l_size/2-0.5) + ", " + str(lz+l_size/2-0.5) )
+    print("light pos: " + str(lx+l_size/2-0.5) + ", " + str(ly+l_size/2-0.5) + ", " + str(lz+l_size/2-0.5) )
 
 
 if RECORD_HISTORY:
