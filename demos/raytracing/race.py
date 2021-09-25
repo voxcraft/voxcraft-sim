@@ -11,7 +11,7 @@ from shape_utils import make_one_shape_only, make_sphere, make_circle
 SEED = 0
 np.random.seed(int(sys.argv[1]))
 
-N_CUTS = 4
+N_CUTS = 1
 CUT_DIAMETER = 3
 N_PATCHES = 3
 
