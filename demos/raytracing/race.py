@@ -7,13 +7,16 @@ from shape_utils import make_one_shape_only, make_sphere, make_circle
 
 # inputs
 # 1: seed
+# 2: n holes
+# 3: hole/patch size
+# 4: n patches
 
 SEED = 0
 np.random.seed(int(sys.argv[1]))
 
-N_CUTS = 6
-CUT_LEN = 3
-N_PATCHES = 12
+N_CUTS = int(sys.argv[2])
+CUT_LEN = int(sys.argv[3])
+N_PATCHES = int(sys.argv[4])
 
 RECORD_HISTORY = True
 
