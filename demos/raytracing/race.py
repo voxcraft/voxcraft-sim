@@ -3,7 +3,7 @@ import subprocess as sub
 import numpy as np
 import sys
 from cilia_utils import restricted_cilia
-from shape_utils import make_one_shape_only, make_sphere
+from shape_utils import make_one_shape_only, make_sphere, make_circle
 
 # inputs
 # 1: seed
@@ -11,7 +11,7 @@ from shape_utils import make_one_shape_only, make_sphere
 SEED = 0
 np.random.seed(int(sys.argv[1]))
 
-N_CUTS = 3
+N_CUTS = 4
 CUT_DIAMETER = 3
 N_PATCHES = 3
 
@@ -54,26 +54,47 @@ for layer in range(bz):
         pad = 1
     body[:, :, layer] *= sphere[1:bx+1, 1:by+1, layer+pad]
 
-# carve out random balls
+# # carve out random balls
+# for cut in range(N_CUTS):
+#     sphere = make_sphere(CUT_DIAMETER)
+#     cornx = np.random.randint(0, bx)
+#     corny = np.random.randint(0, by)
+#     cornz = np.random.randint(0, bz)
+#     body_part = body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), cornz:min(cornz+CUT_DIAMETER, bz)]
+#     sphere_part = sphere[:min(bx-cornx, CUT_DIAMETER), :min(by-corny, CUT_DIAMETER), :min(bz-cornz, CUT_DIAMETER)]
+#     if np.sum(body)-np.sum(body_part) > 25:
+#         body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), cornz:min(cornz+CUT_DIAMETER, bz)] -= sphere_part*body_part
+
+# # material distribution
+# for patch in range(N_PATCHES):
+#     sphere = make_sphere(CUT_DIAMETER)*2
+#     cornx = np.random.randint(0, bx)
+#     corny = np.random.randint(0, by)
+#     cornz = np.random.randint(0, bz)
+#     body_part = body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), cornz:min(cornz+CUT_DIAMETER, bz)]
+#     sphere_part = sphere[:min(bx-cornx, CUT_DIAMETER), :min(by-corny, CUT_DIAMETER), :min(bz-cornz, CUT_DIAMETER)]
+#     body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), cornz:min(cornz+CUT_DIAMETER, bz)] = sphere_part*body_part
+#     # body[body > 1] = 2  # only two material types
+
+
+# carve out random holes
 for cut in range(N_CUTS):
-    sphere = make_sphere(CUT_DIAMETER)
+    circle = make_circle(CUT_DIAMETER)
     cornx = np.random.randint(0, bx)
     corny = np.random.randint(0, by)
-    cornz = np.random.randint(0, bz)
-    body_part = body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), cornz:min(cornz+CUT_DIAMETER, bz)]
-    sphere_part = sphere[:min(bx-cornx, CUT_DIAMETER), :min(by-corny, CUT_DIAMETER), :min(bz-cornz, CUT_DIAMETER)]
+    body_part = body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), :]
+    circle_part = sphere[:min(bx-cornx, CUT_DIAMETER), :min(by-corny, CUT_DIAMETER), :]
     if np.sum(body)-np.sum(body_part) > 25:
-        body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), cornz:min(cornz+CUT_DIAMETER, bz)] -= sphere_part*body_part
+        body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), :] -= circle_part*body_part
 
 # material distribution
 for patch in range(N_PATCHES):
-    sphere = make_sphere(CUT_DIAMETER)*2
+    circle = make_circle(CUT_DIAMETER)*2
     cornx = np.random.randint(0, bx)
     corny = np.random.randint(0, by)
-    cornz = np.random.randint(0, bz)
-    body_part = body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), cornz:min(cornz+CUT_DIAMETER, bz)]
-    sphere_part = sphere[:min(bx-cornx, CUT_DIAMETER), :min(by-corny, CUT_DIAMETER), :min(bz-cornz, CUT_DIAMETER)]
-    body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), cornz:min(cornz+CUT_DIAMETER, bz)] = sphere_part*body_part
+    body_part = body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), :]
+    circle_part = sphere[:min(bx-cornx, CUT_DIAMETER), :min(by-corny, CUT_DIAMETER), :]
+    body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), :] = circle_part*body_part
     # body[body > 1] = 2  # only two material types
 
 # shift down until in contact with surface plane

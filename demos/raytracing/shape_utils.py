@@ -2,6 +2,15 @@ import numpy as np
 from scipy.ndimage.measurements import label
 
 
+def make_circle(diameter):
+    circle = np.zeros((diameter+2,)*2, dtype=np.int8) 
+    radius = diameter//2+1
+    r2 = np.arange(-radius, radius+1)**2
+    dist2 = r2[:, None] + r2
+    circle[dist2 <= radius**2] = 1
+    return circle
+
+
 def make_sphere(diameter):
     sphere = np.zeros((diameter+2,)*3, dtype=np.int8) 
     radius = diameter//2+1
