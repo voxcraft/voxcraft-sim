@@ -80,7 +80,7 @@ for layer in range(bz):
 # carve out random holes
 for cut in range(N_CUTS):
     circle = make_circle(CUT_DIAMETER)
-    circle = np.stack(circle, bz, axis=-1)
+    circle = np.repeat(circle, bz, axis=-1)
     cornx = np.random.randint(0, bx)
     corny = np.random.randint(0, by)
     body_part = body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), :]
@@ -91,7 +91,7 @@ for cut in range(N_CUTS):
 # material distribution
 for patch in range(N_PATCHES):
     circle = make_circle(CUT_DIAMETER)*2
-    circle = np.stack(circle, bz, axis=-1)
+    circle = np.repeat(circle, bz, axis=-1)
     cornx = np.random.randint(0, bx)
     corny = np.random.randint(0, by)
     body_part = body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), :]
