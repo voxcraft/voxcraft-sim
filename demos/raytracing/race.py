@@ -86,13 +86,13 @@ for patch in range(N_PATCHES):
     corny = np.random.randint(0, by)
     xpart = min(cornx+CUT_LEN, bx)
     ypart = min(corny+CUT_LEN, by)
-    body_part = body[cornx:xpart, corny:ypart, :]
+    body_part = tmp_body[cornx:xpart, corny:ypart, :]
     square_part = square[:xpart-cornx, :ypart-corny, :]
     tmp_body[cornx:xpart, corny:ypart, :] = square_part*body_part
-    tmp_body[body > 1] = 2  # only two material types
+    tmp_body[tmp_body > 1] = 2  # only two material types
 
 tmp_body -= 1
-tmp_body[body < 0] = 0
+tmp_body[tmp_body < 0] = 0
 blob = make_one_shape_only(tmp_body)
 blob = blob.astype(np.int8)
 body += blob
