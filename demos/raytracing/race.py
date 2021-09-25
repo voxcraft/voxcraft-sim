@@ -81,7 +81,7 @@ while True:
     else:
         break
 
-for x in range(0, wz, bx+1)
+for x in range(0, wz, bx+1):
     world[x:x+bx, :by, :bz] = body  # same body
     BASE_CILIA_FORCE[x:x+bx, :by, :bz] = restricted_cilia(body, DEBUG)  # different cilia
 
