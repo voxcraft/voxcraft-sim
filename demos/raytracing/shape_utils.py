@@ -8,7 +8,7 @@ def make_circle(diameter):
     r2 = np.arange(-radius, radius+1)**2
     dist2 = r2[:, None] + r2
     circle[dist2 <= radius**2] = 1
-    return circle[1:-1, 1:-1, 1:-1]
+    return circle[1:-1, 1:-1]
 
 
 def make_sphere(diameter):
