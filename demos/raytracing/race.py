@@ -83,7 +83,7 @@ for cut in range(N_CUTS):
     cornx = np.random.randint(0, bx)
     corny = np.random.randint(0, by)
     body_part = body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), :]
-    circle_part = sphere[:min(bx-cornx, CUT_DIAMETER), :min(by-corny, CUT_DIAMETER), :]
+    circle_part = circle[:min(bx-cornx, CUT_DIAMETER), :min(by-corny, CUT_DIAMETER)]
     if np.sum(body)-np.sum(body_part) > 25:
         body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), :] -= circle_part*body_part
 
@@ -93,7 +93,7 @@ for patch in range(N_PATCHES):
     cornx = np.random.randint(0, bx)
     corny = np.random.randint(0, by)
     body_part = body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), :]
-    circle_part = sphere[:min(bx-cornx, CUT_DIAMETER), :min(by-corny, CUT_DIAMETER), :]
+    circle_part = circle[:min(bx-cornx, CUT_DIAMETER), :min(by-corny, CUT_DIAMETER)]
     body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), :] = circle_part*body_part
     # body[body > 1] = 2  # only two material types
 
