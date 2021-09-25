@@ -11,9 +11,9 @@ from shape_utils import make_one_shape_only, make_sphere
 SEED = 0
 np.random.seed(int(sys.argv[1]))
 
-N_CUTS = 0
+N_CUTS = 1
 CUT_DIAMETER = 3
-N_PATCHES = 2
+N_PATCHES = 1
 
 RECORD_HISTORY = True
 
@@ -60,25 +60,21 @@ for cut in range(N_CUTS):
     cornx = np.random.randint(0, bx)
     corny = np.random.randint(0, by)
     cornz = np.random.randint(0, bz)
-    if np.sum(body)-np.sum(sphere) > 25:
-        body[cornx:min(cornx+CUT_DIAMETER, bx), 
-             corny:min(corny+CUT_DIAMETER, by), 
-             cornz:min(cornz+CUT_DIAMETER, bz)] -= sphere[:min(bx-cornx, CUT_DIAMETER), 
-                                                          :min(by-corny, CUT_DIAMETER), 
-                                                          :min(bz-cornz, CUT_DIAMETER)]
+    body_part = body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), cornz:min(cornz+CUT_DIAMETER, bz)]
+    sphere_part = sphere[:min(bx-cornx, CUT_DIAMETER), :min(by-corny, CUT_DIAMETER), :min(bz-cornz, CUT_DIAMETER)]
+    if np.sum(body)-np.sum(body_part) > 25:
+        body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), cornz:min(cornz+CUT_DIAMETER, bz)] -= sphere_part*body_part
 
 # material distribution
 for patch in range(N_PATCHES):
-    sphere = make_sphere(CUT_DIAMETER)
+    sphere = make_sphere(CUT_DIAMETER)*2
     cornx = np.random.randint(0, bx)
     corny = np.random.randint(0, by)
     cornz = np.random.randint(0, bz)
-    body[cornx:min(cornx+CUT_DIAMETER, bx), 
-         corny:min(corny+CUT_DIAMETER, by), 
-         cornz:min(cornz+CUT_DIAMETER, bz)] += sphere[:min(bx-cornx, CUT_DIAMETER), 
-                                                      :min(by-corny, CUT_DIAMETER), 
-                                                      :min(bz-cornz, CUT_DIAMETER)]
-    body[body > 1] = 2  # only two material types
+    body_part = body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), cornz:min(cornz+CUT_DIAMETER, bz)]
+    sphere_part = sphere[:min(bx-cornx, CUT_DIAMETER), :min(by-corny, CUT_DIAMETER), :min(bz-cornz, CUT_DIAMETER)]
+    body[cornx:min(cornx+CUT_DIAMETER, bx), corny:min(corny+CUT_DIAMETER, by), cornz:min(cornz+CUT_DIAMETER, bz)] = sphere_part*body_part
+    # body[body > 1] = 2  # only two material types
 
 # shift down until in contact with surface plane
 while True:
