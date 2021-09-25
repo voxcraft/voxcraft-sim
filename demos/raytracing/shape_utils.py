@@ -17,7 +17,7 @@ def make_sphere(diameter):
     r2 = np.arange(-radius, radius+1)**2
     dist2 = r2[:, None, None] + r2[:, None] + r2
     sphere[dist2 <= radius**2] = 1
-    return sphere[1:-1, 1:-1, 1:-1]
+    return sphere
 
 
 def make_one_shape_only(output_state):
