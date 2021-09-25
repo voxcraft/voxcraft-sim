@@ -78,7 +78,8 @@ for layer in range(bz):
 
 
 # # material distribution
-tmp_body = body[:, :, :]
+tmp_body = np.zeros((bx, by, bz), dtype=np.int8)
+tmp_body[:, :, :] = body[:, :, :]
 for patch in range(N_PATCHES):
     square = 2 * np.ones(2*(CUT_LEN,), dtype=np.int8)
     square = np.repeat(square[:, :, np.newaxis], bz, axis=2)
