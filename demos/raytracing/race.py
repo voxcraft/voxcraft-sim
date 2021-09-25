@@ -78,6 +78,7 @@ for layer in range(bz):
 
 
 # # material distribution
+tmp_body = body[:, :, :]
 for patch in range(N_PATCHES):
     square = 2 * np.ones(2*(CUT_LEN,), dtype=np.int8)
     square = np.repeat(square[:, :, np.newaxis], bz, axis=2)
@@ -87,8 +88,14 @@ for patch in range(N_PATCHES):
     ypart = min(corny+CUT_LEN, by)
     body_part = body[cornx:xpart, corny:ypart, :]
     square_part = square[:xpart-cornx, :ypart-corny, :]
-    body[cornx:xpart, corny:ypart, :] = square_part*body_part
-    body[body > 1] = 2  # only two material types
+    tmp_body[cornx:xpart, corny:ypart, :] = square_part*body_part
+    tmp_body[body > 1] = 2  # only two material types
+
+tmp_body -= 1
+tmp_body[body < 0] = 0
+blob = make_one_shape_only(tmp_body)
+blob = blob.astype(np.int8)
+body += blob
 
 # carve out random holes
 for cut in range(N_CUTS):
