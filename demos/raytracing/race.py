@@ -91,18 +91,18 @@ for patch in range(N_PATCHES):
     circle_part = circle[:xpart-cornx, :ypart-corny, :]
     body[cornx:xpart, corny:ypart, :] = circle_part*body_part
 
-# carve out random holes
-for cut in range(N_CUTS):
-    circle = make_circle(CUT_DIAMETER)
-    circle = np.repeat(circle[:, :, np.newaxis], bz, axis=2)
-    cornx = np.random.randint(0, bx)
-    corny = np.random.randint(0, by)
-    xpart = min(cornx+d, bx)
-    ypart = min(corny+d, by)
-    body_part = body[cornx:xpart, corny:ypart, :]
-    circle_part = circle[:xpart-cornx, :ypart-corny, :]
-    if np.sum(body)-np.sum(body_part) > 25:
-        body[cornx:xpart, corny:ypart, :] -= circle_part*body_part
+# # carve out random holes
+# for cut in range(N_CUTS):
+#     circle = make_circle(CUT_DIAMETER)
+#     circle = np.repeat(circle[:, :, np.newaxis], bz, axis=2)
+#     cornx = np.random.randint(0, bx)
+#     corny = np.random.randint(0, by)
+#     xpart = min(cornx+d, bx)
+#     ypart = min(corny+d, by)
+#     body_part = body[cornx:xpart, corny:ypart, :]
+#     circle_part = circle[:xpart-cornx, :ypart-corny, :]
+#     if np.sum(body)-np.sum(body_part) > 25:
+#         body[cornx:xpart, corny:ypart, :] -= circle_part*body_part
 
 # shift down until in contact with surface plane
 while True:
