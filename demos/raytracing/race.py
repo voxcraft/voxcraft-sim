@@ -103,7 +103,8 @@ for cut in range(N_CUTS):
     if np.sum(body)-np.sum(body_part) > 0:
         body[cornx:xpart, corny:ypart, :] -= square_part*body_part
     blob = make_one_shape_only(body)
-    body = blob.astype(np.int8)
+    blob = blob.astype(np.int8)
+    body *= blob
 
 # shift down until in contact with surface plane
 while True:
