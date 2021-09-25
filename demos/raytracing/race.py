@@ -59,7 +59,7 @@ for layer in range(bz):
 
 # carve away random chunks
 for cut in range(N_CUTS):
-    noise = np.random.rand(bx,by,bz)
+    noise = 2*np.random.rand(bx,by,bz)-1
     chunk = make_one_shape_only(noise)
     chunk = chunk.astype(np.int8)
     chunk *= body
@@ -68,7 +68,7 @@ for cut in range(N_CUTS):
 
 # material distribution
 for patch in range(N_PATCHES):
-    noise = np.random.rand(bx,by,bz)
+    noise = 2*np.random.rand(bx,by,bz)-1
     chunk = make_one_shape_only(noise)
     chunk = chunk.astype(np.int8)
     chunk *= body
