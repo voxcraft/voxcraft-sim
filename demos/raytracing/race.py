@@ -91,11 +91,9 @@ for patch in range(N_PATCHES):
     tmp_body[cornx:xpart, corny:ypart, :] = square_part*body_part
     tmp_body[tmp_body > 1] = 2  # only two material types
 
-tmp_body -= 1
-tmp_body[tmp_body < 0] = 0
-blob = make_one_shape_only(tmp_body)
+blob = make_one_shape_only(tmp_body == 2)
 blob = blob.astype(np.int8)
-body += blob
+# body += blob
 
 # carve out random holes
 for cut in range(N_CUTS):
