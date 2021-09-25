@@ -88,6 +88,7 @@ for patch in range(N_PATCHES):
     body_part = body[cornx:xpart, corny:ypart, :]
     square_part = square[:xpart-cornx, :ypart-corny, :]
     body[cornx:xpart, corny:ypart, :] = square_part*body_part
+    body[body > 1] = 2  # only two material types
 
 # carve out random holes
 for cut in range(N_CUTS):
