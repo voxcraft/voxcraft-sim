@@ -6,7 +6,8 @@ from cilia_utils import restricted_cilia
 from shape_utils import make_one_shape_only, make_sphere, make_circle
 
 # python race.py 0 4 3 12
-# uses base_race.vxa (line 142)
+# uses base_race.vxa (line 143)
+# turn off history before cluster (line 25)
 
 # inputs
 # 1: seed
