@@ -14,20 +14,24 @@ from shape_utils import make_one_shape_only, make_sphere, make_circle
 # 2: n holes
 # 3: hole/patch size
 # 4: n patches
+# 5: n bodies
 
-SEED = 0
-np.random.seed(int(sys.argv[1]))
+SEED = int(sys.argv[1])
+np.random.seed(SEED)
 
 N_CUTS = int(sys.argv[2])
 CUT_LEN = int(sys.argv[3])
 N_PATCHES = int(sys.argv[4])
+N_BODIES = int(sys.argv[5])
 
 RECORD_HISTORY = True
 
+SMUSH_BODIES = True
+
 DEBUG = False  # straight cilia vectors, instead of random angles
 
-bx, by, bz = (11, 11, 7)
-wx, wy, wz = (36, 11, 7)
+bx, by, bz = (11, 11, 7 - 2*int(SMUSH_BODIES))
+wx, wy, wz = ((bx+1)*N_BODIES, 11, 7 - 2*int(SMUSH_BODIES))
 
 USING_LIGHT_SOURCE = False
 CILIA_DELAY_IN_LIGHT = 0
@@ -56,9 +60,10 @@ sphere = make_sphere(by)
 # remove the min and max layers and as many middle layers as necessary
 for layer in range(bz):
     if layer > bz//2:
-        pad = 1+by-bz
+        pad = 1+by-bz - int(SMUSH_BODIES)
     else:
-        pad = 1
+        pad = 1 + int(SMUSH_BODIES)
+
     body[:, :, layer] *= sphere[1:bx+1, 1:by+1, layer+pad]
 
 # # carve out random balls
@@ -118,6 +123,11 @@ for cut in range(N_CUTS):
     blob = blob.astype(np.int8)
     body *= blob
 
+# don't eval passive bodies
+if np.sum(body == 1) == 0:
+    print("null")
+    exit()
+
 # shift down until in contact with surface plane
 while True:
     if np.sum(body[:, :, 0]) == 0:
@@ -146,14 +156,13 @@ sub.call("cp base_race.vxa data{}/base.vxa".format(SEED), shell=True)
 sub.call("rm data{}/*.vxd".format(SEED), shell=True)
 
 # delete old hist file
-sub.call("rm a.hist", shell=True)
+sub.call("rm a{}.hist".format(SEED), shell=True)
 
 # delete old workspace
 sub.call("rm -r workspace", shell=True)
 
-# remove old sim output.xml if we are saving new stats
-if not RECORD_HISTORY:
-    sub.call("rm output{}.xml".format(SEED), shell=True)
+# remove old sim output.xml to save new stats
+sub.call("rm output{}.xml".format(SEED), shell=True)
 
 # start vxd file
 root = etree.Element("VXD")
@@ -231,6 +240,6 @@ with open('data'+str(SEED)+'/bot_0.vxd', 'wb') as vxd:
 # ok let's finally evaluate all the robots in the data directory
 
 if RECORD_HISTORY:
-    sub.call("./voxcraft-sim -i data{0} > a.hist".format(SEED), shell=True)
+    sub.call("./voxcraft-sim -i data{0} -o output{0}.xml -f > a{0}.hist".format(SEED), shell=True)
 else:
     sub.call("./voxcraft-sim -i data{0} -o output{0}.xml".format(SEED), shell=True)

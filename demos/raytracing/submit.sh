@@ -4,13 +4,13 @@
 # Request nodes
 #SBATCH --nodes=1
 # Request some processor cores
-#SBATCH --ntasks=4
+#SBATCH --ntasks=2
 # Request GPUs
 #SBATCH --gres=gpu:1
 # Request memory
 #SBATCH --mem=32G
 # Run for X hours
-#SBATCH --time=1:00:00
+#SBATCH --time=0:20:00
 # Name of this job
 #SBATCH --job-name=X4
 # Output of this job, stderr and stdout are joined by default
@@ -29,4 +29,4 @@ echo "  jobid:           ${SLURM_JOBID}"
 # show me my assigned GPU number(s):
 echo "  GPU(s):          ${CUDA_VISIBLE_DEVICES}"
 
-python3 race.py $1 $2 $3 $4
+python3 race.py $1 $2 $3 $4 $5

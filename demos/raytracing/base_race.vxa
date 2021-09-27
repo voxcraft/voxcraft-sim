@@ -35,13 +35,13 @@
             <mtVAR>y</mtVAR>
         </FitnessFunction>
         <Integration>
-            <DtFrac>0.9</DtFrac>
+            <DtFrac>0.95</DtFrac>
         </Integration>
         <StopCondition>
             <StopConditionFormula>
                 <mtSUB>
                     <mtVAR>t</mtVAR>
-                    <mtCONST>5</mtCONST>
+                    <mtCONST>2</mtCONST>
                 </mtSUB>
             </StopConditionFormula>
         </StopCondition>
@@ -80,7 +80,7 @@
                 <Mechanical>
                     <isMeasured>1</isMeasured>
                     <isTarget>0</isTarget>
-                    <Cilia>0.15</Cilia>
+                    <Cilia>0.25</Cilia><!--was 0.15-->
                     <LockZ>1</LockZ>
                     <MatModel>0</MatModel><!--0 = no failing-->
                     <Elastic_Mod>5e+04</Elastic_Mod>
