@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <VXA Version="1.1">
     <Simulator>
-        <UsingLightSource>1</UsingLightSource>
+        <UsingLightSource>0</UsingLightSource>
         <TurnOnLightAfterThisManySeconds>0</TurnOnLightAfterThisManySeconds>
         <LightPosX>0</LightPosX>
         <LightPosY>0</LightPosY>
