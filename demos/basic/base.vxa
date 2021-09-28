@@ -1,4 +1,9 @@
 <VXA Version="1.1">
+<GPU>
+    <HeapSize>
+	0.1
+    </HeapSize>
+</GPU>
 <Simulator>
     <RecordHistory>
         <RecordStepSize>100</RecordStepSize>

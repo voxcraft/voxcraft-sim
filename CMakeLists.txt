@@ -7,16 +7,18 @@ if (NOT DEFINED CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RELEASE)
 endif()
 
-set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
+set(CMAKE_CUDA_COMPILER /n/app/cuda/10.1/bin/nvcc)
 
 project(voxcraft-sim LANGUAGES CXX CUDA)
 set(CMAKE_CXX_STANDARD 17)
 
+include_directories(/home/sak8790/miniconda3/envs/luna/include)
 include_directories(src)
 include_directories(src/VX3)
 include_directories(src/Utils)
 include_directories(src/VXA)
 include_directories(src/old)
+
 
 file( GLOB UTILS_SRC_cu src/Utils/*.cu )
 file( GLOB VX3_SRC_cu src/VX3/*.cu )
@@ -24,7 +26,14 @@ file( GLOB VX3_SRC_cpp src/VX3/*.cpp )
 file( GLOB VXA_SRC_cpp src/VXA/*.cpp )
 file( GLOB OLD_SRC src/old/*.c* )
 
-add_library(voxelyze.3.0 ${UTILS_SRC_cu} ${VX3_SRC_cu} ${VX3_SRC_cpp} ${VXA_SRC_cpp} ${OLD_SRC})
+set(Boost_USE_STATIC_LIBS   ON)
+find_package(Boost REQUIRED COMPONENTS filesystem thread chrono program_options)
+message("Boost Found: ${Boost_FOUND}")
+message("Boost Include Dirs: ${Boost_INCLUDE_DIRS}")
+message("Boost LIBS: ${Boost_LIBRARIES}")
+file(GLOB boost_incl ${Boost_INCLUDE_DIRS})
+
+add_library(voxelyze.3.0 ${UTILS_SRC_cu} ${VX3_SRC_cu} ${VX3_SRC_cpp} ${VXA_SRC_cpp} ${OLD_SRC} ${Boost_INCLUDE_DIRS})
 add_executable(voxcraft-sim src/Executables/voxcraft-sim.cpp)
 add_executable(vx3_node_worker src/Executables/vx3_node_worker.cu)
 add_executable(vx3_node_daemon src/Executables/vx3_node_daemon.cu)
@@ -32,9 +41,7 @@ add_executable(vx3_test src/Executables/vx3_test.cu)
 
 target_link_libraries(vx3_node_worker PUBLIC voxelyze.3.0)
 target_link_libraries(vx3_test PUBLIC voxelyze.3.0)
-# for Boost
-set(Boost_USE_STATIC_LIBS   ON)
-find_package(Boost REQUIRED COMPONENTS filesystem thread chrono program_options)
+
 target_link_libraries(voxelyze.3.0 PUBLIC ${Boost_LIBRARIES})
 target_link_libraries(voxcraft-sim PUBLIC ${Boost_LIBRARIES})
 target_link_libraries(vx3_node_worker PUBLIC ${Boost_LIBRARIES})
@@ -44,20 +51,22 @@ target_link_libraries(vx3_node_daemon PUBLIC ${Boost_LIBRARIES})
 # CUDA options
 find_package(CUDA) # for CUDA_SELECT_NVCC_ARCH_FLAGS function
 # if one want to force use certain Gpu Architecture, one can add `CUDA_ARCH` like `cmake -DCUDA_ARCH=arch=compute_61,code=sm_61 ..`
-if (NOT DEFINED CUDA_ARCH)
-  CUDA_SELECT_NVCC_ARCH_FLAGS(RET_ARCH_FLAGS)
-  message("CUDA_SELECT_NVCC_ARCH_FLAGS returns: " ${RET_ARCH_FLAGS})
-  list(LENGTH RET_ARCH_FLAGS FLAG_LENGTH)
-  message("Flag length: " ${FLAG_LENGTH})
-  if (FLAG_LENGTH GREATER 3)
-    # CUDA_SELECT_NVCC_ARCH_FLAGS resulted more than 3 items, which is probably GPU not found error.
-    message(FATAL_ERROR "Nvidia GPU not found. Abort.")
-  endif()
-  list(GET RET_ARCH_FLAGS -1 CUDA_ARCH) # use newest architecture
-endif()
+#if (NOT DEFINED CUDA_ARCH)
+#  CUDA_SELECT_NVCC_ARCH_FLAGS(RET_ARCH_FLAGS)
+#  message("CUDA_SELECT_NVCC_ARCH_FLAGS returns: " ${RET_ARCH_FLAGS})
+#  list(LENGTH RET_ARCH_FLAGS FLAG_LENGTH)
+#  message("Flag length: " ${FLAG_LENGTH})
+#  if (FLAG_LENGTH GREATER 3)
+#    # CUDA_SELECT_NVCC_ARCH_FLAGS resulted more than 3 items, which is probably GPU not found error.
+#    message(FATAL_ERROR "Nvidia GPU not found. Abort.")
+#  endif()
+#  list(GET RET_ARCH_FLAGS -1 CUDA_ARCH) # use newest architecture
+#endif()
+
+set(CUDA_ARCH arch=compute_52,code=sm_52)
 message("Using GPU Architecture: " ${CUDA_ARCH})
 set(ARCH_FLAGS "-gencode" ${CUDA_ARCH})
-list(APPEND CMAKE_CUDA_FLAGS -gencode=${CUDA_ARCH})
+list(APPEND CMAKE_CUDA_FLAGS "-gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_60,code=sm_60 -gencode=arch=compute_70,code=sm_70 -gencode=arch=compute_75,code=sm_75")
 
 set_target_properties(voxelyze.3.0 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(vx3_node_worker PROPERTIES CUDA_SEPARABLE_COMPILATION ON)

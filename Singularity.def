@@ -1,0 +1,34 @@
+Bootstrap: docker
+From: nvcr.io/nvidia/cuda:10.2-devel-ubuntu18.04
+Stage: spython-base
+
+%post
+
+cd "/root"
+
+apt-get update
+apt-get remove -y --purge cmake
+apt-get install -y git libboost-all-dev wget screen
+
+# Install Miniconda
+PATH="/root/miniconda3/bin:${PATH}"
+apt-get update
+apt-get install -y wget && rm -rf /var/lib/apt/lists/*
+wget \
+https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+&& mkdir /root/.conda \
+&& bash Miniconda3-latest-Linux-x86_64.sh -b \
+&& rm -f Miniconda3-latest-Linux-x86_64.sh
+
+# Build voxcraft-sim
+conda install -c anaconda cmake
+git clone https://github.com/voxcraft/voxcraft-sim.git \
+&& cd voxcraft-sim && mkdir build && cd build && cmake .. && make -j 10
+%environment
+export PATH="/root/miniconda3/bin:${PATH}"
+%runscript
+cd "/root"
+exec /bin/bash "$@"
+%startscript
+cd "/root"
+exec /bin/bash "$@"
