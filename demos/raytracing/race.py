@@ -24,6 +24,8 @@ CUT_LEN = int(sys.argv[3])
 N_PATCHES = int(sys.argv[4])
 N_BODIES = int(sys.argv[5])
 
+BUILD_DIR = "/users/s/k/skriegma/phototaxis/voxcraft-sim/build"
+
 RECORD_HISTORY = True
 
 SMUSH_BODIES = True
@@ -145,8 +147,8 @@ world = np.swapaxes(world, 0,2)
 world = world.reshape(wz, wx*wy)
 
 # get new voxcraft build
-sub.call("cp ../../build/voxcraft-sim .", shell=True)
-sub.call("cp ../../build/vx3_node_worker .", shell=True)
+sub.call("cp {}/voxcraft-sim .".format(BUILD_DIR), shell=True)
+sub.call("cp {}/vx3_node_worker .".format(BUILD_DIR), shell=True)
 
 # create data folder if it doesn't already exist
 sub.call("mkdir data{}".format(SEED), shell=True)
