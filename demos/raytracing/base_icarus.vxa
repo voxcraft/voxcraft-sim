@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <VXA Version="1.1">
     <Simulator>
+        <EnableExpansion>1</EnableExpansion>
         <UsingLightSource>1</UsingLightSource>
         <TurnOnLightAfterThisManySeconds>0</TurnOnLightAfterThisManySeconds>
         <LightPosX>0</LightPosX>
@@ -54,10 +55,17 @@
             <ColDampingZ>0.8</ColDampingZ>
             <SlowDampingZ>0.01</SlowDampingZ>
         </Damping>
+        <AttachDetach>
+            <EnableCollision>0</EnableCollision>
+        </AttachDetach>
     </Simulator>
     <Environment>
         <Thermal>
-            <TempPeriod>0</TempPeriod><!--never-->
+            <TempEnabled>1</TempEnabled>
+            <TempAmplitude>14.4714</TempAmplitude>
+            <TempBase>25</TempBase>
+            <VaryTempEnabled>1</VaryTempEnabled>
+            <TempPeriod>0.2</TempPeriod>
         </Thermal>
         <Gravity>
             <GravEnabled>1</GravEnabled>
@@ -71,27 +79,24 @@
         </Lattice>
         <Palette>
             <Material ID="1">
-                <Name>Cilia</Name>
+                <Name>Muscle</Name>
                 <Display>
-                    <Red>1</Red>
-                    <Green>0</Green>
+                    <Red>0.7</Red>
+                    <Green>0.7</Green>
                     <Blue>1</Blue>
-                    <Alpha>0.8</Alpha>
+                    <Alpha>0.7</Alpha>
                 </Display>
                 <Mechanical>
                     <isMeasured>1</isMeasured>
-                    <isTarget>0</isTarget>
-                    <Cilia>0.15</Cilia>
-                    <LockZ>1</LockZ>
                     <MatModel>0</MatModel><!--0 = no failing-->
-                    <Elastic_Mod>5e+04</Elastic_Mod>
+                    <Elastic_Mod>10000</Elastic_Mod>
                     <Fail_Stress>0</Fail_Stress>
-                    <Density>1e+03</Density>
-                    <Poissons_Ratio>0.35</Poissons_Ratio>
-                    <CTE>0</CTE>
+                    <Density>10</Density>
+                    <Poissons_Ratio>0.5</Poissons_Ratio>
+                    <CTE>0.01</CTE>
                     <MaterialTempPhase>0</MaterialTempPhase>
-                    <uStatic>0</uStatic>
-                    <uDynamic>0</uDynamic>
+                    <uStatic>1</uStatic>
+                    <uDynamic>0.5</uDynamic>
                 </Mechanical>
             </Material>
             <Material ID="2">
@@ -104,18 +109,15 @@
                 </Display>
                 <Mechanical>
                     <isMeasured>1</isMeasured>
-                    <isTarget>0</isTarget>
-                    <Cilia>0.0</Cilia>
-                    <LockZ>1</LockZ>
                     <MatModel>0</MatModel><!--0 = no failing-->
-                    <Elastic_Mod>5e+04</Elastic_Mod>
+                    <Elastic_Mod>10000</Elastic_Mod>
                     <Fail_Stress>0</Fail_Stress>
-                    <Density>1e+03</Density>
-                    <Poissons_Ratio>0.35</Poissons_Ratio>
+                    <Density>10</Density>
+                    <Poissons_Ratio>0.5</Poissons_Ratio>
                     <CTE>0</CTE>
                     <MaterialTempPhase>0</MaterialTempPhase>
-                    <uStatic>0</uStatic>
-                    <uDynamic>0</uDynamic>
+                    <uStatic>1</uStatic>
+                    <uDynamic>0.5</uDynamic>
                 </Mechanical>
             </Material>
             <Material ID="3">

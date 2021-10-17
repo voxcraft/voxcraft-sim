@@ -241,6 +241,9 @@ class VX3_Link {
 
     bool isDetached = false;
 
+    // sam
+    bool detachMe = false;
+
 	// for Secondary Experiment
     bool removed = false;
 };

@@ -18,6 +18,7 @@
         <CiliaDelayInLight>0</CiliaDelayInLight>
         <CiliaDecayInDark>0</CiliaDecayInDark>
         <OnlySurfVoxOcclude>0</OnlySurfVoxOcclude>
+        <EnableDisintegration>0</EnableDisintegration>
         <!-- <RecordHistory>
             <RecordStepSize>100</RecordStepSize>
             <RecordVoxel>1</RecordVoxel>

@@ -41,6 +41,7 @@ class VX3_VoxelyzeKernel {
     __device__ void registerTargets();
     __device__ void computeTargetCloseness();
     __device__ void saveInitialPosition();
+    __device__ void updateVoxelDetachment();  // sam
 
 
     __device__ void updateOcclusion(bool lightOn);
@@ -167,6 +168,7 @@ class VX3_VoxelyzeKernel {
     double LightPosY = 0;
     double LightPosZ = 0;
     VX3_Vec3D<> LightPos = VX3_Vec3D<>(LightPosX, LightPosY, LightPosZ);
+    int EnableDisintegration = 0;
 
     //for Secondary Experiment
     int SecondaryExperiment = 0;

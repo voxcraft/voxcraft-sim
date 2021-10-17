@@ -23,6 +23,7 @@ __global__ void gpu_insert_lookupgrid(VX3_Voxel **d_surface_voxels, int num, VX3
 __global__ void gpu_collision_attachment_lookupgrid(VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid, int num, double watchDistance,
                                                     VX3_VoxelyzeKernel *k);
 __global__ void gpu_update_detach(VX3_Link **links, int num, VX3_VoxelyzeKernel *k);
+__global__ void gpu_update_voxel_detachment(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k); //sam
 /* Host methods */
 
 VX3_VoxelyzeKernel::VX3_VoxelyzeKernel(CVX_Sim *In) {
@@ -313,6 +314,12 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
         updateOcclusion(lightOn);
     }
 
+    //sam:
+    if (EnableDisintegration) {
+        updateVoxelDetachment();  // find voxels to break off
+        updateDetach(); // cut links
+    }
+
     cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_voxels, 0,
                                        num_d_voxels); // Dynamically calculate blockSize
     int gridSize_voxels = (num_d_voxels + blockSize - 1) / blockSize;
@@ -503,6 +510,17 @@ __device__ void VX3_VoxelyzeKernel::updateOcclusion(bool lightOn) {
     VcudaDeviceSynchronize();
 }
 
+// sam:
+__device__ void VX3_VoxelyzeKernel::updateVoxelDetachment() {
+    int minGridSize, blockSize;
+    cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_voxel_detachment, 0, num_d_surface_voxels);
+    int gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
+    int blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
+    gpu_update_voxel_detachment<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, this);
+    CUDA_CHECK_AFTER_CALL();
+    VcudaDeviceSynchronize();
+}
+
 __device__ void VX3_VoxelyzeKernel::updateCurrentCenterOfMass() {
     double TotalMass = 0;
     VX3_Vec3D<> Sum(0, 0, 0);
@@ -664,6 +682,9 @@ __global__ void gpu_update_temperature(VX3_Voxel *voxels, int num, double TempAm
             return;
         if (t->mat->fixed)
             return; // fixed voxels, no need to update temperature
+        // // sam:
+        // if (t->isDetached)
+        //     return; 
         double currentTemperature =
             TempAmplitude * sin(2 * 3.1415926f * (currentTime / TempPeriod + t->phaseOffset)); // update the global temperature
         // TODO: if we decide not to use PhaseOffset any more, we can move this calculation outside.
@@ -926,6 +947,10 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
             thisVox->localSignal = 1;  // todo: light bulb material tag
             return;
         }
+
+        if (thisVox->removed) {
+            return;
+        }
             
         // double prevTimeInDark = thisVox->timeInDark;
         // double prevTimeInLight = thisVox->timeInLight;
@@ -944,7 +969,7 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
             if (surfVoxOnly)
                 otherVox = surface_voxels[j];
 
-            if (otherVox->mat->transparent)
+            if (otherVox->mat->transparent || otherVox->isDetached || otherVox->removed)  // todo: detached don't occlude tag
                 continue;
 
             // lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
@@ -1115,8 +1140,9 @@ __global__ void gpu_update_detach(VX3_Link **links, int num, VX3_VoxelyzeKernel*
         if (t->isDetached)
             return;
         // clu: vxa: MatModel=1, Fail_Stress=1e+6 => Fail_Stress => failureStress => isFailed.
-        if (t->isFailed()) {
+        if (t->isFailed() || t->detachMe) {
             t->isDetached = true;
+            t->removed = true;
             for (int i = 0; i < 6; i++) {
                 if (t->pVNeg->links[i] == t) {
                     t->pVNeg->links[i] = NULL;
@@ -1126,6 +1152,29 @@ __global__ void gpu_update_detach(VX3_Link **links, int num, VX3_VoxelyzeKernel*
                 }
             }
             k->isSurfaceChanged = true;
+        }
+    }
+}
+
+// sam:
+__global__ void gpu_update_voxel_detachment(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel* k) {
+    int index = threadIdx.x + blockIdx.x * blockDim.x;
+    if (index < num) {
+        VX3_Voxel *thisVox = surface_voxels[index];
+        if (thisVox->removed)
+            return;
+        // if (thisVox->isDetached)
+        //     return;
+        if (thisVox->mat->fixed)
+            return;
+        if (thisVox->localSignal >= 1) {
+            thisVox->isDetached = true;
+            thisVox->removed = true;
+            for (int k=0;k<6;k++) { // check links in all direction
+                if (thisVox->links[k]) {
+                    thisVox->links[k]->detachMe = true;
+                }
+            }
         }
     }
 }

@@ -4,10 +4,9 @@ import numpy as np
 import sys
 from cilia_utils import restricted_cilia
 
-# python demo.py 0 50 6 12 3 3 2000 10 0
-# python demo.py 0 100 15 12 11 9 1000 10 0
+# python icarus.py 0 100 15 12 11 9 1000 10 0
 
-# uses base_demo.vxa (line 103)
+# uses base_icarus.vxa (line 103)
 
 # inputs
 # 1: DEBUG cilia: 0=random push angle, 1=exactly perpendicular
@@ -103,7 +102,7 @@ sub.call("cp ../../build/vx3_node_worker .", shell=True)
 
 # create data folder if it doesn't already exist
 sub.call("mkdir data{}".format(SEED), shell=True)
-sub.call("cp base_demo.vxa data{}/base.vxa".format(SEED), shell=True)
+sub.call("cp base_icarus.vxa data{}/base.vxa".format(SEED), shell=True)
 
 # clear old .vxd robot files from the data directory
 sub.call("rm data{}/*.vxd".format(SEED), shell=True)
@@ -120,6 +119,11 @@ if not RECORD_HISTORY:
 
 # start vxd file
 root = etree.Element("VXD")
+
+# icarus mode:
+vxa_disintegration = etree.SubElement(root, "EnableDisintegration")
+vxa_disintegration.set('replace', 'VXA.Simulator.EnableDisintegration')
+vxa_disintegration.text = str(1)
 
 vxa_cilia_delay = etree.SubElement(root, "CiliaDelayInLight")
 vxa_cilia_delay.set('replace', 'VXA.Simulator.CiliaDelayInLight')
