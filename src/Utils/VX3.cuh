@@ -58,6 +58,7 @@ __device__ __inline__ int random(int max, int random_seed=0) {
     #define CUDA_ERROR_CHECK(ans) { CUDA_ERROR_CHECK_OUTPUT((ans), __FILE__, __LINE__); }
 #endif
 #define VcudaMemGetInfo(a,b) {CUDA_ERROR_CHECK(cudaMemGetInfo(a,b))}
+#define VcudaDeviceGetLimit(a,b) {CUDA_ERROR_CHECK(cudaDeviceGetLimit(a,b))}
 #define VcudaDeviceSetLimit(a,b) {CUDA_ERROR_CHECK(cudaDeviceSetLimit(a,b))}
 #define VcudaSetDevice(a) {CUDA_ERROR_CHECK(cudaSetDevice(a))}
 #define VcudaGetDeviceCount(a) {CUDA_ERROR_CHECK(cudaGetDeviceCount(a))}
