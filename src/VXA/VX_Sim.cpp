@@ -97,6 +97,8 @@ bool CVX_Sim::Import(CVX_Environment *pEnvIn, CMesh *pSurfMeshIn, std::string *R
                 printf("ERROR: No such material.\n");
             }
             VoxList.push_back(Vx.setVoxel(VxcToVx2MatIndexMap[VxcMatIndex], x, y, z));
+            // sam: DetachTime
+            VoxList.back()->DetachTime = pEnv->pObj->Structure.GetDetachTime(VoxList.size() - 1);
             // PhaseOffset
             VoxList.back()->phaseOffset = pEnv->pObj->Structure.GetPhaseOffset(VoxList.size() - 1);
             // BaseCiliaForce

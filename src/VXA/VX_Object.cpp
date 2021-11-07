@@ -1856,6 +1856,41 @@ bool CVXC_Structure::ReadXML(CXML_Rip* pXML, std::string Version, std::string* R
 		}
 	}
 
+	// sam: Read DetachTime
+	if (pXML->FindElement("DetachTime")){ 
+		usingDetachTime = true;
+		int voxCounter = 0;
+		// std::cout << "found weights!" << std::endl;
+		InitDetachTimeArray(X_Voxels*Y_Voxels*Z_Voxels);
+		for (int i=0; i<Z_Voxels; i++)
+		{
+			std::string DataIn;
+			std::string RawData;
+			// std::string thisValue;
+			pXML->FindLoadElement("Layer", &RawData, true, true);
+		
+			std::vector<std::string> dataArray;
+			dataArray = split(RawData,',',dataArray);
+			for (int k=0; k<X_Voxels*Y_Voxels; k++)
+			{
+				if (dataArray.size()<=k) {
+					printf("ERROR: Data in DetachTime.Layers is too short.\n");
+				}
+				if (pData[X_Voxels*Y_Voxels*i+k] > 0)
+				{
+					SetDetachTime(voxCounter,atof(dataArray[k].c_str()));
+					voxCounter++;
+				}
+			}
+		}
+		pXML->UpLevel(); //Layer
+		pXML->UpLevel(); //Weights
+	}
+	else
+	{
+		usingDetachTime = false;
+	}
+
 	//Read PhaseOffset
 	if (pXML->FindElement("PhaseOffset")){ 
 		usingPhaseOffset = true;

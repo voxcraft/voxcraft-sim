@@ -174,6 +174,12 @@ public:
 	void ResetStructure(); //erases all voxel imformation within voxel array
 	void ReplaceMaterial(int Matindex, int ReplaceWith = 0, bool ShiftDown = false); //converts a material to ReplaceWith, option to decrement all higher indices
 
+	//DetachTime
+	inline void SetDetachTime(int Index, double Value) {pDetachTimes[Index] = Value;}
+	inline double GetDetachTime(int Index) const {if (pDetachTimes) return pDetachTimes[Index]; return 0.0f;}
+	inline void InitDetachTimeArray(int Size) {pDetachTimes = new double[Size];}
+	inline bool GetUsingDetachTime(void) {return usingDetachTime;}
+
 	//PhaseOffset
 	inline void SetPhaseOffset(int Index, double Value) {pPhaseOffsets[Index] = Value;} // nac: sets the material index here
 	inline double GetPhaseOffset(int Index) const {if (pPhaseOffsets) return pPhaseOffsets[Index]; return 0.0f;}
@@ -208,6 +214,10 @@ protected:
 	//functions that should only be used locally
 	void DeleteData(void); //sandbox the creation and destruction...
 	void IniData(int Size);
+
+	//sam
+	bool usingDetachTime; 
+	double* pDetachTimes;
 
 	//PhaseOffset
 	bool usingPhaseOffset; 

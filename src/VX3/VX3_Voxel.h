@@ -305,6 +305,7 @@ class VX3_Voxel {
     // double timeInDark = 0;
     // double timeInLight = 0;
     // bool hasSeenTheLight = false;
+    double DetachTime = 0;
 
     bool enableAttach = true;
 
