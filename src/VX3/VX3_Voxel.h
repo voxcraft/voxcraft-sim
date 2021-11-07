@@ -290,7 +290,7 @@ class VX3_Voxel {
     float previousDt; // remember the duration of the last timestep of this voxel
 
     VX3_Vec3D<float> lastColWatchPosition;
-
+    
     double phaseOffset;
     bool isDetached; // true if the voxel is on main body, false if it fell on the ground.
 
@@ -305,7 +305,7 @@ class VX3_Voxel {
     // double timeInDark = 0;
     // double timeInLight = 0;
     // bool hasSeenTheLight = false;
-    double DetachTime = 0;
+    double detachTime = 0;
 
     bool enableAttach = true;
 

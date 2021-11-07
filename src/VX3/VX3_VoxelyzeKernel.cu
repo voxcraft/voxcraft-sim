@@ -1167,7 +1167,10 @@ __global__ void gpu_update_voxel_detachment(VX3_Voxel **surface_voxels, int num,
         //     return;
         if (thisVox->mat->fixed)
             return;
-        if (thisVox->localSignal >= 1 || thisVox->timeToDetach >= k->currentTime) {
+        if (thisVox->detachTime > 0 && k->currentTime <= thisVox->detachTime) { 
+            thisVox->localSignal = k->currentTime / thisVox->detachTime;
+        }
+        if (thisVox->localSignal >= 1 || k->currentTime >= thisVox->detachTime) {
             thisVox->isDetached = true;
             thisVox->removed = true;
             for (int k=0;k<6;k++) { // check links in all direction
@@ -1175,9 +1178,6 @@ __global__ void gpu_update_voxel_detachment(VX3_Voxel **surface_voxels, int num,
                     thisVox->links[k]->detachMe = true;
                 }
             }
-        }
-        else if (thisVox->timeToDetach > 0 && k->currentTime > 0) { 
-            thisVox->localSignal = thisVox->timeToDetach / k->currentTime;
         }
     }
 }

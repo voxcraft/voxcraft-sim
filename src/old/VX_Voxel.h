@@ -194,6 +194,8 @@ public:
 	std::vector<CVX_Collision*>* colWatch;
 	std::vector<CVX_Voxel*>* nearby;
 
+	double detachTime; //sam
+
 	double phaseOffset;
 	bool isDetached; //true if the voxel is on main body, false if it fell on the ground.
 	Vec3D<> baseCiliaForce;
