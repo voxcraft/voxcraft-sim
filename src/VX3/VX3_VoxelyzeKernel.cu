@@ -23,7 +23,7 @@ __global__ void gpu_insert_lookupgrid(VX3_Voxel **d_surface_voxels, int num, VX3
 __global__ void gpu_collision_attachment_lookupgrid(VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid, int num, double watchDistance,
                                                     VX3_VoxelyzeKernel *k);
 __global__ void gpu_update_detach(VX3_Link **links, int num, VX3_VoxelyzeKernel *k);
-__global__ void gpu_update_voxel_detachment(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k); //sam
+__global__ void gpu_update_voxel_detachment(VX3_Voxel *voxels, VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k, bool surfVoxOnly); //sam
 /* Host methods */
 
 VX3_VoxelyzeKernel::VX3_VoxelyzeKernel(CVX_Sim *In) {
@@ -171,6 +171,8 @@ __device__ bool VX3_VoxelyzeKernel::StopConditionMet(void) // have we met the st
         // printf("stop score: %f.\n\n", a);
         return true;
     }
+    if (currentTime > 0 && num_d_surface_voxels <= 1)
+        return true;
     if (forceExit)
         return true;
     return false;
@@ -513,10 +515,18 @@ __device__ void VX3_VoxelyzeKernel::updateOcclusion(bool lightOn) {
 // sam:
 __device__ void VX3_VoxelyzeKernel::updateVoxelDetachment() {
     int minGridSize, blockSize;
-    cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_voxel_detachment, 0, num_d_surface_voxels);
-    int gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
-    int blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
-    gpu_update_voxel_detachment<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, this);
+    if (UsingLightSource) {  // make a tag for this? or just assume lightsource + disintegrate = laser
+        cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_voxel_detachment, 0, num_d_surface_voxels);
+        int gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
+        int blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
+        gpu_update_voxel_detachment<<<gridSize_voxels, blockSize_voxels>>>(d_voxels, d_surface_voxels, num_d_surface_voxels, this, true);
+    }
+    else {
+        cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_occlusion, 0, num_d_voxels);
+        int gridSize_voxels = (num_d_voxels + blockSize - 1) / blockSize;
+        int blockSize_voxels = num_d_voxels < blockSize ? num_d_voxels : blockSize;
+        gpu_update_voxel_detachment<<<gridSize_voxels, blockSize_voxels>>>(d_voxels, d_surface_voxels, num_d_voxels, this, false);
+    }
     CUDA_CHECK_AFTER_CALL();
     VcudaDeviceSynchronize();
 }
@@ -1157,10 +1167,14 @@ __global__ void gpu_update_detach(VX3_Link **links, int num, VX3_VoxelyzeKernel*
 }
 
 // sam:
-__global__ void gpu_update_voxel_detachment(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel* k) {
+__global__ void gpu_update_voxel_detachment(VX3_Voxel *voxels, VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel* k, bool surfVoxOnly) {
     int index = threadIdx.x + blockIdx.x * blockDim.x;
     if (index < num) {
-        VX3_Voxel *thisVox = surface_voxels[index];
+        
+        VX3_Voxel *thisVox = &voxels[index];
+        if (surfVoxOnly)
+            thisVox = surface_voxels[index];
+
         if (thisVox->removed)
             return;
         // if (thisVox->isDetached)
