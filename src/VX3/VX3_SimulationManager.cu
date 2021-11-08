@@ -373,6 +373,7 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         if (HeapSize < 0.01) {
             HeapSize = 0.01;
         }
+        PrintfFIFOSize = pt_merged.get<double>("VXA.GPU.PrintfFIFOSize", 50);
 
         VcudaMemcpy(d_voxelyze_3s[device_index] + i, &h_d_tmp, sizeof(VX3_VoxelyzeKernel), cudaMemcpyHostToDevice);
         i++;
@@ -395,13 +396,13 @@ void VX3_SimulationManager::enlargeGPUHeapSize() {
     // VcudaDeviceSetLimit(cudaLimitStackSize, 2048);
 }
 
-/* gets the current printfFifo buffer size and increases it 50 times */                                                           
+/* gets the current printfFifo buffer size and increases it PrintfFIFOSize times */                                                           
 void VX3_SimulationManager::enlargeGPUPrintfFIFOSize()                                                             
 {                                                               
-    size_t size;               
-    VcudaDeviceGetLimit(&size, cudaLimitPrintfFifoSize);     
-    VcudaDeviceSetLimit(cudaLimitPrintfFifoSize, size*50);
-    printf("set GPU printfFIFO size to be %ld bytes.\n", size*50);
+    size_t PrintfFIFOSizeInBytes;               
+    VcudaDeviceGetLimit(&PrintfFIFOSizeInBytes, cudaLimitPrintfFifoSize);
+    VcudaDeviceSetLimit(cudaLimitPrintfFifoSize, PrintfFIFOSizeInBytes*PrintfFIFOSize);
+    printf("set GPU printfFIFO size to be %ld bytes.\n", PrintfFIFOSizeInBytes*PrintfFIFOSize);
 }
 
 
