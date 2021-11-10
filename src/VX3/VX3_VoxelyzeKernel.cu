@@ -171,7 +171,7 @@ __device__ bool VX3_VoxelyzeKernel::StopConditionMet(void) // have we met the st
         // printf("stop score: %f.\n\n", a);
         return true;
     }
-    if (currentTime > 0 && num_d_surface_voxels <= 1)
+    if (currentTime > 0 && num_d_surface_voxels <= 2)
         return true;
     if (forceExit)
         return true;
@@ -535,7 +535,7 @@ __device__ void VX3_VoxelyzeKernel::updateCurrentCenterOfMass() {
     double TotalMass = 0;
     VX3_Vec3D<> Sum(0, 0, 0);
     for (int i = 0; i < num_d_voxels; i++) {
-        if (!d_voxels[i].mat->isMeasured) {
+        if (!d_voxels[i].mat->isMeasured || d_voxels[i].removed) {  // sam: || d_voxels[i].removed
             continue;
         }
         double ThisMass = d_voxels[i].material()->mass();
