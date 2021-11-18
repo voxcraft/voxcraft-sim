@@ -386,6 +386,7 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         if (HeapSize < 0.01) {
             HeapSize = 0.01;
         }
+        PrintfFIFOSize = pt_merged.get<double>("VXA.GPU.PrintfFIFOSize", 50);
 
         VcudaMemcpy(d_voxelyze_3s[device_index] + i, &h_d_tmp, sizeof(VX3_VoxelyzeKernel), cudaMemcpyHostToDevice);
         i++;
@@ -408,6 +409,15 @@ void VX3_SimulationManager::enlargeGPUHeapSize() {
     // VcudaDeviceSetLimit(cudaLimitStackSize, 2048);
 }
 
+/* gets the current printfFifo buffer size and increases it PrintfFIFOSize times */                                                           
+ void VX3_SimulationManager::enlargeGPUPrintfFIFOSize()                                                             
+ {                                                               
+     size_t PrintfFIFOSizeInBytes;               
+     VcudaDeviceGetLimit(&PrintfFIFOSizeInBytes, cudaLimitPrintfFifoSize);
+     VcudaDeviceSetLimit(cudaLimitPrintfFifoSize, PrintfFIFOSizeInBytes*PrintfFIFOSize);
+     printf("set GPU printfFIFO size to be %ld bytes.\n", PrintfFIFOSizeInBytes*PrintfFIFOSize);
+ }
+
 void VX3_SimulationManager::startKernel(int num_simulation, int device_index) {
     int threadsPerBlock = 512;
     int numBlocks = (num_simulation + threadsPerBlock - 1) / threadsPerBlock;
@@ -422,6 +432,7 @@ void VX3_SimulationManager::startKernel(int num_simulation, int device_index) {
     //             num_simulation * sizeof(VX3_VoxelyzeKernel),
     //             cudaMemcpyDeviceToHost);
     enlargeGPUHeapSize();
+    enlargeGPUPrintfFIFOSize();
     CUDA_Simulation<<<numBlocks, threadsPerBlock>>>(d_voxelyze_3s[device_index], num_simulation, device_index);
     CUDA_CHECK_AFTER_CALL();
 }
