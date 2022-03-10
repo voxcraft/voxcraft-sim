@@ -74,26 +74,8 @@ def restricted_cilia(body, DEBUG=False):
                             angle_in_radians = np.arctan2(vector[1],vector[0])
                             lb = angle_in_radians-rad45 # lower bound
                             ub = angle_in_radians+rad45 # upper bound
-                            
-                            # convert angle to positive degrees around the unit circle if the angles are negative
                             # print(lb,ub)
-                            if lb < 0 and ub < 0: 
-                                lb = 2*np.pi + lb
-                                ub = 2*np.pi + ub
-                                bounds.append([lb,ub])
-
-                            elif lb<0 and ub > 0:
-                                lb = 2*np.pi + lb
-                                bounds.append([lb,np.pi*2])
-                                bounds.append([0,ub])
-
-                            elif lb>0 and ub<0:
-                                ub = 2*np.pi + ub
-                                bounds.append([ub,np.pi*2])
-                                bounds.append([0,lb])
-
-                            else:
-                                bounds.append([lb,ub])
+                            bounds.append([lb,ub])
 
                         # print(bounds)
 
