@@ -50,6 +50,7 @@ CVX_Material& CVX_Material::operator=(const CVX_Material& vIn)
 	// sam:
 	LockZ = vIn.LockZ;
 	transparent = vIn.transparent;
+	detachable = vIn.detachable;
 	
 	linear = vIn.linear;
 	E = vIn.E;

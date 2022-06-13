@@ -119,6 +119,7 @@ public:
 	// sam:
 	bool LockZ = false;
 	bool transparent = false;
+	bool detachable = false;
 
 	bool linear; //!< Set to true if this material is specified as linear.
 	float E; //!< Young's modulus (stiffness) in Pa.

@@ -1181,6 +1181,10 @@ __global__ void gpu_update_voxel_detachment(VX3_Voxel *voxels, VX3_Voxel **surfa
         //     return;
         if (thisVox->mat->fixed)
             return;
+
+        if (!thisVox->mat->detachable)
+            return;
+
         if (thisVox->detachTime > 0 && k->currentTime <= thisVox->detachTime) { 
             thisVox->localSignal = k->currentTime / thisVox->detachTime;
         }

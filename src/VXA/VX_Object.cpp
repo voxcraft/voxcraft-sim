@@ -1194,6 +1194,7 @@ CVXC_Material& CVXC_Material::operator=(const CVXC_Material& RefMat)
 	// sam:
 	LockZ = RefMat.LockZ;
 	Transparent = RefMat.Transparent;
+	Detachable = RefMat.Detachable;
 
 	RemoveFromSimulationAfterThisManySeconds = RefMat.RemoveFromSimulationAfterThisManySeconds;
 	TurnOnThermalExpansionAfterThisManySeconds = RefMat.TurnOnThermalExpansionAfterThisManySeconds;
@@ -1442,6 +1443,7 @@ void CVXC_Material::ReadXML(CXML_Rip* pXML, std::string Version, std::string* Re
 
 				if (!pXML->FindLoadElement("LockZ", &LockZ)) LockZ = 0; // sam
 				if (!pXML->FindLoadElement("Transparent", &Transparent)) Transparent = 0; // sam
+				if (!pXML->FindLoadElement("Detachable", &Detachable)) Detachable = 0; // sam
 
 				if (!pXML->FindLoadElement("Elastic_Mod", &Elastic_Mod)) Elastic_Mod = 0;
 				if (!pXML->FindLoadElement("Plastic_Mod", &Plastic_Mod)) Plastic_Mod = 0;
