@@ -73,14 +73,15 @@
             <Material ID="1">
                 <Name>Cilia</Name>
                 <Display>
-                    <Red>1</Red>
+                    <Red>0</Red>
                     <Green>0</Green>
                     <Blue>1</Blue>
-                    <Alpha>0.8</Alpha>
+                    <Alpha>0.7</Alpha>
                 </Display>
                 <Mechanical>
                     <isMeasured>1</isMeasured>
                     <isTarget>0</isTarget>
+                    <lightSensitive>1</lightSensitive>
                     <Cilia>0.15</Cilia>
                     <LockZ>1</LockZ>
                     <MatModel>0</MatModel><!--0 = no failing-->
@@ -127,6 +128,7 @@
                     <Alpha>0.7</Alpha>
                 </Display>
                 <Mechanical>
+                    <isLightSource>1</isLightSource>
                     <Fixed>1</Fixed>
                     <Transparent>1</Transparent>
                     <MatModel>0</MatModel>

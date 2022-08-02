@@ -20,7 +20,7 @@ from cilia_utils import restricted_cilia
 # 8: cilia decay % of 1 to remove from charge each time step when in dark
 # 9: cilia factor when fully charged 
 
-SEED = 0
+SEED = 1
 np.random.seed(SEED)
 
 RECORD_HISTORY = True
