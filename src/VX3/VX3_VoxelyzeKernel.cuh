@@ -159,6 +159,10 @@ class VX3_VoxelyzeKernel {
     // sam:
     VX3_MathTreeToken light_function[1024];
     int UsingLightSource = 0;
+    int UsingVolvox = 0;
+    double VolvoxLightDelay = 0;
+    double VolvoxLightSensitiveTime = 0;
+    double VolvoxRefractoryPeriod = 0;
     double TurnOnLightAfterThisManySeconds = 0;
     double CiliaFactorInLight = 0;
     double CiliaDelayInLight = 0;

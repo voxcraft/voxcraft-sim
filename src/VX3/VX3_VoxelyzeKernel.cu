@@ -918,10 +918,18 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
             surface_voxels[index]->CiliaForce = surface_voxels[index]->orient.RotateVec3D(surface_voxels[index]->baseCiliaForce);
 
             VX3_Vec3D<double> force = surface_voxels[index]->CiliaForce;
-            double light = surface_voxels[index]->lightStored / k->CiliaDelayInLight;  // in [0,1]
-            double effect = k->CiliaFactorInLight;
 
-            surface_voxels[index]->CiliaForce += light * (force*effect - force);  // add accumulated light effect to cilia force
+            if (k->UsingVolvox) {
+                double SensitiveTime = surface_voxels[index]->timeInLight - k->VolvoxLightDelay;
+                if (SensitiveTime > 0)
+                    surface_voxels[index]->CiliaForce -= force * (1 - SensitiveTime / k->VolvoxLightSensitiveTime); 
+            }
+
+            else {
+                double light = surface_voxels[index]->lightStored / k->CiliaDelayInLight;  // in [0,1]
+                double effect = k->CiliaFactorInLight;
+                surface_voxels[index]->CiliaForce += light * (force*effect - force);  // add accumulated light effect to cilia force
+            }
         }
 
         else {
@@ -945,20 +953,44 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
 
         if (!lightOn) { // then everything is in the dark
             thisVox->inShade = true;
+
+            if (thisVox->mat->isLightSource)
+                thisVox->localSignal = 0;
+
             if (thisVox->lightStored > 0)
                 thisVox->lightStored -= k->CiliaDecayInDark;
+
             thisVox->localSignal = thisVox->lightStored / k->CiliaDelayInLight;
-            if (thisVox->mat->fixed)
-                thisVox->localSignal = 0; // todo: light bulb material tag
+
+            thisVox->timeInDark += 1;
+            
+            if (k->UsingVolvox) {
+
+                if (thisVox->timeInDark > k->VolvoxRefractoryPeriod)
+                    thisVox->timeInLight = 0;  // abrupt reset 
+
+                double SensitiveTime = thisVox->timeInLight - k->VolvoxLightDelay;
+                double RefractoryTimeRemaining = 1 - thisVox->timeInDark / k->VolvoxRefractoryPeriod;
+                
+                if (thisVox->timeInLight > k->VolvoxLightDelay)
+                    thisVox->localSignal = 1 - SensitiveTime / k->VolvoxLightSensitiveTime;
+
+                if (thisVox->timeInDark > 0)
+                    thisVox->localSignal *= RefractoryTimeRemaining;
+            }            
             return;
         }
 
-        if (thisVox->mat->fixed) {
-            thisVox->localSignal = 1;  // todo: light bulb material tag
+        if (thisVox->mat->isLightSource) {
+            thisVox->localSignal = 1;
             return;
         }
 
         if (thisVox->removed) {
+            return;
+        }
+
+        if (!thisVox->mat->lightSensitive) {
             return;
         }
             
@@ -1036,23 +1068,41 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
             // t = tmin;
             thisVox->inShade = true;
             // thisVox->localSignal = 0;
-            // thisVox->timeInDark = 1 + prevTimeInDark;
-            // thisVox->timeInLight = 0;
+            // volvox:
+            thisVox->timeInDark += 1;
+            if (thisVox->timeInDark > k->VolvoxRefractoryPeriod)
+                thisVox->timeInLight = 0;  // abrupt reset 
+            // original model:
             if (thisVox->lightStored > 0)
-                thisVox->lightStored -= k->CiliaDecayInDark;
+                thisVox->lightStored -= k->CiliaDecayInDark;  // slow decay
             break;
         }
         // done checking for occlusion here
         if (!thisVox->inShade) {
             // thisVox->localSignal = 100;
-            // thisVox->timeInDark = 0;
-            // thisVox->timeInLight = 1 + prevTimeInLight;
             // thisVox->hasSeenTheLight = true;
+            // volvox:
+            thisVox->timeInDark = 0;
+            if (thisVox->timeInLight < k->VolvoxLightDelay + k->VolvoxLightSensitiveTime)
+                thisVox->timeInLight += 1;
+            // orig model:
             if (thisVox->lightStored < k->CiliaDelayInLight)
                 thisVox->lightStored += 1;
         }
         // for drawing
-        thisVox->localSignal = thisVox->lightStored / k->CiliaDelayInLight;
+        if (k->UsingVolvox) {
+            double SensitiveTime = thisVox->timeInLight - k->VolvoxLightDelay;
+            double RefractoryTimeRemaining = 1 - thisVox->timeInDark / k->VolvoxRefractoryPeriod;
+            
+            if (thisVox->timeInLight > k->VolvoxLightDelay)
+                thisVox->localSignal = 1 - SensitiveTime / k->VolvoxLightSensitiveTime;
+
+            if (thisVox->timeInDark > 0)
+                thisVox->localSignal *= RefractoryTimeRemaining;
+        }
+            
+        else
+            thisVox->localSignal = thisVox->lightStored / k->CiliaDelayInLight;
     }
 }
 
@@ -1184,11 +1234,12 @@ __global__ void gpu_update_voxel_detachment(VX3_Voxel *voxels, VX3_Voxel **surfa
 
         if (!thisVox->mat->detachable)
             return;
-
-        if (thisVox->detachTime > 0 && k->currentTime <= thisVox->detachTime) { 
+        
+        if (!k->UsingLightSource && thisVox->detachTime > 0 && k->currentTime <= thisVox->detachTime) { 
             thisVox->localSignal = k->currentTime / thisVox->detachTime;
         }
-        if (thisVox->localSignal >= 1 || k->currentTime >= thisVox->detachTime) {
+        
+        else if (thisVox->localSignal >= 1 || k->currentTime >= thisVox->detachTime) {
             thisVox->isDetached = true;
             thisVox->removed = true;
             for (int k=0;k<6;k++) { // check links in all direction

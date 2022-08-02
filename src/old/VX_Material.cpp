@@ -51,6 +51,8 @@ CVX_Material& CVX_Material::operator=(const CVX_Material& vIn)
 	LockZ = vIn.LockZ;
 	transparent = vIn.transparent;
 	detachable = vIn.detachable;
+	lightSensitive = vIn.lightSensitive;
+	isLightSource = vIn.isLightSource;
 	
 	linear = vIn.linear;
 	E = vIn.E;

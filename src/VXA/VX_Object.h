@@ -497,6 +497,8 @@ public:
 	int LockZ = 0;
 	int Transparent = 0;
 	int Detachable = 0;
+	int lightSensitive = 0;
+	int isLightSource = 0;
 
 	vfloat Density, Elastic_Mod, Yield_Stress, Plastic_Mod, Fail_Stress, Fail_Strain, Poissons_Ratio, CTE, CurMaterialTemp, MaterialTempPhase, uStatic, uDynamic;
 	std::vector<vfloat> DStress, DStrain; //arbitrary stress/strain values for material model (in tension only for now)

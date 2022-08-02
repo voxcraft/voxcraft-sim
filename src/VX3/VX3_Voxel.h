@@ -302,8 +302,8 @@ class VX3_Voxel {
     // sam:
     double lightStored = 0;
     bool inShade = false;
-    // double timeInDark = 0;
-    // double timeInLight = 0;
+    double timeInDark = 0;
+    double timeInLight = 0;
     // bool hasSeenTheLight = false;
     double detachTime = 0;
 

@@ -391,6 +391,8 @@ void CVX_Sim::CopyMat(CVXC_Material *pOld, CVX_Material *pNew) // copies paramet
     pNew->LockZ = (bool)pOld->LockZ;
     pNew->transparent = (bool)pOld->Transparent;
     pNew->detachable = (bool)pOld->Detachable;
+    pNew->lightSensitive = (bool)pOld->lightSensitive;
+    pNew->isLightSource = (bool)pOld->isLightSource;
 
     pNew->setName(pOld->GetName().c_str());
     pNew->setColor(pOld->GetRedi(), pOld->GetGreeni(), pOld->GetBluei(), pOld->GetAlphai());
