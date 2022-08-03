@@ -362,14 +362,10 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
 
         // sam:
         ParseMathTree(h_d_tmp.light_function, sizeof(h_d_tmp.light_function), "VXA.Simulator.LightFunction", pt_merged);
-        h_d_tmp.CiliaFactorInLight = pt_merged.get<double>("VXA.Simulator.CiliaFactorInLight", 0);
-        h_d_tmp.CiliaDelayInLight = pt_merged.get<double>("VXA.Simulator.CiliaDelayInLight", 0);
-        h_d_tmp.CiliaDecayInDark = pt_merged.get<double>("VXA.Simulator.CiliaDecayInDark", 0);
         h_d_tmp.UsingLightSource = pt_merged.get<int>("VXA.Simulator.UsingLightSource", 0);
+        h_d_tmp.CiliaFactorInLight = pt_merged.get<double>("VXA.Simulator.CiliaFactorInLight", 0);  // todo: switch to per vox
+        h_d_tmp.LightSensitiveTime = pt_merged.get<double>("VXA.Simulator.LightSensitiveTime", 0);
         h_d_tmp.UsingVolvox = pt_merged.get<int>("VXA.Simulator.UsingVolvox", 0);
-        h_d_tmp.VolvoxLightDelay = pt_merged.get<double>("VXA.Simulator.VolvoxLightDelay", 0);
-        h_d_tmp.VolvoxLightSensitiveTime = pt_merged.get<double>("VXA.Simulator.VolvoxLightSensitiveTime", 0);
-        h_d_tmp.VolvoxRefractoryPeriod = pt_merged.get<double>("VXA.Simulator.VolvoxRefractoryPeriod", 0);
         h_d_tmp.TurnOnLightAfterThisManySeconds = pt_merged.get<double>("VXA.Simulator.TurnOnLightAfterThisManySeconds", 0);
         h_d_tmp.OnlySurfVoxOcclude = pt_merged.get<int>("VXA.Simulator.OnlySurfVoxOcclude", 0);
         h_d_tmp.LightPosX = pt_merged.get<double>("VXA.Simulator.LightPosX", 0);
