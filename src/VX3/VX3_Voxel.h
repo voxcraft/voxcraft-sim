@@ -302,6 +302,7 @@ class VX3_Voxel {
     // sam:
     double lightStored = 0;
     bool inShade = false;
+    double photosensitivity = 0;
     double detachTime = 0;
 
     bool enableAttach = true;

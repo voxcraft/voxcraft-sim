@@ -97,6 +97,8 @@ bool CVX_Sim::Import(CVX_Environment *pEnvIn, CMesh *pSurfMeshIn, std::string *R
                 printf("ERROR: No such material.\n");
             }
             VoxList.push_back(Vx.setVoxel(VxcToVx2MatIndexMap[VxcMatIndex], x, y, z));
+            // sam: Photosensitivity
+            VoxList.back()->photosensitivity = pEnv->pObj->Structure.GetPhotosensitivity(VoxList.size() - 1);
             // sam: DetachTime
             VoxList.back()->detachTime = pEnv->pObj->Structure.GetDetachTime(VoxList.size() - 1);
             // PhaseOffset

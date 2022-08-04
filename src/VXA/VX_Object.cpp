@@ -1864,6 +1864,41 @@ bool CVXC_Structure::ReadXML(CXML_Rip* pXML, std::string Version, std::string* R
 		}
 	}
 
+	// sam: read Photosensitivity
+	if (pXML->FindElement("Photosensitivity")){ 
+		usingPhotosensitivity = true;
+		int voxCounter = 0;
+		// std::cout << "found weights!" << std::endl;
+		InitPhotosensitivityArray(X_Voxels*Y_Voxels*Z_Voxels);
+		for (int i=0; i<Z_Voxels; i++)
+		{
+			std::string DataIn;
+			std::string RawData;
+			// std::string thisValue;
+			pXML->FindLoadElement("Layer", &RawData, true, true);
+		
+			std::vector<std::string> dataArray;
+			dataArray = split(RawData,',',dataArray);
+			for (int k=0; k<X_Voxels*Y_Voxels; k++)
+			{
+				if (dataArray.size()<=k) {
+					printf("ERROR: Data in Photosensitivity.Layers is too short.\n");
+				}
+				if (pData[X_Voxels*Y_Voxels*i+k] > 0)
+				{
+					SetPhotosensitivity(voxCounter,atof(dataArray[k].c_str()));
+					voxCounter++;
+				}
+			}
+		}
+		pXML->UpLevel(); //Layer
+		pXML->UpLevel(); //Weights
+	}
+	else
+	{
+		usingPhotosensitivity = false;
+	}
+
 	// sam: Read DetachTime
 	if (pXML->FindElement("DetachTime")){ 
 		usingDetachTime = true;

@@ -11,7 +11,7 @@ VX3_Voxel::VX3_Voxel(CVX_Voxel *p, VX3_VoxelyzeKernel *k)
     : matid(p->matid), ix(p->ix), iy(p->iy), iz(p->iz), pos(p->pos), linMom(p->linMom), orient(p->orient), angMom(p->angMom),
       boolStates(p->boolStates), tempe(p->temp), pStrain(p->pStrain), poissonsStrainInvalid(p->poissonsStrainInvalid),
       previousDt(p->previousDt), phaseOffset(p->phaseOffset), isDetached(p->isDetached), baseCiliaForce(p->baseCiliaForce),
-      shiftCiliaForce(p->shiftCiliaForce), detachTime(p->detachTime) {
+      shiftCiliaForce(p->shiftCiliaForce), photosensitivity(p->photosensitivity), detachTime(p->detachTime) {
     _voxel = p;
 
     for (int i = 0; i < k->num_d_voxelMats; i++) {

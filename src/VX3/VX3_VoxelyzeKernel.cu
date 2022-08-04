@@ -922,6 +922,7 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
             VX3_Vec3D<double> force = surface_voxels[index]->CiliaForce;
             double light = surface_voxels[index]->lightStored / k->LightSensitiveTime;  // in [0,1]
             double effect = k->CiliaFactorInLight;
+            // note: we can now use per vox sensitivity: surface_voxels[index]->photosensitivity
             if (k->UsingVolvox && light > 0)
                 surface_voxels[index]->CiliaForce += (1 - light) * (force*effect - force); // volvox get full effect then decay
             else

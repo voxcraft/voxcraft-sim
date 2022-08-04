@@ -174,6 +174,13 @@ public:
 	void ResetStructure(); //erases all voxel imformation within voxel array
 	void ReplaceMaterial(int Matindex, int ReplaceWith = 0, bool ShiftDown = false); //converts a material to ReplaceWith, option to decrement all higher indices
 
+
+	//Photosensitivity
+	inline void SetPhotosensitivity(int Index, double Value) {pPhotosensitivitys[Index] = Value;}
+	inline double GetPhotosensitivity(int Index) const {if (pPhotosensitivitys) return pPhotosensitivitys[Index]; return 0.0f;}
+	inline void InitPhotosensitivityArray(int Size) {pPhotosensitivitys = new double[Size];}
+	inline bool GetUsingPhotosensitivity(void) {return usingPhotosensitivity;}
+
 	//DetachTime
 	inline void SetDetachTime(int Index, double Value) {pDetachTimes[Index] = Value;}
 	inline double GetDetachTime(int Index) const {if (pDetachTimes) return pDetachTimes[Index]; return 0.0f;}
@@ -216,6 +223,9 @@ protected:
 	void IniData(int Size);
 
 	//sam
+	bool usingPhotosensitivity; 
+	double* pPhotosensitivitys;
+
 	bool usingDetachTime; 
 	double* pDetachTimes;
 
