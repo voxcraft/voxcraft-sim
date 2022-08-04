@@ -52,7 +52,8 @@ CVX_Material& CVX_Material::operator=(const CVX_Material& vIn)
 	transparent = vIn.transparent;
 	detachable = vIn.detachable;
 	lightSensitive = vIn.lightSensitive;
-	isLightSource = vIn.isLightSource;
+	isLightSourceA = vIn.isLightSourceA;
+	isLightSourceB = vIn.isLightSourceB;
 	
 	linear = vIn.linear;
 	E = vIn.E;

@@ -16,7 +16,7 @@ __global__ void gpu_update_voxels(VX3_Voxel *voxels, int num, double dt, double 
 __global__ void gpu_update_temperature(VX3_Voxel *voxels, int num, double TempAmplitude, double TempPeriod, double currentTime, VX3_VoxelyzeKernel* k);
 __global__ void gpu_update_attach(VX3_Voxel **surface_voxels, int num, double watchDistance, VX3_VoxelyzeKernel *k);
 __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k);
-__global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k, bool surfVoxOnly, bool lightOn);  // sam
+__global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k, bool surfVoxOnly, int lightOn);  // sam
 __global__ void gpu_clear_lookupgrid(VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid, int num);
 __global__ void gpu_insert_lookupgrid(VX3_Voxel **d_surface_voxels, int num, VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid,
                                       VX3_Vec3D<> *gridLowerBound, VX3_Vec3D<> *gridDelta, int lookupGrid_n);
@@ -309,10 +309,13 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
 
     // sam:
     if (UsingLightSource && TurnOnLightAfterThisManySeconds < currentTime) {
-        LightPos = VX3_Vec3D<>(LightPosX*voxSize, LightPosY*voxSize, LightPosZ*voxSize);
-        bool lightOn = false;
-        if (VX3_MathTree::eval(0, 0, 0, 0, currentTime, 0, 0, 0, 0, light_function) > 0 )
-            lightOn = true;
+        LightAPos = VX3_Vec3D<>(LightAPosX*voxSize, LightAPosY*voxSize, LightAPosZ*voxSize);
+        LightBPos = VX3_Vec3D<>(LightBPosX*voxSize, LightBPosY*voxSize, LightBPosZ*voxSize);
+        int lightOn = 0;
+        if (VX3_MathTree::eval(0, 0, 0, 0, currentTime, 0, 0, 0, 0, lightA_function) > 0 )
+            lightOn += 1;
+        if (VX3_MathTree::eval(0, 0, 0, 0, currentTime, 0, 0, 0, 0, lightB_function) > 0 )
+            lightOn += 2;
         updateOcclusion(lightOn);
     }
 
@@ -494,7 +497,7 @@ __device__ void VX3_VoxelyzeKernel::updateDetach() {
 }
 
 // sam:
-__device__ void VX3_VoxelyzeKernel::updateOcclusion(bool lightOn) {
+__device__ void VX3_VoxelyzeKernel::updateOcclusion(int lightOn) {
     int minGridSize, blockSize;
     if (OnlySurfVoxOcclude) {
         cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, gpu_update_occlusion, 0, num_d_surface_voxels);
@@ -933,7 +936,7 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
 }
 
 // sam:
-__global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k, bool surfVoxOnly, bool lightOn) {
+__global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k, bool surfVoxOnly, int lightOn) {
     // https://gamedev.stackexchange.com/questions/18436/most-efficient-aabb-vs-ray-collision-algorithms
 
     int index = threadIdx.x + blockIdx.x * blockDim.x;
@@ -944,10 +947,14 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
         if (surfVoxOnly)
             thisVox = surface_voxels[index];
 
-        if (!lightOn) { // then everything is in the dark
+        if (thisVox->removed) {
+            return;
+        }
+
+        if (lightOn == 0) { // then everything is in the dark
             thisVox->inShade = true;
 
-            if (thisVox->mat->isLightSource){
+            if (thisVox->mat->isLightSourceA || thisVox->mat->isLightSourceB){
                 thisVox->localSignal = 0;
                 return;
             }
@@ -966,12 +973,45 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
             return;
         }
 
-        if (thisVox->mat->isLightSource) {
+        if (lightOn == 3) { // ASSUMPTION: everything is in the light
+            thisVox->inShade = true;
+
+            if (thisVox->mat->isLightSourceA || thisVox->mat->isLightSourceB){
+                thisVox->localSignal = 1;
+                return;
+            }
+
+            if (thisVox->lightStored > 0)
+                thisVox->lightStored += 1;
+
+            if (k->UsingVolvox)
+                thisVox->localSignal = 1 - thisVox->lightStored / k->LightSensitiveTime;
+            else
+                thisVox->localSignal = thisVox->lightStored / k->LightSensitiveTime;
+
+            if (k->UsingVolvox && thisVox->lightStored == 0)
+                thisVox->localSignal = 0; // just for drawing
+
+            return;
+        }
+
+        if (lightOn == 1 && thisVox->mat->isLightSourceA) {
             thisVox->localSignal = 1;
             return;
         }
 
-        if (thisVox->removed) {
+        if (lightOn == 1 && thisVox->mat->isLightSourceB) {
+            thisVox->localSignal = 0;
+            return;
+        }
+
+        if (lightOn == 2 && thisVox->mat->isLightSourceA) {
+            thisVox->localSignal = 0;
+            return;
+        }
+
+        if (lightOn == 2 && thisVox->mat->isLightSourceB) {
+            thisVox->localSignal = 1;
             return;
         }
 
@@ -985,6 +1025,13 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
         thisVox->inShade = false;
 
         VX3_Vec3D<double> ray_origin = thisVox->position();
+
+        // TODO: only one can be on at a time or else light B overrides
+        VX3_Vec3D<> LightPos;
+        if (lightOn == 1)
+            LightPos = k->LightAPos;
+        if (lightOn == 2)
+            LightPos = k->LightBPos; 
 
         for (int j = 0; j < num; j++) {
 
@@ -1005,7 +1052,7 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
 
             // vector from this voxel to other voxel 
             VX3_Vec3D<double> thisVoxToOtherVox = otherVox->position() - ray_origin; // ray_origin ---> otherVox origin
-            VX3_Vec3D<double> thisVoxToLight = k->LightPos - ray_origin ;  // ray_origin ---> k->LightPos  // apply inverse square law?
+            VX3_Vec3D<double> thisVoxToLight = LightPos - ray_origin ;  // ray_origin ---> k->LightPos  // apply inverse square law?
 
             // can't occlude on far side of the light source
             if (thisVoxToOtherVox.Length2() > thisVoxToLight.Length2())

@@ -44,7 +44,7 @@ class VX3_VoxelyzeKernel {
     __device__ void updateVoxelDetachment();  // sam
 
 
-    __device__ void updateOcclusion(bool lightOn);
+    __device__ void updateOcclusion(int lightOn);
 
     // for Secondary Experiment
     __device__ void removeVoxels();
@@ -157,17 +157,22 @@ class VX3_VoxelyzeKernel {
     VX3_Vec3D<>* d_initialPosition = NULL;
     
     // sam:
-    VX3_MathTreeToken light_function[1024];
+    VX3_MathTreeToken lightB_function[1024];
+    VX3_MathTreeToken lightA_function[1024];
     int UsingLightSource = 0;
     int UsingVolvox = 0;
     double LightSensitiveTime = 0;
     double CiliaFactorInLight = 0;
     double TurnOnLightAfterThisManySeconds = 0;
     int OnlySurfVoxOcclude = 0;
-    double LightPosX = 0;
-    double LightPosY = 0;
-    double LightPosZ = 0;
-    VX3_Vec3D<> LightPos = VX3_Vec3D<>(LightPosX, LightPosY, LightPosZ);
+    double LightAPosX = 0;
+    double LightAPosY = 0;
+    double LightAPosZ = 0;
+    VX3_Vec3D<> LightAPos = VX3_Vec3D<>(LightAPosX, LightAPosY, LightAPosZ);
+    double LightBPosX = 0;
+    double LightBPosY = 0;
+    double LightBPosZ = 0;
+    VX3_Vec3D<> LightBPos = VX3_Vec3D<>(LightBPosX, LightBPosY, LightBPosZ);
     int EnableDisintegration = 0;
 
     //for Secondary Experiment

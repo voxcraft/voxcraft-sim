@@ -128,7 +128,8 @@ class CVX_Material {
 	bool transparent = false;
 	bool detachable = false;
 	bool lightSensitive = false;
-	bool isLightSource = false;
+	bool isLightSourceA = false;
+	bool isLightSourceB = false;
 
 	bool linear; //!< Set to true if this material is specified as linear.
 	float E; //!< Young's modulus (stiffness) in Pa.

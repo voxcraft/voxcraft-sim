@@ -361,16 +361,20 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         h_d_tmp.EnableSignals = pt_merged.get<int>("VXA.Simulator.EnableSignals", 0);
 
         // sam:
-        ParseMathTree(h_d_tmp.light_function, sizeof(h_d_tmp.light_function), "VXA.Simulator.LightFunction", pt_merged);
+        ParseMathTree(h_d_tmp.lightA_function, sizeof(h_d_tmp.lightA_function), "VXA.Simulator.LightAFunction", pt_merged);
+        ParseMathTree(h_d_tmp.lightB_function, sizeof(h_d_tmp.lightB_function), "VXA.Simulator.LightBFunction", pt_merged);
         h_d_tmp.UsingLightSource = pt_merged.get<int>("VXA.Simulator.UsingLightSource", 0);
         h_d_tmp.CiliaFactorInLight = pt_merged.get<double>("VXA.Simulator.CiliaFactorInLight", 0);  // todo: switch to per vox
         h_d_tmp.LightSensitiveTime = pt_merged.get<double>("VXA.Simulator.LightSensitiveTime", 0);
         h_d_tmp.UsingVolvox = pt_merged.get<int>("VXA.Simulator.UsingVolvox", 0);
         h_d_tmp.TurnOnLightAfterThisManySeconds = pt_merged.get<double>("VXA.Simulator.TurnOnLightAfterThisManySeconds", 0);
         h_d_tmp.OnlySurfVoxOcclude = pt_merged.get<int>("VXA.Simulator.OnlySurfVoxOcclude", 0);
-        h_d_tmp.LightPosX = pt_merged.get<double>("VXA.Simulator.LightPosX", 0);
-        h_d_tmp.LightPosY = pt_merged.get<double>("VXA.Simulator.LightPosY", 0);
-        h_d_tmp.LightPosZ = pt_merged.get<double>("VXA.Simulator.LightPosZ", 0);
+        h_d_tmp.LightAPosX = pt_merged.get<double>("VXA.Simulator.LightAPosX", 0);
+        h_d_tmp.LightAPosY = pt_merged.get<double>("VXA.Simulator.LightAPosY", 0);
+        h_d_tmp.LightAPosZ = pt_merged.get<double>("VXA.Simulator.LightAPosZ", 0);
+        h_d_tmp.LightBPosX = pt_merged.get<double>("VXA.Simulator.LightBPosX", 0);
+        h_d_tmp.LightBPosY = pt_merged.get<double>("VXA.Simulator.LightBPosY", 0);
+        h_d_tmp.LightBPosZ = pt_merged.get<double>("VXA.Simulator.LightBPosZ", 0);
         h_d_tmp.EnableDisintegration = pt_merged.get<int>("VXA.Simulator.EnableDisintegration", 0);
         
         // for Secondary Experiment
