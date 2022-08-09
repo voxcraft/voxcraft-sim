@@ -1864,12 +1864,12 @@ bool CVXC_Structure::ReadXML(CXML_Rip* pXML, std::string Version, std::string* R
 		}
 	}
 
-	// sam: read Photosensitivity
-	if (pXML->FindElement("Photosensitivity")){ 
-		usingPhotosensitivity = true;
+	// sam: read ActivationTimeConstant
+	if (pXML->FindElement("ActivationTimeConstant")){ 
+		usingActivationTimeConstant = true;
 		int voxCounter = 0;
 		// std::cout << "found weights!" << std::endl;
-		InitPhotosensitivityArray(X_Voxels*Y_Voxels*Z_Voxels);
+		InitActivationTimeConstantArray(X_Voxels*Y_Voxels*Z_Voxels);
 		for (int i=0; i<Z_Voxels; i++)
 		{
 			std::string DataIn;
@@ -1882,11 +1882,11 @@ bool CVXC_Structure::ReadXML(CXML_Rip* pXML, std::string Version, std::string* R
 			for (int k=0; k<X_Voxels*Y_Voxels; k++)
 			{
 				if (dataArray.size()<=k) {
-					printf("ERROR: Data in Photosensitivity.Layers is too short.\n");
+					printf("ERROR: Data in ActivationTimeConstant.Layers is too short.\n");
 				}
 				if (pData[X_Voxels*Y_Voxels*i+k] > 0)
 				{
-					SetPhotosensitivity(voxCounter,atof(dataArray[k].c_str()));
+					SetActivationTimeConstant(voxCounter,atof(dataArray[k].c_str()));
 					voxCounter++;
 				}
 			}
@@ -1896,7 +1896,77 @@ bool CVXC_Structure::ReadXML(CXML_Rip* pXML, std::string Version, std::string* R
 	}
 	else
 	{
-		usingPhotosensitivity = false;
+		usingActivationTimeConstant = false;
+	}
+
+	// sam: read RecoveryTimeConstant
+	if (pXML->FindElement("RecoveryTimeConstant")){ 
+		usingRecoveryTimeConstant = true;
+		int voxCounter = 0;
+		// std::cout << "found weights!" << std::endl;
+		InitRecoveryTimeConstantArray(X_Voxels*Y_Voxels*Z_Voxels);
+		for (int i=0; i<Z_Voxels; i++)
+		{
+			std::string DataIn;
+			std::string RawData;
+			// std::string thisValue;
+			pXML->FindLoadElement("Layer", &RawData, true, true);
+		
+			std::vector<std::string> dataArray;
+			dataArray = split(RawData,',',dataArray);
+			for (int k=0; k<X_Voxels*Y_Voxels; k++)
+			{
+				if (dataArray.size()<=k) {
+					printf("ERROR: Data in RecoveryTimeConstant.Layers is too short.\n");
+				}
+				if (pData[X_Voxels*Y_Voxels*i+k] > 0)
+				{
+					SetRecoveryTimeConstant(voxCounter,atof(dataArray[k].c_str()));
+					voxCounter++;
+				}
+			}
+		}
+		pXML->UpLevel(); //Layer
+		pXML->UpLevel(); //Weights
+	}
+	else
+	{
+		usingRecoveryTimeConstant = false;
+	}
+
+	// sam: read DownregulationConstant
+	if (pXML->FindElement("DownregulationConstant")){ 
+		usingDownregulationConstant = true;
+		int voxCounter = 0;
+		// std::cout << "found weights!" << std::endl;
+		InitDownregulationConstantArray(X_Voxels*Y_Voxels*Z_Voxels);
+		for (int i=0; i<Z_Voxels; i++)
+		{
+			std::string DataIn;
+			std::string RawData;
+			// std::string thisValue;
+			pXML->FindLoadElement("Layer", &RawData, true, true);
+		
+			std::vector<std::string> dataArray;
+			dataArray = split(RawData,',',dataArray);
+			for (int k=0; k<X_Voxels*Y_Voxels; k++)
+			{
+				if (dataArray.size()<=k) {
+					printf("ERROR: Data in DownregulationConstant.Layers is too short.\n");
+				}
+				if (pData[X_Voxels*Y_Voxels*i+k] > 0)
+				{
+					SetDownregulationConstant(voxCounter,atof(dataArray[k].c_str()));
+					voxCounter++;
+				}
+			}
+		}
+		pXML->UpLevel(); //Layer
+		pXML->UpLevel(); //Weights
+	}
+	else
+	{
+		usingDownregulationConstant = false;
 	}
 
 	// sam: Read DetachTime

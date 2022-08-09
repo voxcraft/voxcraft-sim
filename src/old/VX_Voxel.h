@@ -195,7 +195,9 @@ public:
 	std::vector<CVX_Voxel*>* nearby;
 
 	double detachTime; //sam
-	double photosensitivity; //sam
+	double activationTimeConstant; // sam
+    double recoveryTimeConstant; // sam
+    double downregulationConstant; // sam
 
 	double phaseOffset;
 	bool isDetached; //true if the voxel is on main body, false if it fell on the ground.

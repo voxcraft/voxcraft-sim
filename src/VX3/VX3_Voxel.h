@@ -302,14 +302,13 @@ class VX3_Voxel {
     // sam:
     double lightStored = 0;
     bool inShade = false;
-    double photosensitivity = 0;
-    double activationTimeConstant = 6; // tau_a  // todo: make this input
-    double recoveryTimeConstant = 0.2; // tau_r  // todo: make this input
-    double downregulationConstant = 0.4; // beta  // todo: make this input
-    double h1 = 0;  // for volvox  // todo: rename
-    double h2 = 0;  // for volvox  // todo: rename
-    double p1 = 0;  // for volvox  // todo: rename
-    double p2 = 0;  // for volvox  // todo: rename
+    double activationTimeConstant = 1; // tau_a
+    double recoveryTimeConstant = 1; // tau_r
+    double downregulationConstant = 1; // beta
+    double h1 = 0;  // for volvox  // todo: rename these
+    double h2 = 0;  // for volvox
+    double p1 = 0;  // for volvox
+    double p2 = 0;  // for volvox
     double detachTime = 0;
 
     bool enableAttach = true;

@@ -175,11 +175,23 @@ public:
 	void ReplaceMaterial(int Matindex, int ReplaceWith = 0, bool ShiftDown = false); //converts a material to ReplaceWith, option to decrement all higher indices
 
 
-	//Photosensitivity
-	inline void SetPhotosensitivity(int Index, double Value) {pPhotosensitivitys[Index] = Value;}
-	inline double GetPhotosensitivity(int Index) const {if (pPhotosensitivitys) return pPhotosensitivitys[Index]; return 0.0f;}
-	inline void InitPhotosensitivityArray(int Size) {pPhotosensitivitys = new double[Size];}
-	inline bool GetUsingPhotosensitivity(void) {return usingPhotosensitivity;}
+	//ActivationTimeConstant
+	inline void SetActivationTimeConstant(int Index, double Value) {pActivationTimeConstants[Index] = Value;}
+	inline double GetActivationTimeConstant(int Index) const {if (pActivationTimeConstants) return pActivationTimeConstants[Index]; return 0.0f;}
+	inline void InitActivationTimeConstantArray(int Size) {pActivationTimeConstants = new double[Size];}
+	inline bool GetUsingActivationTimeConstant(void) {return usingActivationTimeConstant;}
+
+	//RecoveryTimeConstant
+	inline void SetRecoveryTimeConstant(int Index, double Value) {pRecoveryTimeConstants[Index] = Value;}
+	inline double GetRecoveryTimeConstant(int Index) const {if (pRecoveryTimeConstants) return pRecoveryTimeConstants[Index]; return 0.0f;}
+	inline void InitRecoveryTimeConstantArray(int Size) {pRecoveryTimeConstants = new double[Size];}
+	inline bool GetUsingRecoveryTimeConstant(void) {return usingRecoveryTimeConstant;}
+
+	//DownregulationConstant
+	inline void SetDownregulationConstant(int Index, double Value) {pDownregulationConstants[Index] = Value;}
+	inline double GetDownregulationConstant(int Index) const {if (pDownregulationConstants) return pDownregulationConstants[Index]; return 0.0f;}
+	inline void InitDownregulationConstantArray(int Size) {pDownregulationConstants = new double[Size];}
+	inline bool GetUsingDownregulationConstant(void) {return usingDownregulationConstant;}
 
 	//DetachTime
 	inline void SetDetachTime(int Index, double Value) {pDetachTimes[Index] = Value;}
@@ -223,9 +235,15 @@ protected:
 	void IniData(int Size);
 
 	//sam
-	bool usingPhotosensitivity; 
-	double* pPhotosensitivitys;
-
+	bool usingActivationTimeConstant;
+	double* pActivationTimeConstants;
+	//sam
+    bool usingRecoveryTimeConstant;
+	double* pRecoveryTimeConstants;
+	//sam
+    bool usingDownregulationConstant;
+	double* pDownregulationConstants;
+	//sam
 	bool usingDetachTime; 
 	double* pDetachTimes;
 
