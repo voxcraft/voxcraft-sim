@@ -160,6 +160,15 @@ class VX3_VoxelyzeKernel {
     VX3_MathTreeToken lightB_function[1024];
     VX3_MathTreeToken lightA_function[1024];
     int UsingLightSource = 0;
+    int RandomizeLightA = 0;
+    int RandomizeLightB = 0;
+    // std::vector<int> randomLightA;
+    // std::vector<int> randomLightB;
+    int DecisionForLightA = 0;
+    int DecisionForLightB = 0;
+    int prevLightA = 0;
+    int prevLightB = 0;
+    int RandomSeed = 0;  // not used
     int UsingVolvox = 0;
     double LightSensitiveTime = 0;
     double CiliaFactorInLight = 0;

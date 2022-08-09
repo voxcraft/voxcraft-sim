@@ -361,6 +361,9 @@ void VX3_SimulationManager::readVXD(fs::path base, std::vector<fs::path> files, 
         h_d_tmp.EnableSignals = pt_merged.get<int>("VXA.Simulator.EnableSignals", 0);
 
         // sam:
+        h_d_tmp.RandomSeed = pt_merged.get<double>("VXA.Simulator.RandomSeed", 0);  // doesn't do anything yet
+        h_d_tmp.RandomizeLightA = pt_merged.get<double>("VXA.Simulator.RandomizeLightA", 0);
+        h_d_tmp.RandomizeLightB = pt_merged.get<double>("VXA.Simulator.RandomizeLightB", 0);
         ParseMathTree(h_d_tmp.lightA_function, sizeof(h_d_tmp.lightA_function), "VXA.Simulator.LightAFunction", pt_merged);
         ParseMathTree(h_d_tmp.lightB_function, sizeof(h_d_tmp.lightB_function), "VXA.Simulator.LightBFunction", pt_merged);
         h_d_tmp.UsingLightSource = pt_merged.get<int>("VXA.Simulator.UsingLightSource", 0);

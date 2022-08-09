@@ -311,11 +311,62 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
     if (UsingLightSource && TurnOnLightAfterThisManySeconds < currentTime) {
         LightAPos = VX3_Vec3D<>(LightAPosX*voxSize, LightAPosY*voxSize, LightAPosZ*voxSize);
         LightBPos = VX3_Vec3D<>(LightBPosX*voxSize, LightBPosY*voxSize, LightBPosZ*voxSize);
+
         int lightOn = 0;
-        if (VX3_MathTree::eval(0, 0, 0, 0, currentTime, 0, 0, 0, 0, lightA_function) > 0 )
-            lightOn += 1;
-        if (VX3_MathTree::eval(0, 0, 0, 0, currentTime, 0, 0, 0, 0, lightB_function) > 0 )
-            lightOn += 2;
+        int LightA = 0;
+        int LightB = 0;
+        
+        int r = random(10, clock()); // RandomSeed
+
+        if (VX3_MathTree::eval(0, 0, 0, 0, currentTime, 0, 0, 0, 0, lightA_function) > 0 ) {
+
+            LightA = 1;
+
+            if(RandomizeLightA) {
+
+                if (!prevLightA) {  // decide to switch on or not
+                    if (r < 5) {
+                        DecisionForLightA = 1;
+                        lightOn += 1;
+                    }
+                    else {
+                        DecisionForLightA = 0;  // decide no; will look again next cycle
+                    }
+                }
+                else if (DecisionForLightA)// already decided yes
+                        lightOn += 1;
+            }
+            else
+                lightOn += 1;
+        }
+
+        r = random(10, clock()); // RandomSeed
+
+        if (VX3_MathTree::eval(0, 0, 0, 0, currentTime, 0, 0, 0, 0, lightB_function) > 0 ) {
+
+            LightB = 1;
+
+            if(RandomizeLightB) {
+
+                if (!prevLightB) {  // decide to switch on or not
+                    if (r < 5) {
+                        DecisionForLightB = 1;
+                        lightOn += 2;
+                    }
+                    else {
+                        DecisionForLightB = 0;  // decide no; will look again next cycle
+                    }
+                }
+                else if (DecisionForLightB)// already decided yes
+                        lightOn += 2;
+            }
+            else
+                lightOn += 2;
+        }
+
+        prevLightA = LightA;
+        prevLightB = LightB;
+
         updateOcclusion(lightOn);
     }
 
