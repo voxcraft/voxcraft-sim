@@ -15,7 +15,7 @@ __global__ void gpu_update_links(VX3_Link **links, int num);
 __global__ void gpu_update_voxels(VX3_Voxel *voxels, int num, double dt, double currentTime, VX3_VoxelyzeKernel *k);
 __global__ void gpu_update_temperature(VX3_Voxel *voxels, int num, double TempAmplitude, double TempPeriod, double currentTime, VX3_VoxelyzeKernel* k);
 __global__ void gpu_update_attach(VX3_Voxel **surface_voxels, int num, double watchDistance, VX3_VoxelyzeKernel *k);
-__global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k);
+__global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, double dt, VX3_VoxelyzeKernel *k);
 __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k, bool surfVoxOnly, int lightOn);  // sam
 __global__ void gpu_clear_lookupgrid(VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid, int num);
 __global__ void gpu_insert_lookupgrid(VX3_Voxel **d_surface_voxels, int num, VX3_dVector<VX3_Voxel *> *d_collisionLookupGrid,
@@ -302,7 +302,7 @@ __device__ bool VX3_VoxelyzeKernel::doTimeStep(float dt) {
                                            num_d_surface_voxels); // Dynamically calculate blockSize
         int gridSize_voxels = (num_d_surface_voxels + blockSize - 1) / blockSize;
         int blockSize_voxels = num_d_surface_voxels < blockSize ? num_d_surface_voxels : blockSize;
-        gpu_update_cilia_force<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, this);
+        gpu_update_cilia_force<<<gridSize_voxels, blockSize_voxels>>>(d_surface_voxels, num_d_surface_voxels, dt, this);
         CUDA_CHECK_AFTER_CALL();
         VcudaDeviceSynchronize();
     }
@@ -905,7 +905,7 @@ __global__ void gpu_update_attach(VX3_Voxel **surface_voxels, int num, double wa
     }
 }
 
-__global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_VoxelyzeKernel *k) {
+__global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, double dt, VX3_VoxelyzeKernel *k) {
     int index = threadIdx.x + blockIdx.x * blockDim.x;
     if (index < num) {
         if (surface_voxels[index]->removed)
@@ -918,15 +918,51 @@ __global__ void gpu_update_cilia_force(VX3_Voxel **surface_voxels, int num, VX3_
 
         // sam:
         if (k->UsingLightSource) {
+
             surface_voxels[index]->CiliaForce = surface_voxels[index]->orient.RotateVec3D(surface_voxels[index]->baseCiliaForce);
             VX3_Vec3D<double> force = surface_voxels[index]->CiliaForce;
             double light = surface_voxels[index]->lightStored / k->LightSensitiveTime;  // in [0,1]
             double effect = k->CiliaFactorInLight;
+            surface_voxels[index]->CiliaForce += light * (force*effect - force);  // add accumulated light effect to cilia force
+            
             // note: we can now use per vox sensitivity: surface_voxels[index]->photosensitivity
-            if (k->UsingVolvox && light > 0)
-                surface_voxels[index]->CiliaForce += (1 - light) * (force*effect - force); // volvox get full effect then decay
-            else
-                surface_voxels[index]->CiliaForce += light * (force*effect - force);  // add accumulated light effect to cilia force
+
+            if (k->UsingVolvox) {
+                // Drescher et al. (2010). PNAS, 107(25), 11171-11176.
+                // https://www.pnas.org/doi/10.1073/pnas.1000901107
+                // approximating dx/dt=(x2-x1)/(t2-t1), where (t2-t1)=dt=tstep
+
+                VX3_Vec3D<double> u_0 = surface_voxels[index]->orient.RotateVec3D(surface_voxels[index]->baseCiliaForce);
+
+                double tau_a = surface_voxels[index]->activationTimeConstant;
+                double tau_r = surface_voxels[index]->recoveryTimeConstant;
+                double beta = surface_voxels[index]->downregulationConstant;
+
+                double p1 = surface_voxels[index]->p1;
+                double p2 = surface_voxels[index]->p2;
+                double h1 = surface_voxels[index]->h1;
+                double h2 = surface_voxels[index]->h2;
+
+                double s = 1;
+                if (surface_voxels[index]->inShade)
+                    s = 0;
+
+                double heaviside = s-h1;
+                if (heaviside < 0)
+                    heaviside = 0;
+                if (heaviside > 1)
+                    heaviside = 1;
+
+                p2=p1+dt*(((s-h1)*heaviside-p1)/tau_r);
+                h2=h1+dt*((s-h1)/tau_a);
+
+                surface_voxels[index]->p1=p2;
+                surface_voxels[index]->h1=h2;
+
+                surface_voxels[index]->CiliaForce = u_0*(1-beta*p2);
+                surface_voxels[index]->localSignal = p2; // for drawing
+            }
+
         }
 
         else {
@@ -963,13 +999,8 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
             if (thisVox->lightStored > 0)
                 thisVox->lightStored -= 1;
 
-            if (k->UsingVolvox)
-                thisVox->localSignal = 1 - thisVox->lightStored / k->LightSensitiveTime;
-            else
-                thisVox->localSignal = thisVox->lightStored / k->LightSensitiveTime;
-
-            if (k->UsingVolvox && thisVox->lightStored == 0)
-                thisVox->localSignal = 0; // just for drawing
+            if (!k->UsingVolvox)
+                thisVox->localSignal = thisVox->lightStored / k->LightSensitiveTime; // just for drawing
 
             return;
         }
@@ -985,13 +1016,8 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
             if (thisVox->lightStored > 0)
                 thisVox->lightStored += 1;
 
-            if (k->UsingVolvox)
-                thisVox->localSignal = 1 - thisVox->lightStored / k->LightSensitiveTime;
-            else
-                thisVox->localSignal = thisVox->lightStored / k->LightSensitiveTime;
-
-            if (k->UsingVolvox && thisVox->lightStored == 0)
-                thisVox->localSignal = 0; // just for drawing
+            if (!k->UsingVolvox)
+                thisVox->localSignal = thisVox->lightStored / k->LightSensitiveTime;  // just for drawing
 
             return;
         }
@@ -1110,9 +1136,7 @@ __global__ void gpu_update_occlusion(VX3_Voxel *voxels, VX3_Voxel **surface_voxe
                 thisVox->lightStored += 1;
         }
         // for drawing
-        if (k->UsingVolvox && thisVox->lightStored>0)
-            thisVox->localSignal = 1 - thisVox->lightStored / k->LightSensitiveTime;
-        else
+        if (!k->UsingVolvox)
             thisVox->localSignal = thisVox->lightStored / k->LightSensitiveTime;
     }
 }
